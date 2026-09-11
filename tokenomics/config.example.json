@@ -1,0 +1,98 @@
+{
+  "token": {
+    "name": "New Coin",
+    "ticker": "NEWC",
+    "total_supply": 1000000000,
+    "decimals": 18
+  },
+  "horizon_months": 36,
+  "rules": {
+    "max_monthly_unlock_pct_of_prior_circ": 8.0,
+    "tge_circulating_min_pct": 8.0,
+    "tge_circulating_max_pct": 25.0,
+    "team_plus_investors_max_pct": 40.0,
+    "first_3_months_max_pct_of_tge_circ": 30.0
+  },
+  "buckets": [
+    {
+      "key": "community_ecosystem",
+      "name": "Cộng đồng & hệ sinh thái",
+      "role": "community",
+      "pct": 32,
+      "tge_unlock_pct": 5,
+      "cliff_months": 0,
+      "vesting_months": 48,
+      "note": "Airdrop, quest, grant. Tuyến tính 48 tháng, phần TGE cho airdrop người dùng sớm."
+    },
+    {
+      "key": "team_advisors",
+      "name": "Đội ngũ & cố vấn",
+      "role": "team",
+      "pct": 18,
+      "tge_unlock_pct": 0,
+      "cliff_months": 12,
+      "vesting_months": 36,
+      "note": "Bắt buộc 0% tại TGE. Cliff 12 tháng, tuyến tính 36 tháng."
+    },
+    {
+      "key": "investors",
+      "name": "Nhà đầu tư (seed/private)",
+      "role": "investors",
+      "pct": 15,
+      "tge_unlock_pct": 0,
+      "cliff_months": 9,
+      "vesting_months": 24,
+      "note": "Cliff 9 tháng để tháng đầu sau cliff không trùng cliff đội ngũ (tháng 13) và mốc Binance (tháng 4)."
+    },
+    {
+      "key": "treasury",
+      "name": "Treasury / quỹ dự trữ",
+      "role": "treasury",
+      "pct": 13,
+      "tge_unlock_pct": 2,
+      "cliff_months": 0,
+      "vesting_months": 36,
+      "note": "Multisig 3/5, timelock 48h. Mô hình hóa tuyến tính 36 tháng; thực tế chi theo đề xuất quản trị."
+    },
+    {
+      "key": "liquidity",
+      "name": "Thanh khoản (DEX/CEX/MM)",
+      "role": "liquidity",
+      "pct": 8,
+      "tge_unlock_pct": 100,
+      "cliff_months": 0,
+      "vesting_months": 0,
+      "note": "Toàn bộ tại TGE để tạo pool PancakeSwap và cấp cho MM. LP phải khóa >= 12 tháng."
+    },
+    {
+      "key": "binance_programs",
+      "name": "Chương trình Binance",
+      "role": "binance",
+      "pct": 5,
+      "tge_unlock_pct": 0,
+      "cliff_months": 3,
+      "vesting_months": 24,
+      "note": "Airdrop Alpha / Launchpool / HODLer. Giữ riêng; mô hình hóa giải ngân từ tháng 4 trong 24 tháng."
+    },
+    {
+      "key": "marketing_kol",
+      "name": "Marketing / KOL",
+      "role": "marketing",
+      "pct": 5,
+      "tge_unlock_pct": 20,
+      "cliff_months": 0,
+      "vesting_months": 24,
+      "note": "20% của nhóm = 1% tổng cung tại TGE. Hợp đồng KOL phải có vesting."
+    },
+    {
+      "key": "public_sale",
+      "name": "Public sale",
+      "role": "public",
+      "pct": 4,
+      "tge_unlock_pct": 100,
+      "cliff_months": 0,
+      "vesting_months": 0,
+      "note": "Mở khóa toàn bộ tại TGE. Giá không thấp hơn vòng private quá xa."
+    }
+  ]
+}
