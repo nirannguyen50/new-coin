@@ -1,7 +1,10 @@
-# New Coin — Kế hoạch phát hành token và niêm yết trên Binance
+# New Coin — Phát hành token và đưa lên sàn để giao dịch
 
-Repo này chứa bộ tài liệu kế hoạch để đưa một token từ ý tưởng đến niêm yết trên Binance
-(theo lộ trình chính thức **Binance Alpha → Binance Futures → Binance Spot**).
+Repo này chứa kế hoạch, mã nguồn và công cụ để đưa một token từ ý tưởng đến chỗ **người dùng mua bán được**.
+
+**Mục tiêu hiện tại:** giao dịch được trên DEX (PancakeSwap, BNB Chain) và sàn tập trung nhỏ.
+Bắt đầu từ [docs/09-ke-hoach-rut-gon-dex-va-san-nho.md](docs/09-ke-hoach-rut-gon-dex-va-san-nho.md).
+Lộ trình Binance (docs/01, 02, 06) được giữ lại làm tham khảo nếu sau này muốn đi xa hơn.
 
 ## Cấu trúc tài liệu
 
@@ -15,6 +18,7 @@ Repo này chứa bộ tài liệu kế hoạch để đưa một token từ ý t
 | [docs/06-binance-listing-application-draft.md](docs/06-binance-listing-application-draft.md) | Bản nháp câu trả lời cho Binance Listing Application Portal (đề nghị Alpha), tài liệu đính kèm, những điều không được viết |
 | [docs/07-one-pager-and-pitch.md](docs/07-one-pager-and-pitch.md) | Mẫu one-pager, dàn ý pitch deck 10 slide, bài pitch 60 giây |
 | [docs/08-legal-checklist-vietnam.md](docs/08-legal-checklist-vietnam.md) | Checklist chuẩn bị pháp lý cho đội ngũ tại Việt Nam: câu hỏi cho luật sư, lựa chọn pháp nhân, hồ sơ KYB, thuế (không phải tư vấn pháp lý) |
+| [docs/09-ke-hoach-rut-gon-dex-va-san-nho.md](docs/09-ke-hoach-rut-gon-dex-va-san-nho.md) | **Kế hoạch đang áp dụng.** Lộ trình 6 tuần lên PancakeSwap, khóa LP, lên CoinGecko/CMC, tùy chọn CEX nhỏ, ngân sách rút gọn, checklist ngày ra mắt |
 
 ## Cấu trúc mã nguồn và công cụ
 
@@ -30,18 +34,18 @@ Repo này chứa bộ tài liệu kế hoạch để đưa một token từ ý t
 
 ## Ba sự thật cần chấp nhận trước khi bắt đầu
 
-1. **Binance không bán suất niêm yết.** Không có phí niêm yết chính thức; bất kỳ ai hứa "bảo đảm lên Binance" đều là lừa đảo hoặc môi giới không có thẩm quyền.
-2. **Tỷ lệ thành công thấp.** Hàng nghìn dự án nộp đơn mỗi năm; theo số liệu công khai giữa 2025, chỉ khoảng 9–10% token trên Binance Alpha lên được Spot.
-3. **Niêm yết là kết quả, không phải mục tiêu.** Binance chấm điểm sản phẩm thật, người dùng thật, thanh khoản thật, đội ngũ minh bạch và tuân thủ pháp lý. Kế hoạch này vì vậy đặt trọng tâm vào việc xây một dự án đủ tốt để Binance *muốn* niêm yết.
+1. **Lên DEX không cần ai duyệt.** Bất kỳ ai cũng tạo được pool PancakeSwap trong một ngày; khó là làm cho người lạ tin và mua.
+2. **Sàn nhỏ bán "cửa vào", không bán người mua.** Trả phí niêm yết CEX chỉ có ý nghĩa khi DEX đã có giao dịch thật.
+3. **Ba thứ người mua kiểm tra đầu tiên:** mã nguồn verify không có quyền admin, LP đã khóa, token đội ngũ có vesting. Thiếu một trong ba, token bị coi là rug pull tiềm năng.
 
 ## Bắt đầu từ đâu
 
-1. Đọc `docs/01-ke-hoach-tong-the.md` để nắm lộ trình 7 giai đoạn.
-2. **Chốt use case sản phẩm.** Đây là quyết định duy nhất chưa có trong repo và mọi thứ khác phụ thuộc vào nó.
-3. Điền `docs/05` (whitepaper) trước, rồi dùng nó làm nguồn cho `docs/06` (hồ sơ Binance) và `docs/07` (pitch).
-4. Điều chỉnh `tokenomics/config.example.json` nếu cần, chạy công cụ để xác nhận không còn WARN, rồi đồng bộ contract config và website.
-5. Đọc `docs/08` trước khi gặp luật sư; đọc `contracts/README.md` mục checklist bảo mật trước khi deploy mainnet.
-6. Bắt đầu `growth/01-ke-hoach-cong-dong-12-tuan.md` tối thiểu 12 tuần trước TGE.
+1. Đọc `docs/09` (kế hoạch 6 tuần lên DEX). Các tài liệu Binance chỉ đọc khi cần.
+2. **Chốt tên, ticker, lý do tồn tại của token.** Đổi placeholder NewCoin/NEWC trong `contracts/contracts/NewCoin.sol`, `tokenomics/config.example.json` và `website/`.
+3. Điều chỉnh `tokenomics/config.example.json` nếu cần, chạy công cụ để xác nhận không còn WARN, rồi đồng bộ `contracts/config/allocations.example.json`.
+4. Chạy trọn quy trình trên BSC testnet theo `contracts/README.md`: deploy → verify → vesting → add liquidity.
+5. Đọc `docs/08` và hỏi luật sư trước khi deploy mainnet; làm audit nhỏ.
+6. Deploy mainnet, tạo pool, khóa LP, nộp CoinGecko/CMC, rồi chạy `growth/` để có người mua thật.
 
 ## Trạng thái hiện tại
 
@@ -51,5 +55,6 @@ Repo này chứa bộ tài liệu kế hoạch để đưa một token từ ý t
 | Smart contract + test | Hoàn thành, chưa audit, chưa deploy |
 | Công cụ tokenomics | Hoàn thành, cấu hình ví dụ pass 7/7 red flag |
 | Landing page, growth kit | Hoàn thành (placeholder) |
-| Use case sản phẩm | **Chưa chốt** |
-| Pháp nhân, luật sư, audit, market maker, cộng đồng thật | Chưa bắt đầu; không thể tự động hóa |
+| Script tạo thanh khoản PancakeSwap | Hoàn thành, test bằng mock router; chưa chạy trên mạng thật |
+| Tên token, ticker, lý do tồn tại | **Chưa chốt** (đang dùng placeholder NewCoin/NEWC) |
+| Pháp lý, audit, ví Safe, BNB thanh khoản, cộng đồng thật | Chưa bắt đầu; cần người thật thực hiện |
