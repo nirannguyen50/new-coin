@@ -14,7 +14,9 @@
     "deploy:mainnet": "hardhat run scripts/deploy.js --network bsc",
     "deploy:vesting:testnet": "hardhat run scripts/deploy-vesting.js --network bscTestnet",
     "deploy:vesting:mainnet": "hardhat run scripts/deploy-vesting.js --network bsc",
-    "verify": "hardhat run scripts/verify.js"
+    "verify": "hardhat run scripts/verify.js",
+    "liquidity:testnet": "hardhat run scripts/add-liquidity.js --network bscTestnet",
+    "liquidity:mainnet": "hardhat run scripts/add-liquidity.js --network bsc"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "5.0.0",
