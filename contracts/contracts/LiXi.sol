@@ -6,12 +6,13 @@ import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
 /**
- * @title NewCoin (NEWC)
- * @notice Fixed-supply BEP-20 utility token for BNB Chain.
+ * @title LiXi (LIXI)
+ * @notice Fixed-supply BEP-20 reward and tip ("li xi") token for Vietnamese online
+ *         communities on BNB Chain; the first product built on it is a Telegram tip bot.
  *
  * @dev Security guarantees, by construction (not by policy):
  *
- *  - Fixed supply. Exactly 1,000,000,000 NEWC (18 decimals) is minted once, in
+ *  - Fixed supply. Exactly 1,000,000,000 LIXI (18 decimals) is minted once, in
  *    the constructor, to the treasury address. There is no `mint` function and
  *    `_mint` is never reachable after deployment, so total supply can only go
  *    down (via burns).
@@ -33,7 +34,7 @@ import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20P
  *  VestingWallet instances and a multisig treasury), keeping the token itself
  *  minimal and immutable.
  */
-contract NewCoin is ERC20, ERC20Burnable, ERC20Permit {
+contract LiXi is ERC20, ERC20Burnable, ERC20Permit {
     /// @notice Total supply in whole tokens (before applying `decimals()`).
     uint256 public constant TOTAL_SUPPLY_WHOLE = 1_000_000_000;
 
@@ -44,7 +45,7 @@ contract NewCoin is ERC20, ERC20Burnable, ERC20Permit {
      * @param treasury Address that receives the entire fixed supply at deployment.
      *                 Intended to be a multisig (e.g. Safe), never an EOA in production.
      */
-    constructor(address treasury) ERC20("NewCoin", "NEWC") ERC20Permit("NewCoin") {
+    constructor(address treasury) ERC20("LiXi", "LIXI") ERC20Permit("LiXi") {
         if (treasury == address(0)) revert TreasuryIsZeroAddress();
         _mint(treasury, TOTAL_SUPPLY_WHOLE * 10 ** decimals());
     }

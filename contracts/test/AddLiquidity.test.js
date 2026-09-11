@@ -56,7 +56,7 @@ describe("PancakeSwap helpers (scripts/lib/pancake.js)", function () {
   });
 
   describe("impliedPrice", function () {
-    it("80,000,000 NEWC + 100 BNB -> 0.00000125 BNB per NEWC and 800,000 NEWC per BNB", function () {
+    it("80,000,000 LIXI + 100 BNB -> 0.00000125 BNB per LIXI and 800,000 LIXI per BNB", function () {
       const p = impliedPrice(LIQ_TOKENS, LIQ_BNB);
       expect(p.bnbPerToken).to.equal("0.00000125");
       expect(p.tokenPerBnb).to.equal("800000");
@@ -167,7 +167,7 @@ describe("add-liquidity script (end to end against mock router on hardhat networ
     const [deployer, treasury, lpVault] = await ethers.getSigners();
 
     // Token with the deployer holding the liquidity allocation (as after a treasury transfer).
-    const token = await (await ethers.getContractFactory("NewCoin")).deploy(treasury.address);
+    const token = await (await ethers.getContractFactory("LiXi")).deploy(treasury.address);
     await token.connect(treasury).transfer(deployer.address, LIQ_TOKENS * 2n);
     const tokenAddress = await token.getAddress();
 
@@ -251,7 +251,7 @@ describe("add-liquidity script (end to end against mock router on hardhat networ
     expect(result.factoryAddress).to.equal(await factory.getAddress());
     expect(result.wethAddress).to.equal(await weth.getAddress());
     expect(result.lpRecipient).to.equal(lpVault.address);
-    expect(result.symbol).to.equal("NEWC");
+    expect(result.symbol).to.equal("LIXI");
     expect(result.approveTxHash).to.match(/^0x[0-9a-f]{64}$/);
     expect(result.txHash).to.match(/^0x[0-9a-f]{64}$/);
     expect(result.amountTokenMin).to.equal(call.amountTokenMin);
@@ -264,8 +264,8 @@ describe("add-liquidity script (end to end against mock router on hardhat networ
     // Printed summary.
     const out = logs.join("\n");
     expect(out).to.include(`Pair (LP token): ${pairAddress}`);
-    expect(out).to.include("1 NEWC = 0.00000125 BNB ; 1 BNB = 800000 NEWC");
-    expect(out).to.include("80,000,000 NEWC");
+    expect(out).to.include("1 LIXI = 0.00000125 BNB ; 1 BNB = 800000 LIXI");
+    expect(out).to.include("80,000,000 LIXI");
     expect(out).to.include("Approve tx");
 
     // Deployment record is plain JSON with stringified bigints.
@@ -311,10 +311,10 @@ describe("add-liquidity script (end to end against mock router on hardhat networ
     const { deployer, treasury, lpVault, tokenAddress, router } = await loadFixture(deployFixture);
     const routerAddress = await router.getAddress();
 
-    // lpVault holds no NEWC.
-    await expect(run({ signer: lpVault, tokenAddress, routerAddress })).to.be.rejectedWith(/holds 0 NEWC/);
+    // lpVault holds no LIXI.
+    await expect(run({ signer: lpVault, tokenAddress, routerAddress })).to.be.rejectedWith(/holds 0 LIXI/);
 
-    // treasury holds NEWC but not 1,000,000 BNB.
+    // treasury holds LIXI but not 1,000,000 BNB.
     await expect(
       run({ signer: treasury, tokenAddress, routerAddress, bnbAmount: ethers.parseEther("1000000") })
     ).to.be.rejectedWith(/BNB plus gas/);

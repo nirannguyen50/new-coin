@@ -1,6 +1,7 @@
-# Website NewCoin — trang giới thiệu tĩnh
+# Website LiXi (LIXI) — trang giới thiệu tĩnh
 
-Trang landing một file HTML, không phụ thuộc thư viện, không bước build, không tải tài nguyên từ bên thứ ba
+Trang landing của LiXi — token lì xì BEP-20 trên BNB Chain cho cộng đồng người Việt (Lì Xì Bot trên Telegram:
+thưởng, tip, bao lì xì chia ngẫu nhiên). Một file HTML, không phụ thuộc thư viện, không bước build, không tải tài nguyên từ bên thứ ba
 (không CDN, không font ngoài, không analytics). Hoạt động từ 400px đến màn hình lớn; tự chuyển sáng/tối theo
 `prefers-color-scheme`.
 
@@ -31,10 +32,13 @@ Mọi chỗ cần điền đều có dạng `[[ĐIỀN: ...]]` và được tô 
    grep -n "ĐIỀN" index.html script.js
    ```
 2. **Link kênh chính thức** — sửa object `CONFIG` ở đầu `script.js`. Link để trống sẽ trỏ về `#` và
-   được đánh dấu `*` trên trang; điền URL thật thì dấu `*` tự mất.
+   được đánh dấu `*` trên trang; điền URL thật thì dấu `*` tự mất. Khóa `pancakeswap` (link pool LIXI)
+   chỉ điền **sau khi** đã phát hành và tự kiểm tra địa chỉ hợp đồng.
 3. **Tokenomics** — sửa mảng `ALLOCATIONS` trong `script.js`. Biểu đồ và bảng đều sinh từ mảng này;
    tổng `pct` phải bằng 100 (trang sẽ hiện cảnh báo nếu sai). `TOTAL_SUPPLY` cố định 1.000.000.000.
-4. **Nội dung sản phẩm** (hero, vấn đề/giải pháp, 3 thẻ tiện ích, roadmap Q3) — sửa trực tiếp trong `index.html`.
+4. **Nội dung sản phẩm** (hero, vấn đề/giải pháp, 3 thẻ tiện ích, lộ trình, FAQ) đã được viết cho LiXi và
+   Lì Xì Bot; nếu sản phẩm thay đổi, sửa trực tiếp trong `index.html`. Không thêm số liệu người dùng,
+   đối tác hay cộng đồng thí điểm cụ thể khi chưa có nguồn công khai.
 5. **Bảo mật** — chỉ điền địa chỉ hợp đồng, multisig, LP lock **sau khi** đã deploy và verify thật.
    Đổi nhãn kiểm toán từ "Đang chờ" sang tên hãng + link báo cáo khi có báo cáo công khai.
 6. **Đội ngũ** — thay 4 thẻ placeholder bằng thông tin thật; có thể thêm/bớt thẻ.

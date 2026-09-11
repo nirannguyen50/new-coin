@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 import {VestingWallet} from "@openzeppelin/contracts/finance/VestingWallet.sol";
 
 /**
- * @title NewCoinVestingWallet
+ * @title LiXiVestingWallet
  * @notice Deployable instance of OpenZeppelin's audited `VestingWallet`.
  *
  * @dev This contract intentionally contains NO custom vesting logic. It only
@@ -26,7 +26,7 @@ import {VestingWallet} from "@openzeppelin/contracts/finance/VestingWallet.sol";
  * who is also the `owner()` of the wallet (OpenZeppelin design). Anyone may call
  * `release(token)`; funds always go to the beneficiary.
  */
-contract NewCoinVestingWallet is VestingWallet {
+contract LiXiVestingWallet is VestingWallet {
     /**
      * @param beneficiary     Recipient of the vested tokens (and owner of this wallet).
      * @param startTimestamp  Unix time at which linear vesting starts (TGE + cliff).

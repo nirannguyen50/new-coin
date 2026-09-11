@@ -1,4 +1,4 @@
-// Deploys one OpenZeppelin VestingWallet (via NewCoinVestingWallet) per
+// Deploys one OpenZeppelin VestingWallet (via LiXiVestingWallet) per
 // allocation bucket defined in a JSON config, then prints a table of wallets
 // and amounts. Cliff semantics: wallet.start = TGE + cliffMonths, duration =
 // vestingMonths (same model as tokenomics/unlock_schedule.py). Usage:
@@ -45,10 +45,10 @@ async function main() {
   const tokenAddress = process.env.TOKEN_ADDRESS || deployment?.token?.address;
   if (!tokenAddress || !ethers.isAddress(tokenAddress)) {
     throw new Error(
-      `No NewCoin deployment found for network "${network.name}". Run the token deploy first or set TOKEN_ADDRESS.`
+      `No LiXi deployment found for network "${network.name}". Run the token deploy first or set TOKEN_ADDRESS.`
     );
   }
-  const token = await ethers.getContractAt("NewCoin", tokenAddress);
+  const token = await ethers.getContractAt("LiXi", tokenAddress);
   const totalSupply = await token.totalSupply();
 
   // --- Load and validate config --------------------------------------------
@@ -67,7 +67,7 @@ async function main() {
   console.log("Network        :", network.name);
   console.log("Signer         :", signer.address);
   console.log("Token          :", tokenAddress);
-  console.log("Total supply   :", fmt(totalSupply), "NEWC");
+  console.log("Total supply   :", fmt(totalSupply), "LIXI");
   console.log("Config         :", configPath);
   console.log("TGE timestamp  :", tge.toString(), `(${new Date(Number(tge) * 1000).toISOString()})`);
   console.log("Fund wallets   :", fund ? "yes (transfer from signer)" : "no (print transfers only)");
@@ -78,14 +78,14 @@ async function main() {
     const have = await token.balanceOf(signer.address);
     if (have < needed) {
       throw new Error(
-        `FUND_VESTING=true but signer holds ${fmt(have)} NEWC, needs ${fmt(needed)} NEWC. ` +
+        `FUND_VESTING=true but signer holds ${fmt(have)} LIXI, needs ${fmt(needed)} LIXI. ` +
           "Either run from the treasury or leave FUND_VESTING empty and execute transfers from the multisig."
       );
     }
   }
 
   // --- Deploy wallets --------------------------------------------------------
-  const Wallet = await ethers.getContractFactory("NewCoinVestingWallet");
+  const Wallet = await ethers.getContractFactory("LiXiVestingWallet");
   const confirmations = network.name === "hardhat" || network.name === "localhost" ? 1 : 2;
   const results = [];
 
@@ -107,13 +107,13 @@ async function main() {
   if (fund) {
     for (const r of results) {
       if (r.tgeAmount > 0n) {
-        process.stdout.write(`Transfer ${fmt(r.tgeAmount)} NEWC (TGE unlock) -> ${r.beneficiary}... `);
+        process.stdout.write(`Transfer ${fmt(r.tgeAmount)} LIXI (TGE unlock) -> ${r.beneficiary}... `);
         const tx = await token.transfer(r.beneficiary, r.tgeAmount);
         await tx.wait(confirmations);
         console.log(tx.hash);
       }
       if (r.vestedAmount > 0n) {
-        process.stdout.write(`Transfer ${fmt(r.vestedAmount)} NEWC (vesting) -> ${r.walletAddress}... `);
+        process.stdout.write(`Transfer ${fmt(r.vestedAmount)} LIXI (vesting) -> ${r.walletAddress}... `);
         const tx = await token.transfer(r.walletAddress, r.vestedAmount);
         await tx.wait(confirmations);
         console.log(tx.hash);
@@ -139,7 +139,7 @@ async function main() {
     [
       { key: "name", header: "Bucket" },
       { key: "percent", header: "% supply", right: true },
-      { key: "total", header: "Total NEWC", right: true },
+      { key: "total", header: "Total LIXI", right: true },
       { key: "tge", header: "TGE unlock", right: true },
       { key: "vested", header: "In vesting", right: true },
       { key: "cliff", header: "Cliff", right: true },
@@ -163,7 +163,7 @@ async function main() {
     deployment.vestingWallets = results
       .filter((r) => r.needsWallet)
       .map((r) => ({
-        contract: "NewCoinVestingWallet",
+        contract: "LiXiVestingWallet",
         name: r.name,
         address: r.walletAddress,
         beneficiary: r.beneficiary,

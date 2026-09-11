@@ -1,8 +1,8 @@
-// Bootstraps the NEWC/BNB pool on PancakeSwap V2 (approve + addLiquidityETH).
+// Bootstraps the LIXI/BNB pool on PancakeSwap V2 (approve + addLiquidityETH).
 // Usage:
 //   npm run liquidity:testnet   (chainId 97)
 //   npm run liquidity:mainnet   (chainId 56, requires CONFIRM_MAINNET=yes)
-// Env (see .env.example): LIQUIDITY_TOKEN_AMOUNT (whole NEWC), LIQUIDITY_BNB_AMOUNT
+// Env (see .env.example): LIQUIDITY_TOKEN_AMOUNT (whole LIXI), LIQUIDITY_BNB_AMOUNT
 // (whole BNB), LP_RECIPIENT (default: signer), SLIPPAGE_BPS (default 100),
 // DEADLINE_MINUTES (default 20), ROUTER_ADDRESS (override), TOKEN_ADDRESS
 // (override; default read from deployments/<network>.json), CONFIRM_MAINNET.
@@ -34,10 +34,10 @@ const DEFAULT_DEADLINE_MINUTES = 20;
 function readConfig(env, { ethers, deployment, chainId }) {
   const tokenAddress = env.TOKEN_ADDRESS || deployment?.token?.address;
   if (!tokenAddress || !ethers.isAddress(tokenAddress)) {
-    throw new Error("No NewCoin deployment found for this network. Run the token deploy first or set TOKEN_ADDRESS.");
+    throw new Error("No LiXi deployment found for this network. Run the token deploy first or set TOKEN_ADDRESS.");
   }
 
-  if (!env.LIQUIDITY_TOKEN_AMOUNT) throw new Error("LIQUIDITY_TOKEN_AMOUNT is missing (whole NEWC, e.g. 80000000)");
+  if (!env.LIQUIDITY_TOKEN_AMOUNT) throw new Error("LIQUIDITY_TOKEN_AMOUNT is missing (whole LIXI, e.g. 80000000)");
   if (!env.LIQUIDITY_BNB_AMOUNT) throw new Error("LIQUIDITY_BNB_AMOUNT is missing (whole BNB, e.g. 100)");
   const tokenAmount = ethers.parseUnits(String(env.LIQUIDITY_TOKEN_AMOUNT).trim(), 18);
   const bnbAmount = ethers.parseEther(String(env.LIQUIDITY_BNB_AMOUNT).trim());
@@ -95,7 +95,7 @@ function fmt(ethers, wei) {
  * @param {import("ethers").Signer} p.signer   pays gas, must hold the tokens and BNB
  * @param {string} p.tokenAddress
  * @param {string} p.routerAddress             PancakeSwap V2 router (or mock)
- * @param {bigint} p.tokenAmount               NEWC amount in wei
+ * @param {bigint} p.tokenAmount               LIXI amount in wei
  * @param {bigint} p.bnbAmount                 BNB amount in wei
  * @param {string} [p.lpRecipient]             receives the LP tokens (default: signer)
  * @param {number} [p.slippageBps]             default 100 (1%)
@@ -311,11 +311,11 @@ function buildLiquidityRecord(result) {
 function printMainnetWarning(cfg, ethers) {
   const bar = "!".repeat(78);
   console.warn(`\n${bar}`);
-  console.warn("!!  BNB CHAIN MAINNET - THIS SPENDS REAL BNB AND REAL NEWC AND CANNOT BE UNDONE  !!");
+  console.warn("!!  BNB CHAIN MAINNET - THIS SPENDS REAL BNB AND REAL LIXI AND CANNOT BE UNDONE  !!");
   console.warn(bar);
   console.warn(`   Token         : ${cfg.tokenAddress}`);
   console.warn(`   Router        : ${cfg.routerAddress}`);
-  console.warn(`   NEWC in       : ${fmt(ethers, cfg.tokenAmount)}`);
+  console.warn(`   LIXI in       : ${fmt(ethers, cfg.tokenAmount)}`);
   console.warn(`   BNB in        : ${fmt(ethers, cfg.bnbAmount)}`);
   console.warn(`   LP recipient  : ${cfg.lpRecipient || "(signer)"}`);
   console.warn("   The first addLiquidityETH sets the launch price for everyone. Double-check both amounts,");

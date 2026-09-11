@@ -1,4 +1,4 @@
-// Deploys the NewCoin token. Usage:
+// Deploys the LiXi token. Usage:
 //   npm run deploy:testnet   (chainId 97)
 //   npm run deploy:mainnet   (chainId 56)
 // Requires PRIVATE_KEY and TREASURY_ADDRESS in .env.
@@ -44,20 +44,20 @@ async function main() {
     return;
   }
 
-  console.log("\nDeploying NewCoin...");
-  const NewCoin = await ethers.getContractFactory("NewCoin");
-  const token = await NewCoin.deploy(treasury);
+  console.log("\nDeploying LiXi...");
+  const LiXi = await ethers.getContractFactory("LiXi");
+  const token = await LiXi.deploy(treasury);
   const receipt = await token.deploymentTransaction().wait(chainId === 31337n ? 1 : 3);
   const address = await token.getAddress();
 
   const totalSupply = await token.totalSupply();
   const treasuryBalance = await token.balanceOf(treasury);
 
-  console.log("NewCoin address :", address);
+  console.log("LiXi address :", address);
   console.log("Tx hash         :", receipt.hash);
   console.log("Block           :", receipt.blockNumber);
-  console.log("Total supply    :", ethers.formatUnits(totalSupply, 18), "NEWC");
-  console.log("Treasury holds  :", ethers.formatUnits(treasuryBalance, 18), "NEWC");
+  console.log("Total supply    :", ethers.formatUnits(totalSupply, 18), "LIXI");
+  console.log("Treasury holds  :", ethers.formatUnits(treasuryBalance, 18), "LIXI");
 
   const file = saveDeployment(network.name, {
     network: network.name,
@@ -65,7 +65,7 @@ async function main() {
     deployer: deployer.address,
     treasury,
     token: {
-      contract: "NewCoin",
+      contract: "LiXi",
       address,
       constructorArgs: [treasury],
       txHash: receipt.hash,

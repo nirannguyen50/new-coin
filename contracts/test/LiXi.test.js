@@ -5,11 +5,11 @@ const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helper
 const DECIMALS = 18n;
 const TOTAL_SUPPLY = 1_000_000_000n * 10n ** DECIMALS;
 
-describe("NewCoin", function () {
+describe("LiXi", function () {
   async function deployFixture() {
     const [deployer, treasury, alice, bob] = await ethers.getSigners();
-    const NewCoin = await ethers.getContractFactory("NewCoin");
-    const token = await NewCoin.deploy(treasury.address);
+    const LiXi = await ethers.getContractFactory("LiXi");
+    const token = await LiXi.deploy(treasury.address);
     await token.waitForDeployment();
     return { token, deployer, treasury, alice, bob };
   }
@@ -17,12 +17,12 @@ describe("NewCoin", function () {
   describe("deployment", function () {
     it("has the expected name, symbol and 18 decimals", async function () {
       const { token } = await loadFixture(deployFixture);
-      expect(await token.name()).to.equal("NewCoin");
-      expect(await token.symbol()).to.equal("NEWC");
+      expect(await token.name()).to.equal("LiXi");
+      expect(await token.symbol()).to.equal("LIXI");
       expect(await token.decimals()).to.equal(DECIMALS);
     });
 
-    it("mints the full fixed supply of 1,000,000,000 NEWC to the treasury", async function () {
+    it("mints the full fixed supply of 1,000,000,000 LIXI to the treasury", async function () {
       const { token, treasury, deployer } = await loadFixture(deployFixture);
       expect(await token.totalSupply()).to.equal(TOTAL_SUPPLY);
       expect(await token.balanceOf(treasury.address)).to.equal(TOTAL_SUPPLY);
@@ -31,9 +31,9 @@ describe("NewCoin", function () {
     });
 
     it("rejects the zero address as treasury", async function () {
-      const NewCoin = await ethers.getContractFactory("NewCoin");
-      await expect(NewCoin.deploy(ethers.ZeroAddress)).to.be.revertedWithCustomError(
-        NewCoin,
+      const LiXi = await ethers.getContractFactory("LiXi");
+      await expect(LiXi.deploy(ethers.ZeroAddress)).to.be.revertedWithCustomError(
+        LiXi,
         "TreasuryIsZeroAddress"
       );
     });
@@ -101,7 +101,7 @@ describe("NewCoin", function () {
     async function signPermit(token, owner, spender, value, deadline, nonce) {
       const { chainId } = await ethers.provider.getNetwork();
       const domain = {
-        name: "NewCoin",
+        name: "LiXi",
         version: "1",
         chainId,
         verifyingContract: await token.getAddress(),

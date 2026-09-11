@@ -6,7 +6,7 @@ const { buildAllocationPlan, SECONDS_PER_MONTH } = require("../scripts/lib/alloc
 const MONTH = Number(SECONDS_PER_MONTH);
 const TOTAL_SUPPLY = 1_000_000_000n * 10n ** 18n;
 
-describe("NewCoinVestingWallet (OpenZeppelin VestingWallet, cliff = delayed start)", function () {
+describe("LiXiVestingWallet (OpenZeppelin VestingWallet, cliff = delayed start)", function () {
   // Team bucket from tokenomics/config.example.json: 12-month full lock, then 36 months linear.
   const CLIFF_MONTHS = 12;
   const VESTING_MONTHS = 36;
@@ -14,7 +14,7 @@ describe("NewCoinVestingWallet (OpenZeppelin VestingWallet, cliff = delayed star
 
   async function deployFixture() {
     const [deployer, treasury, beneficiary, other] = await ethers.getSigners();
-    const token = await (await ethers.getContractFactory("NewCoin")).deploy(treasury.address);
+    const token = await (await ethers.getContractFactory("LiXi")).deploy(treasury.address);
 
     const tge = BigInt((await time.latest()) + 3600); // TGE one hour from now
     const cliff = BigInt(CLIFF_MONTHS * MONTH);
@@ -22,7 +22,7 @@ describe("NewCoinVestingWallet (OpenZeppelin VestingWallet, cliff = delayed star
     const start = tge + cliff; // linear vesting begins when the cliff ends
 
     const wallet = await (
-      await ethers.getContractFactory("NewCoinVestingWallet")
+      await ethers.getContractFactory("LiXiVestingWallet")
     ).deploy(beneficiary.address, start, duration);
 
     await token.connect(treasury).transfer(await wallet.getAddress(), ALLOCATION);
@@ -133,12 +133,12 @@ describe("NewCoinVestingWallet (OpenZeppelin VestingWallet, cliff = delayed star
 
   it("with zero cliff vests linearly from TGE", async function () {
     const [, treasury, beneficiary] = await ethers.getSigners();
-    const token = await (await ethers.getContractFactory("NewCoin")).deploy(treasury.address);
+    const token = await (await ethers.getContractFactory("LiXi")).deploy(treasury.address);
     const tokenAddr = await token.getAddress();
     const tge = BigInt((await time.latest()) + 100);
     const duration = BigInt(10 * MONTH);
     const wallet = await (
-      await ethers.getContractFactory("NewCoinVestingWallet")
+      await ethers.getContractFactory("LiXiVestingWallet")
     ).deploy(beneficiary.address, tge, duration);
     const amount = ethers.parseUnits("1000", 18);
     await token.connect(treasury).transfer(await wallet.getAddress(), amount);
@@ -151,12 +151,12 @@ describe("NewCoinVestingWallet (OpenZeppelin VestingWallet, cliff = delayed star
 
   it("with zero duration unlocks everything at once when the cliff ends", async function () {
     const [, treasury, beneficiary] = await ethers.getSigners();
-    const token = await (await ethers.getContractFactory("NewCoin")).deploy(treasury.address);
+    const token = await (await ethers.getContractFactory("LiXi")).deploy(treasury.address);
     const tokenAddr = await token.getAddress();
     const tge = BigInt((await time.latest()) + 100);
     const cliff = BigInt(3 * MONTH);
     const wallet = await (
-      await ethers.getContractFactory("NewCoinVestingWallet")
+      await ethers.getContractFactory("LiXiVestingWallet")
     ).deploy(beneficiary.address, tge + cliff, 0n);
     const amount = ethers.parseUnits("1000", 18);
     await token.connect(treasury).transfer(await wallet.getAddress(), amount);
@@ -280,7 +280,7 @@ describe("allocation plan (scripts/lib/allocations.js)", function () {
 describe("deploy-vesting script (end to end on hardhat network)", function () {
   it("deploys wallets from the example config, funds them and prints a table", async function () {
     const [deployer, treasury] = await ethers.getSigners();
-    const token = await (await ethers.getContractFactory("NewCoin")).deploy(treasury.address);
+    const token = await (await ethers.getContractFactory("LiXi")).deploy(treasury.address);
     const tokenAddr = await token.getAddress();
     // Give the deployer the supply so FUND_VESTING can transfer from it.
     await token.connect(treasury).transfer(deployer.address, TOTAL_SUPPLY);
@@ -314,7 +314,7 @@ describe("deploy-vesting script (end to end on hardhat network)", function () {
       if (r.needsWallet) {
         expect(ethers.isAddress(r.walletAddress)).to.equal(true);
         expect(await token.balanceOf(r.walletAddress)).to.equal(r.vestedAmount);
-        const wallet = await ethers.getContractAt("NewCoinVestingWallet", r.walletAddress);
+        const wallet = await ethers.getContractAt("LiXiVestingWallet", r.walletAddress);
         expect(await wallet.owner()).to.equal(r.beneficiary);
         expect(await wallet.start()).to.equal(tge + BigInt(r.cliffMonths) * SECONDS_PER_MONTH);
         expect(await wallet.duration()).to.equal(BigInt(r.vestingMonths) * SECONDS_PER_MONTH);

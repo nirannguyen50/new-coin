@@ -1,4 +1,4 @@
-/* NewCoin landing page — dependency-free.
+/* LiXi (LIXI) landing page — dependency-free.
    1. CONFIG: fill in real URLs; empty strings stay as placeholder links.
    2. ALLOCATIONS: the single source of truth for the tokenomics chart and table.
    3. Small UI helpers: mobile nav toggle, footer year. */
@@ -17,6 +17,7 @@
     telegram: "",      // [[ĐIỀN: URL Telegram]]
     discord: "",       // [[ĐIỀN: URL Discord]]
     square: "",        // [[ĐIỀN: URL hồ sơ Binance Square]]
+    pancakeswap: "",   // [[ĐIỀN: URL pool LIXI trên PancakeSwap — chỉ điền sau khi phát hành]]
     github: "",        // [[ĐIỀN: URL mã nguồn]]
     terms: "",         // [[ĐIỀN: URL điều khoản sử dụng]]
     privacy: "",       // [[ĐIỀN: URL chính sách quyền riêng tư]]
@@ -34,12 +35,12 @@
   var TOTAL_SUPPLY = 1000000000;
 
   var ALLOCATIONS = [
-    { name: "Cộng đồng và hệ sinh thái", pct: 32, tge: "1,6% tổng cung", cliff: "—",        vesting: "48 tháng tuyến tính" },
+    { name: "Quỹ thưởng cộng đồng và hệ sinh thái", pct: 32, tge: "1,6% tổng cung", cliff: "—",        vesting: "48 tháng tuyến tính" },
     { name: "Đội ngũ và cố vấn",         pct: 18, tge: "0%",             cliff: "12 tháng", vesting: "36 tháng tuyến tính sau cliff" },
     { name: "Nhà đầu tư (seed/private)", pct: 15, tge: "0%",             cliff: "9 tháng",  vesting: "24 tháng tuyến tính sau cliff" },
     { name: "Treasury / quỹ dự trữ",     pct: 13, tge: "0,26% tổng cung", cliff: "—",       vesting: "36 tháng tuyến tính, multisig 3/5" },
     { name: "Thanh khoản (DEX/CEX/MM)",  pct: 8,  tge: "8% tổng cung",   cliff: "—",        vesting: "LP khóa tối thiểu 12 tháng" },
-    { name: "Dự trữ chương trình sàn",   pct: 5,  tge: "0%",             cliff: "3 tháng",  vesting: "24 tháng, giải ngân theo chương trình nếu được mời" },
+    { name: "Dự trữ chương trình sàn",   pct: 5,  tge: "0%",             cliff: "3 tháng",  vesting: "24 tháng; chỉ giải ngân cho chiến dịch airdrop/khuyến khích của sàn nếu được mời" },
     { name: "Marketing / KOL",           pct: 5,  tge: "1% tổng cung",   cliff: "—",        vesting: "24 tháng; hợp đồng KOL có vesting" },
     { name: "Public sale",               pct: 4,  tge: "4% tổng cung",   cliff: "—",        vesting: "Mở khóa toàn bộ tại TGE" }
   ];
@@ -77,7 +78,7 @@
     ALLOCATIONS.forEach(function (a) {
       var tokens = Math.round(TOTAL_SUPPLY * a.pct / 100);
       var tokensText = vi.format(tokens);
-      var tip = a.name + ": " + a.pct + "% · " + tokensText + " NEWC";
+      var tip = a.name + ": " + a.pct + "% · " + tokensText + " LIXI";
 
       // Chart row: label | bar | value. Hover/focus reveals the tooltip;
       // the value is also visible at the bar end and in the table below.

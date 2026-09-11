@@ -29,14 +29,14 @@ async function main() {
   const d = loadDeployment(name);
   if (!d?.token?.address) throw new Error(`No deployment record found for ${name} (deployments/${name}.json)`);
 
-  await verifyOne("NewCoin", d.token.address, d.token.constructorArgs, "contracts/NewCoin.sol:NewCoin");
+  await verifyOne("LiXi", d.token.address, d.token.constructorArgs, "contracts/LiXi.sol:LiXi");
 
   for (const w of d.vestingWallets || []) {
     await verifyOne(
       `vesting wallet "${w.name}"`,
       w.address,
       w.constructorArgs,
-      "contracts/NewCoinVestingWallet.sol:NewCoinVestingWallet"
+      "contracts/LiXiVestingWallet.sol:LiXiVestingWallet"
     );
   }
 }

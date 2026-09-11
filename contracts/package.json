@@ -1,14 +1,16 @@
 {
-  "name": "newcoin-contracts",
+  "name": "lixi-contracts",
   "version": "1.0.0",
   "private": true,
-  "description": "NewCoin (NEWC) BEP-20 utility token and vesting deployment for BNB Chain",
+  "description": "LiXi (LIXI) BEP-20 reward/tip token for Vietnamese online communities on BNB Chain - token, vesting and liquidity deployment",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
     "compile": "hardhat compile",
+    "wallet:new": "node scripts/new-wallet.js",
+    "check": "node scripts/check-setup.js",
     "test": "hardhat test",
     "deploy:testnet": "hardhat run scripts/deploy.js --network bscTestnet",
     "deploy:mainnet": "hardhat run scripts/deploy.js --network bsc",

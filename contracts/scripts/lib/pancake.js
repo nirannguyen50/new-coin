@@ -22,7 +22,7 @@ const PAIR_ABI = [
   "function token0() view returns (address)",
 ];
 
-// Subset of ERC-20 the script needs on the NEWC side.
+// Subset of ERC-20 the script needs on the LIXI side.
 const ERC20_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function allowance(address owner, address spender) view returns (uint256)",
@@ -87,7 +87,7 @@ function formatFixed18(value) {
 }
 
 /**
- * Implied launch price when `tokenAmount` NEWC (wei) is paired with
+ * Implied launch price when `tokenAmount` LIXI (wei) is paired with
  * `bnbAmount` BNB (wei). Both directions are returned as 18-decimal
  * fixed-point bigints plus human-readable strings. Both assets have 18
  * decimals so the ratio of the raw wei amounts is the ratio of whole units.

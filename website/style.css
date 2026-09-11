@@ -1,4 +1,4 @@
-/* NewCoin landing page — no dependencies, no external resources.
+/* LiXi (LIXI) landing page — no dependencies, no external resources.
    Light palette on :root; dark palette via prefers-color-scheme. */
 
 :root {
@@ -261,10 +261,11 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
 .bar-tip {
   position: absolute; left: 0; top: 100%; margin-top: 6px; z-index: 5;
   background: var(--text); color: var(--bg); font-size: 0.8rem; line-height: 1.35;
-  padding: 6px 10px; border-radius: 6px; white-space: nowrap; pointer-events: none;
-  opacity: 0; transform: translateY(-4px); transition: opacity 120ms, transform 120ms;
+  padding: 6px 10px; border-radius: 6px; pointer-events: none;
+  white-space: normal; max-width: min(320px, calc(100vw - 40px));
+  visibility: hidden; opacity: 0; transform: translateY(-4px); transition: opacity 120ms, transform 120ms;
 }
-.bar-row:hover .bar-tip, .bar-row:focus-visible .bar-tip { opacity: 1; transform: none; }
+.bar-row:hover .bar-tip, .bar-row:focus-visible .bar-tip { visibility: visible; opacity: 1; transform: none; }
 @media (max-width: 480px) {
   .bar-row { grid-template-columns: minmax(0, 1fr) 52px; grid-template-areas: "label value" "track track"; row-gap: 4px; }
   .bar-label { grid-area: label; }
