@@ -16,6 +16,22 @@
  * Giới hạn đã biết: mỗi lệnh đọc/viết cả file JSON của nhóm. Với vài chục thành viên và
  * vài nghìn giao dịch (đủ cho 3 nhóm pilot) thì rất nhanh; KHÔNG phù hợp nếu số nhóm hoặc
  * số giao dịch tăng lên nhiều (nên chuyển sang SQLite/Postgres/OnChainLedger khi đó).
+ *
+ * ===========================================================================
+ * TODO (bước kế tiếp, BẮT BUỘC trước khi mời người thật dùng trên Render):
+ * thay kho lưu trữ file JSON này bằng một kho DỮ LIỆU BỀN VỮNG ngoài tiến trình —
+ * Postgres miễn phí (ví dụ Neon/Supabase/Render Postgres free) hoặc Redis miễn phí
+ * (ví dụ Upstash) — implement ĐÚNG interface `Ledger` mô tả ở đầu `src/ledger.js`
+ * (getBalance, credit, debit, transfer, recordTransaction, listRecentTransactions),
+ * đúng tinh thần `docs/11-quyet-dinh-bot-off-chain-truoc.md`: đổi một module lưu trữ,
+ * KHÔNG sửa lệnh bot và không sửa logic chống lạm dụng.
+ *
+ * Lý do gấp: gói miễn phí của Render KHÔNG có đĩa bền vững (no persistent disk) —
+ * toàn bộ `bot/data/` bị xoá sạch sau mỗi lần restart/redeploy/spin down. Khi chưa
+ * làm xong việc này, dữ liệu điểm chạy trên Render chỉ mang tính tạm thời.
+ * Chưa implement trong lần thay đổi này (cố ý), xem `bot/README.md` mục
+ * "Chạy 24/7 miễn phí trên Render".
+ * ===========================================================================
  */
 
 const fs = require('fs');
@@ -117,8 +133,24 @@ function withGroupState(chatId, mutator) {
   return result;
 }
 
+/**
+ * "Ghi nốt" dữ liệu còn đang chờ trước khi tắt tiến trình.
+ *
+ * Hiện tại MỌI thao tác ghi đều đồng bộ (fs.writeFileSync + fs.renameSync) và xong ngay
+ * trong lệnh gọi `withGroupState`, nên không có gì nằm chờ trong bộ nhớ — hàm này không
+ * phải làm gì. Vẫn giữ hàm để `registerShutdownHandlers` gọi tường minh: khi sau này
+ * chuyển sang ghi bất đồng bộ hoặc sang database ngoài (xem TODO ở đầu file), chỉ cần
+ * thêm phần "flush" ở đây mà không phải sửa luồng tắt máy.
+ *
+ * @returns {{pending: number}} số thao tác ghi còn chờ (luôn là 0 với bản file JSON).
+ */
+function flushPendingWrites() {
+  return { pending: 0 };
+}
+
 module.exports = {
   DATA_DIR,
+  flushPendingWrites,
   defaultConfig,
   defaultGroupState,
   ensureDataDir,

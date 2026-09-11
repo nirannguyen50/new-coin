@@ -15,6 +15,7 @@ chưa có vốn/ví để nạp thanh khoản, nên bot chạy bằng điểm n�
 - [Tạo bot qua @BotFather](#tạo-bot-qua-botfather)
 - [Thêm bot vào nhóm và cấp quyền admin](#thêm-bot-vào-nhóm-và-cấp-quyền-admin)
 - [Chạy bot ở máy của bạn](#chạy-bot-ở-máy-của-bạn)
+- [Chạy 24/7 miễn phí trên Render](#chạy-247-miễn-phí-trên-render)
 - [Chạy 24/7 với chi phí thấp hoặc miễn phí](#chạy-247-với-chi-phí-thấp-hoặc-miễn-phí)
 - [Backup dữ liệu](#backup-dữ-liệu)
 - [Danh sách lệnh đầy đủ](#danh-sách-lệnh-đầy-đủ)
@@ -34,6 +35,9 @@ Xem chi tiết ở `docs/11-quyet-dinh-bot-off-chain-truoc.md`. Vài điểm qua
   là hành động thủ công/off-chain, không phải giao dịch blockchain.
 - **Dữ liệu chỉ nằm trên máy chạy bot** (file JSON trong `bot/data/`). Nếu máy mất dữ liệu thì
   mất luôn lịch sử điểm — cần chạy `npm run backup` định kỳ (xem [Backup dữ liệu](#backup-dữ-liệu)).
+  Riêng khi chạy trên **Render gói miễn phí**, máy chủ **không có ổ đĩa bền vững**: dữ liệu bị
+  xoá sạch sau mỗi lần restart/deploy lại — xem
+  [Chạy 24/7 miễn phí trên Render](#chạy-247-miễn-phí-trên-render).
 - **Không dùng dependency cần build native** (như better-sqlite3) — cố tình để bot chạy được
   trên hosting rẻ/free tier không có toolchain build C++.
 - **Job thưởng hoạt động dùng `setInterval` trong tiến trình bot**, không phải cron thật. Đủ
@@ -99,11 +103,123 @@ Biến môi trường tuỳ chọn khác trong `.env.example`:
   là admin ở mọi nhóm — hữu ích khi test hoặc khi admin nhóm là "admin ẩn danh".
 - `DAILY_REWARD_CHECK_INTERVAL_MINUTES`: chu kỳ (phút) bot tự kiểm tra "hôm nay đã phát thưởng
   hoạt động chưa" (mặc định 60 phút, an toàn để chạy lại nhiều lần vì có kiểm tra idempotent).
+- `WEBHOOK_DOMAIN`: tên miền công khai để chạy ở **chế độ webhook**. **Để trống khi chạy ở máy
+  cá nhân** — khi đó bot chạy ở **chế độ long polling** như trước giờ (bot tự hỏi Telegram, không
+  cần mở cổng, không cần tên miền).
+- `PORT`: cổng HTTP khi chạy ở chế độ webhook (mặc định 3000). Không cần đặt khi chạy ở máy cá nhân.
+
+Lúc khởi động, bot luôn in rõ đang chạy ở chế độ nào ("CHẾ ĐỘ LONG POLLING" hoặc "CHẾ ĐỘ
+WEBHOOK"), không in token hay bất kỳ giá trị bí mật nào.
+
+## Chạy 24/7 miễn phí trên Render
+
+Đây là cách **miễn phí, không cần thẻ ngân hàng, không cần biết kỹ thuật** để bot chạy suốt
+ngày đêm. Hãy đọc hết mục [Hạn chế của gói miễn phí](#hạn-chế-của-gói-miễn-phí-đọc-trước-khi-mời-người-thật-vào)
+bên dưới **trước khi** mời thành viên thật vào dùng.
+
+### Vì sao trên Render bot chạy ở "chế độ webhook"
+
+Gói miễn phí của Render chỉ có **web service** (dịch vụ web nhận request HTTP), không có
+"background worker" (tiến trình chạy nền). Dịch vụ miễn phí còn tự **ngủ** sau khoảng **15 phút**
+không ai gọi vào. Cách chạy cũ (long polling — bot liên tục hỏi Telegram "có tin mới không?")
+không sống sót qua trạng thái ngủ đó.
+
+Vì vậy khi phát hiện đang chạy trên Render, bot tự chuyển sang **webhook**: chính Telegram gửi
+request HTTP vào bot mỗi khi có tin nhắn. Request đó vừa **đánh thức** dịch vụ đang ngủ, vừa
+mang tin nhắn tới — nên bot vẫn hoạt động. Bạn **không phải cấu hình gì thêm**: địa chỉ webhook
+và "mã bí mật" (secret token) được tự suy ra từ token bot, và bot tự đăng ký với Telegram lúc
+khởi động (kể cả khi địa chỉ đổi sau mỗi lần deploy lại).
+
+### Các bước bấm (làm một lần, khoảng 10 phút)
+
+1. Chuẩn bị sẵn **token bot** lấy từ @BotFather (xem mục
+   [Tạo bot qua @BotFather](#tạo-bot-qua-botfather)). Token có dạng
+   `123456789:ABCdef...` — giữ kín, đừng gửi cho ai.
+2. Mở trình duyệt, vào **https://render.com** → bấm **Get Started** (hoặc **Sign In**) →
+   chọn **GitHub** → đăng nhập tài khoản GitHub của bạn → bấm **Authorize Render** để cho phép
+   Render đọc repo.
+3. Nếu Render hỏi chọn repo được phép truy cập, chọn repo **`new-coin`** (hoặc "All repositories"
+   cho nhanh) rồi bấm **Install / Save**.
+4. Ở trang chính (Dashboard), bấm nút **New +** ở góc trên bên phải → chọn **Blueprint**.
+5. Trong danh sách repo, tìm **`new-coin`** → bấm **Connect**.
+6. Ở ô **Branch**, chọn nhánh **`claude/binance-coin-plan-rthkem`**
+   (nếu đang hiện `main` thì bấm vào ô đó và đổi lại — chọn sai nhánh sẽ không thấy cấu hình).
+   Render sẽ tự đọc file `render.yaml` ở gốc repo và hiện sẵn một dịch vụ tên
+   **`lixi-bot-telegram`**. Bạn **không cần sửa gì** trong phần này.
+7. Render hiện ô nhập cho biến **`TELEGRAM_BOT_TOKEN`** (vì token cố ý **không** được lưu trong
+   repo). **Dán token của bạn vào ô đó.** Nếu Render hỏi đặt tên cho Blueprint, đặt gì cũng được
+   (ví dụ `lixi-bot`).
+8. Bấm nút **Apply** (có nơi hiện là **Create New Resources** / **Deploy Blueprint**).
+9. Chờ lần deploy đầu tiên: thường **3–7 phút**. Bấm vào tên dịch vụ để xem tab **Logs**.
+   Khi thấy các dòng sau là **đã xong**:
+
+   ```
+   Chế độ chạy: WEBHOOK (lấy địa chỉ công khai từ RENDER_EXTERNAL_URL).
+   Đang lắng nghe HTTP ở cổng 10000 (health check: GET / và GET /healthz).
+   Đã đăng ký webhook với Telegram.
+   Lì Xì Bot đã khởi động ở CHẾ ĐỘ WEBHOOK tại https://....onrender.com, đang chờ tin nhắn...
+   ```
+
+   Ở đầu log cũng có một khung **CẢNH BÁO** về việc dữ liệu bị xoá khi khởi động lại — đó là
+   cảnh báo cố ý, không phải lỗi (đọc mục hạn chế bên dưới).
+10. Mở Telegram, vào **[t.me/lixi_test_2026_bot](https://t.me/lixi_test_2026_bot)** (hoặc bot của
+    bạn), bấm **Start** hoặc gõ `/start`. Bot trả lời là thành công.
+11. Muốn dùng trong nhóm: thêm bot vào nhóm và cấp quyền admin theo mục
+    [Thêm bot vào nhóm và cấp quyền admin](#thêm-bot-vào-nhóm-và-cấp-quyền-admin).
+
+Sau này mỗi khi code trên nhánh đó được cập nhật, Render **tự deploy lại** — bot tự đăng ký lại
+webhook với địa chỉ mới, bạn không phải làm gì.
+
+### Nếu bot không trả lời
+
+- Mở tab **Logs** của dịch vụ trên Render và đọc dòng lỗi tiếng Việt (bot luôn in lý do rõ ràng,
+  không bao giờ in token).
+- Thấy dòng `LỖI: Không đăng ký được webhook với Telegram` → gần như chắc chắn **token dán sai**.
+  Vào tab **Environment** của dịch vụ, sửa lại `TELEGRAM_BOT_TOKEN`, bấm **Save**, rồi
+  **Manual Deploy → Deploy latest commit**.
+- Mở địa chỉ công khai của dịch vụ (dạng `https://<tên>.onrender.com`) bằng trình duyệt: phải
+  thấy đúng `{"ok":true,"mode":"webhook"}`. Nếu thấy, tức là dịch vụ sống; vấn đề nằm ở token
+  hoặc ở việc bot chưa được thêm vào nhóm.
+
+### Hạn chế của gói miễn phí (đọc trước khi mời người thật vào)
+
+- **Ngủ sau ~15 phút không ai dùng.** Tin nhắn **đầu tiên** sau khi bot ngủ có thể mất tới
+  **khoảng 1 phút** mới được trả lời, hoặc **bị lỡ và phải gửi lại**. Những tin sau đó nhanh bình
+  thường. Cách giảm bớt: dùng một dịch vụ "ping" miễn phí (ví dụ UptimeRobot) gọi
+  `https://<tên>.onrender.com/healthz` mỗi 10 phút để giữ bot thức — lưu ý việc này tiêu tốn
+  số giờ chạy miễn phí bên dưới.
+- **750 giờ chạy/tháng** cho toàn bộ tài khoản miễn phí. Một dịch vụ chạy liên tục cả tháng tốn
+  khoảng 730 giờ → **đủ cho đúng một bot**, nhưng nếu bạn "ping" cho bot thức 24/7 thì gần như
+  dùng hết hạn mức, và không còn dư cho dịch vụ miễn phí nào khác.
+- **KHÔNG có ổ đĩa lưu trữ bền vững.** Đây là hạn chế **quan trọng nhất**:
+  - Toàn bộ "sổ cái" điểm LIXI nằm trong file JSON ở `bot/data/`. Trên Render free, thư mục này
+    nằm trong bộ nhớ tạm của container.
+  - **Mỗi lần deploy lại, bot restart, hoặc dịch vụ ngủ rồi thức dậy, toàn bộ dữ liệu bị xoá
+    sạch**: số dư, lịch sử giao dịch, pot, yêu cầu rút, quy tắc thưởng — tất cả quay về 0 và
+    **không khôi phục được**. `npm run backup` cũng không cứu được vì file backup nằm cùng chỗ
+    và cũng bị xoá.
+  - Vì vậy: **chỉ dùng Render free để chạy thử/demo**. Đừng nói với thành viên rằng điểm được
+    giữ lâu dài, và đừng dùng cấu hình này cho nhóm pilot thật muốn giữ số liệu ≥ 4 tuần (điều
+    kiện chuyển on-chain ở `docs/11`).
+  - Bot **luôn in một khung cảnh báo lớn khi khởi động** ở chế độ webhook mà chưa có kho dữ liệu
+    bền vững, để không ai vô tình quên điều này.
+  - **Bước kế tiếp đã định sẵn (chưa làm trong bản này):** thay lớp lưu trữ file JSON bằng một
+    **Postgres hoặc Redis miễn phí** (Neon/Supabase/Render Postgres, hoặc Upstash Redis),
+    implement đúng interface `Ledger` mô tả ở đầu `src/ledger.js` — theo đúng thiết kế của
+    `docs/11`: chỉ đổi một module lưu trữ, **không sửa lệnh bot, không sửa logic chống lạm dụng**.
+    Xem TODO đánh dấu rõ ở đầu `src/store.js`. Khi có `DATABASE_URL` hoặc `REDIS_URL`, bot sẽ
+    không in cảnh báo mất dữ liệu nữa.
+- Muốn giữ dữ liệu chắc chắn ngay từ bây giờ mà không cần code thêm: chạy bot trên **VPS hoặc
+  Raspberry Pi** (có ổ đĩa thật) theo mục
+  [Chạy 24/7 với chi phí thấp hoặc miễn phí](#chạy-247-với-chi-phí-thấp-hoặc-miễn-phí) và
+  backup định kỳ theo mục [Backup dữ liệu](#backup-dữ-liệu).
 
 ## Chạy 24/7 với chi phí thấp hoặc miễn phí
 
 Bot cần chạy liên tục (`npm start` không tự dừng) để nhận tin nhắn Telegram real-time. Vài lựa
-chọn cho giai đoạn pilot, từ rẻ tới miễn phí:
+chọn cho giai đoạn pilot, từ rẻ tới miễn phí (cách nhanh nhất và không mất tiền là
+[Render](#chạy-247-miễn-phí-trên-render) ở mục trên — nhưng **dữ liệu bị xoá mỗi lần restart**;
+các cách dưới đây giữ được dữ liệu):
 
 1. **Railway.app (free tier / hobby plan)** — dễ nhất để bắt đầu:
    - Tạo repo Git chứa thư mục `bot/` (hoặc trỏ Railway vào repo hiện tại, chọn thư mục `bot`
@@ -190,7 +306,8 @@ bot/
     store.js                # đọc/viết file JSON theo nhóm (atomic write)
     ledger.js                # sổ cái điểm + toàn bộ hàm nghiệp vụ thuần (pure)
     config.js                # đọc cấu hình từ biến môi trường
-    bot.js                   # khởi tạo Telegraf, đăng ký lệnh, job thưởng hằng ngày
+    webhook.js               # hàm thuần cho chế độ webhook (chọn chế độ, suy ra đường dẫn/secret)
+    bot.js                   # khởi tạo Telegraf, đăng ký lệnh, job thưởng, khởi động 2 chế độ
     commands/
       start.js                # /start
       wallet.js                # /sodu, /lichsu
