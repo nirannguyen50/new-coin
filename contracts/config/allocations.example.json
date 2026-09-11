@@ -1,0 +1,87 @@
+{
+  "_comment": [
+    "Example allocation config for scripts/deploy-vesting.js. Copy to config/allocations.json and fill in real addresses.",
+    "Buckets and schedule numbers mirror tokenomics/config.example.json; keep the two files in sync.",
+    "percent: share of total supply for this bucket (decimals allowed, max 2 decimal places). All buckets must sum to 100.",
+    "tgeUnlockPercent: share OF THIS BUCKET sent directly to the beneficiary at TGE (0-100). The rest goes into a vesting wallet.",
+    "cliffMonths: the vested part is fully locked until TGE + cliffMonths (nothing releasable before, exactly 0 at the cliff).",
+    "vestingMonths: after the cliff, the vested part is released linearly over vestingMonths (wallet start = TGE + cliff,",
+    "  duration = vestingMonths). Fully unlocked at TGE + cliffMonths + vestingMonths, e.g. cliff 12 + vesting 36 = month 48.",
+    "  vestingMonths = 0 with cliffMonths > 0: single unlock at TGE + cliffMonths. Both 0: everything is liquid at TGE, no wallet.",
+    "One month = 30 days (2,592,000 seconds)."
+  ],
+  "allocations": [
+    {
+      "key": "community_ecosystem",
+      "name": "Cộng đồng & hệ sinh thái",
+      "beneficiary": "0x0000000000000000000000000000000000000001",
+      "percent": 32,
+      "tgeUnlockPercent": 5,
+      "cliffMonths": 0,
+      "vestingMonths": 48
+    },
+    {
+      "key": "team_advisors",
+      "name": "Đội ngũ & cố vấn",
+      "beneficiary": "0x0000000000000000000000000000000000000002",
+      "percent": 18,
+      "tgeUnlockPercent": 0,
+      "cliffMonths": 12,
+      "vestingMonths": 36
+    },
+    {
+      "key": "investors",
+      "name": "Nhà đầu tư (seed/private)",
+      "beneficiary": "0x0000000000000000000000000000000000000003",
+      "percent": 15,
+      "tgeUnlockPercent": 0,
+      "cliffMonths": 9,
+      "vestingMonths": 24
+    },
+    {
+      "key": "treasury",
+      "name": "Treasury / quỹ dự trữ",
+      "beneficiary": "0x0000000000000000000000000000000000000004",
+      "percent": 13,
+      "tgeUnlockPercent": 2,
+      "cliffMonths": 0,
+      "vestingMonths": 36
+    },
+    {
+      "key": "liquidity",
+      "name": "Thanh khoản (DEX/CEX/MM)",
+      "beneficiary": "0x0000000000000000000000000000000000000005",
+      "percent": 8,
+      "tgeUnlockPercent": 100,
+      "cliffMonths": 0,
+      "vestingMonths": 0
+    },
+    {
+      "key": "binance_programs",
+      "name": "Chương trình Binance",
+      "beneficiary": "0x0000000000000000000000000000000000000006",
+      "percent": 5,
+      "tgeUnlockPercent": 0,
+      "cliffMonths": 3,
+      "vestingMonths": 24
+    },
+    {
+      "key": "marketing_kol",
+      "name": "Marketing / KOL",
+      "beneficiary": "0x0000000000000000000000000000000000000007",
+      "percent": 5,
+      "tgeUnlockPercent": 20,
+      "cliffMonths": 0,
+      "vestingMonths": 24
+    },
+    {
+      "key": "public_sale",
+      "name": "Public sale",
+      "beneficiary": "0x0000000000000000000000000000000000000008",
+      "percent": 4,
+      "tgeUnlockPercent": 100,
+      "cliffMonths": 0,
+      "vestingMonths": 0
+    }
+  ]
+}

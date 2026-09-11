@@ -1,0 +1,26 @@
+{
+  "name": "newcoin-contracts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NewCoin (NEWC) BEP-20 utility token and vesting deployment for BNB Chain",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:testnet": "hardhat run scripts/deploy.js --network bscTestnet",
+    "deploy:mainnet": "hardhat run scripts/deploy.js --network bsc",
+    "deploy:vesting:testnet": "hardhat run scripts/deploy-vesting.js --network bscTestnet",
+    "deploy:vesting:mainnet": "hardhat run scripts/deploy-vesting.js --network bsc",
+    "verify": "hardhat run scripts/verify.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "5.0.0",
+    "@openzeppelin/contracts": "5.7.0",
+    "dotenv": "17.4.2",
+    "hardhat": "2.29.1",
+    "solc": "0.8.28"
+  }
+}

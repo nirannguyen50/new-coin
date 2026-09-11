@@ -1,0 +1,13 @@
+node_modules/
+artifacts/
+cache/
+typechain/
+typechain-types/
+coverage/
+coverage.json
+.env
+.env.*
+!.env.example
+deployments/*.json
+!deployments/.gitkeep
+gas-report.txt
