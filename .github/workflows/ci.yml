@@ -40,6 +40,22 @@ jobs:
       - name: Regenerate example schedule and enforce red-flag rules
         run: python unlock_schedule.py config.example.json --months 36 --out out/ --strict
 
+  bot:
+    name: Lì Xì Bot (Telegram, off-chain)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: bot/package-lock.json
+      - run: npm ci
+      - run: npm test
+
   website:
     name: Landing page checks
     runs-on: ubuntu-latest

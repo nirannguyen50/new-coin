@@ -29,6 +29,7 @@ Lộ trình Binance (docs/01, 02, 06) được giữ lại làm tham khảo; **d
 | [docs/08-legal-checklist-vietnam.md](docs/08-legal-checklist-vietnam.md) | Checklist chuẩn bị pháp lý cho đội ngũ tại Việt Nam: câu hỏi cho luật sư, lựa chọn pháp nhân, hồ sơ KYB, thuế (không phải tư vấn pháp lý) |
 | [docs/09-ke-hoach-rut-gon-dex-va-san-nho.md](docs/09-ke-hoach-rut-gon-dex-va-san-nho.md) | **Kế hoạch đang áp dụng.** Phạm vi Lì Xì Bot v1, lộ trình 6 tuần lên PancakeSwap (bot beta tuần 3–5), khóa LP, lên CoinGecko/CMC, tùy chọn CEX nhỏ, ngân sách rút gọn, checklist ngày ra mắt |
 | [docs/10-huong-dan-vi-va-bnb.md](docs/10-huong-dan-vi-va-bnb.md) | Hướng dẫn từng bước cho người mới: tạo ví deploy, lấy BNB testnet, mua BNB thật từ Việt Nam, tạo ví Safe multisig, thứ tự lệnh ngày ra mắt |
+| [docs/11-quyet-dinh-bot-off-chain-truoc.md](docs/11-quyet-dinh-bot-off-chain-truoc.md) | Quyết định: bot chạy bằng điểm off-chain trước, chưa cần ví/BNB; điều kiện để chuyển sang token thật |
 
 ## Cấu trúc mã nguồn và công cụ
 
@@ -36,6 +37,7 @@ Lộ trình Binance (docs/01, 02, 06) được giữ lại làm tham khảo; **d
 |---|---|---|
 | [contracts/](contracts/) | Hợp đồng BEP-20 `LiXi` (cung cố định, không mint/owner/pause/tax), ví vesting theo từng nhóm, script deploy và verify BSC testnet/mainnet | `cd contracts && npm ci && npm test` (61 test) |
 | [tokenomics/](tokenomics/) | Công cụ tính lịch unlock 36 tháng từ file cấu hình, xuất CSV/Markdown/biểu đồ, tự kiểm tra red flag | `cd tokenomics && pip install -r requirements.txt && python -m pytest` (31 test) |
+| [bot/](bot/) | Lì Xì Bot trên Telegram (bản off-chain, `docs/11`): tip, bao lì xì chia ngẫu nhiên, thưởng hoạt động, rút (chờ admin duyệt), chống lạm dụng | `cd bot && npm ci && npm test` (45 test) |
 | [website/](website/) | Landing page tĩnh, không phụ thuộc bên ngoài, hỗ trợ dark mode và mobile | Mở `website/index.html` |
 | [growth/](growth/) | Kế hoạch cộng đồng 12 tuần quanh ngày ra mắt (pilot, bot beta, bảng xếp hạng, chiến dịch Tết 2027), lịch nội dung, template KPI, mẫu liên hệ cộng đồng pilot/đối tác đổi quà/KOL/sàn | — |
 | [.github/workflows/ci.yml](.github/workflows/ci.yml) | CI chạy toàn bộ test contract, tokenomics và kiểm tra website mỗi lần push | — |
@@ -69,6 +71,7 @@ Lộ trình Binance (docs/01, 02, 06) được giữ lại làm tham khảo; **d
 | Landing page, growth kit | Hoàn thành; growth kit đã theo LiXi (pilot, bot beta, Tết 2027); landing page xem `website/` |
 | Lì Xì Bot (sản phẩm v1) | Chưa bắt đầu; phạm vi trong `docs/09` mục 1 |
 | Script tạo thanh khoản PancakeSwap | Hoàn thành, test bằng mock router; chưa chạy trên mạng thật |
+| Lì Xì Bot (off-chain) | Hoàn thành, 45 test pass; chưa tạo bot thật qua BotFather, chưa chạy trong nhóm thật |
 | Danh tính đội ngũ, ví Safe, số BNB thanh khoản, ngày ra mắt, 3 pilot | **Chưa chốt** (`docs/00` mục 7) |
 | Pháp lý | Chưa có luật sư — rủi ro đã chấp nhận (`docs/00` mục 6); giữ nguyên câu miễn trừ trách nhiệm ở mọi nơi |
 | Audit, cộng đồng thật | Chưa bắt đầu; cần người thật thực hiện |

@@ -1,0 +1,20 @@
+{
+  "name": "lixi-bot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Li Xi Bot - bot Telegram quan ly diem LIXI off-chain (beta), theo docs/09 va docs/11",
+  "type": "commonjs",
+  "license": "UNLICENSED",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test",
+    "backup": "node scripts/backup.js"
+  },
+  "dependencies": {
+    "telegraf": "4.16.3"
+  }
+}
