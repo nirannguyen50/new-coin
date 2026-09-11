@@ -15,23 +15,41 @@
 **Khuyến nghị:** Lên PancakeSwap trước (bước bắt buộc, rẻ, không thể bị từ chối). Chỉ trả tiền cho CEX nhỏ khi DEX đã có
 giao dịch thật và cộng đồng, vì CEX nhỏ không tự tạo ra người mua; họ chỉ bán "cửa vào" cho người đã muốn mua.
 
-## 1. Lộ trình 6 tuần lên DEX
+## 1. Sản phẩm v1: Lì Xì Bot
+
+Token chỉ có lý do tồn tại nếu có thứ để dùng ngay ngày ra mắt. Với LiXi, thứ đó là **Lì Xì Bot trên Telegram**
+(quyết định trong `docs/00`). Phạm vi tối thiểu cho beta:
+
+| Nhóm | Phải có trước khi ra mắt |
+|---|---|
+| Lệnh bot | `/lixi @user <số>` (tip), `/lixi <số> chia <n>` (bao lì xì chia ngẫu nhiên), `/sodu`, `/rut <địa chỉ> <số>`, `/lichsu` (10 giao dịch gần nhất), `/pot` (số dư pot nhóm, chỉ admin) |
+| Nạp pot | Admin gửi LIXI on-chain vào địa chỉ nạp của bot kèm memo/mã nhóm; bot ghi có cho pot sau đủ số block xác nhận |
+| Thưởng hoạt động | Admin đặt quy tắc đơn giản (ví dụ: N LIXI/ngày cho thành viên có ≥ M tin nhắn hợp lệ); bot phát tự động, có nhật ký |
+| Rút | Người dùng rút về ví BEP-20 của mình; bot gửi từ ví nóng, có hàng đợi, xác nhận on-chain và link BscScan |
+| Chống lạm dụng | Hạn mức tip/ngày/người, hạn mức phát thưởng/ngày/nhóm, cooldown giữa hai lệnh, giới hạn số người nhận mỗi bao, tài khoản Telegram phải đủ tuổi/đã tham gia nhóm ≥ X ngày, khoản lớn cần admin xác nhận |
+| Vận hành | Ví nóng chỉ giữ lượng nhỏ, phần còn lại ở Safe; số dư sổ cái đối chiếu với số dư on-chain mỗi ngày; công bố kết quả |
+| Nội dung | Hướng dẫn admin (nạp pot, đặt quy tắc), hướng dẫn thành viên (xem số dư, rút), cảnh báo lừa đảo, câu miễn trừ trách nhiệm trong lệnh `/start` |
+
+Chưa cần cho beta: Discord, dashboard web, đổi quà, mẫu bao lì xì riêng, bảng xếp hạng nhiều nhóm (Q1/2027 trở đi).
+Beta chạy với 3 cộng đồng pilot; trước mainnet bot chạy bằng LIXI testnet để thử toàn bộ luồng nạp → thưởng → tip → rút.
+
+## 2. Lộ trình 6 tuần lên DEX (bot beta tuần 3–5)
 
 | Tuần | Việc | Kết quả |
 |---|---|---|
-| 1 | Chốt tên, ticker, tổng cung, phân bổ; lập pháp nhân tối thiểu hoặc xác nhận với luật sư; đăng ký domain, X, Telegram | Whitepaper ngắn 3–5 trang, kênh cộng đồng mở |
-| 2 | Deploy token lên BSC testnet bằng `contracts/`; thử toàn bộ quy trình (deploy → verify → add liquidity → lock LP) trên testnet | Quy trình chạy trọn vẹn không lỗi trên testnet |
-| 3 | Audit nhanh (xem mục 4), tạo ví multisig Safe cho treasury, chuẩn bị BNB thanh khoản | Audit report, Safe 2/3 hoặc 3/5 |
-| 4 | Deploy mainnet, verify trên BscScan, chuyển token theo phân bổ vào ví vesting/Safe | Contract có mã nguồn công khai |
-| 5 | Tạo pool PancakeSwap, **khóa 100% LP ≥ 12 tháng**, nộp thông tin lên BscScan, DexScreener, CoinGecko, CoinMarketCap | Token mua bán được, có biểu đồ giá |
-| 6 | Truyền thông ra mắt, hướng dẫn mua từng bước, chương trình airdrop nhỏ cho người dùng thật | Có holder thật ngoài đội ngũ |
+| 1 | Tên/ticker đã chốt (`docs/00`); viết whitepaper ngắn từ `docs/05`; đăng ký domain, X, Telegram; chọn 3 cộng đồng pilot và ký cam kết thử nghiệm; viết spec bot theo mục 1 | Whitepaper ngắn 3–5 trang, kênh cộng đồng mở, 3 pilot đã đồng ý |
+| 2 | Deploy token lên BSC testnet bằng `contracts/`; thử toàn bộ quy trình (deploy → verify → add liquidity → lock LP) trên testnet; bot chạy nội bộ với LIXI testnet | Quy trình chạy trọn vẹn không lỗi trên testnet; bot tip/rút được trong nhóm nội bộ |
+| 3 | Audit nhanh (xem mục 5), tạo ví multisig Safe cho treasury, chuẩn bị BNB thanh khoản; **bot beta bắt đầu** với pilot 1 (LIXI testnet), thu lỗi và chỉnh hạn mức | Audit report, Safe 2/3 hoặc 3/5; pilot 1 dùng bot hằng ngày |
+| 4 | Deploy mainnet, verify trên BscScan, chuyển token theo phân bổ vào ví vesting/Safe; **bot beta mở rộng** cho cả 3 pilot, pot nạp bằng LIXI thật với hạn mức thấp | Contract có mã nguồn công khai; 3 pilot chạy trên mainnet |
+| 5 | Tạo pool PancakeSwap, **khóa 100% LP ≥ 12 tháng**, nộp thông tin lên BscScan, DexScreener, CoinGecko, CoinMarketCap; **kết thúc beta**: sửa lỗi, công bố số liệu beta (lì xì/tuần, ví nhận, LIXI trong pot) | Token mua bán được, có biểu đồ giá; báo cáo beta công khai |
+| 6 | Truyền thông ra mắt, hướng dẫn mua từng bước, airdrop nhỏ cho thành viên pilot đã dùng bot thật; mở danh sách chờ cho cộng đồng tiếp theo | Có holder thật ngoài đội ngũ; danh sách chờ cho đợt mở công khai Q1/2027 |
 
-## 2. Chi tiết từng bước kỹ thuật (tất cả đã có sẵn trong `contracts/`)
+## 3. Chi tiết từng bước kỹ thuật (tất cả đã có sẵn trong `contracts/`)
 
 1. **Deploy token:** `npm run deploy:mainnet` với `TREASURY_ADDRESS` là ví Safe multisig, không phải ví cá nhân.
 2. **Verify mã nguồn:** `npm run verify` để BscScan hiển thị mã nguồn; người mua và các công cụ quét (GoPlus, Token Sniffer, DexScreener) sẽ đánh dấu token là an toàn hơn vì không có mint, không thuế, không blacklist.
 3. **Phân bổ token:** `deploy-vesting.js` tạo ví vesting cho đội ngũ, nhà đầu tư, cộng đồng; phần liquidity chuyển sang ví sẽ tạo pool.
-4. **Tạo thanh khoản:** `npm run liquidity:mainnet` (script `add-liquidity.js`) ghép NEWC với BNB trên PancakeSwap V2. Giá ban đầu = BNB bỏ vào ÷ NEWC bỏ vào.
+4. **Tạo thanh khoản:** `npm run liquidity:mainnet` (script `add-liquidity.js`) ghép LIXI với BNB trên PancakeSwap V2. Giá ban đầu = BNB bỏ vào ÷ LIXI bỏ vào.
 5. **Khóa LP:** dùng Team Finance, UNCX hoặc PinkLock; khóa toàn bộ LP token (địa chỉ pair) tối thiểu 12 tháng; đăng link khóa công khai.
 6. **Nộp thông tin công khai:**
    - BscScan: cập nhật logo, website, mạng xã hội cho contract.
@@ -39,9 +57,9 @@ giao dịch thật và cộng đồng, vì CEX nhỏ không tự tạo ra ngư�
    - CoinGecko và CoinMarketCap: nộp form miễn phí; cần website, whitepaper, mã nguồn verify, pool có khối lượng, mạng xã hội hoạt động. Duyệt 1–4 tuần.
    - GoPlus/Token Sniffer: kiểm tra token đạt điểm an toàn cao, chụp màn hình để chia sẻ.
 
-## 3. Bao nhiêu thanh khoản là đủ
+## 4. Bao nhiêu thanh khoản là đủ
 
-| Thanh khoản ban đầu (BNB + NEWC) | Ý nghĩa |
+| Thanh khoản ban đầu (BNB + LIXI) | Ý nghĩa |
 |---|---|
 | 5–10 nghìn USD | Chỉ đủ cho bạn bè, cộng đồng nhỏ; lệnh 500 USD đã trượt giá vài phần trăm |
 | 20–50 nghìn USD | Mức tối thiểu hợp lý cho dự án nghiêm túc muốn có người lạ giao dịch |
@@ -50,14 +68,14 @@ giao dịch thật và cộng đồng, vì CEX nhỏ không tự tạo ra ngư�
 Quy tắc: phần token đưa vào pool nên bằng đúng phần "Thanh khoản" trong tokenomics (8% tổng cung theo cấu hình mẫu).
 Giá khởi điểm nên khiêm tốn; giá cao với thanh khoản mỏng là công thức sụp đổ ngay ngày đầu.
 
-## 4. Bảo mật tối thiểu (không cắt được)
+## 5. Bảo mật tối thiểu (không cắt được)
 
 - **Audit:** với contract chuẩn OpenZeppelin, không cần audit đắt tiền. Phương án đủ dùng: một hãng nhỏ uy tín (SolidProof, Cyberscope, Coinsult, Hashex) khoảng 1–5 nghìn USD, cộng chạy Slither/Mythril miễn phí. Chi phí này chủ yếu để có "tem" hiển thị trên các trang theo dõi.
 - **Không giữ token bằng ví cá nhân:** treasury và ví liquidity phải là Safe multisig.
 - **Khóa LP và vesting đội ngũ** là hai thứ đầu tiên người mua kiểm tra. Không có hai thứ này thì token bị coi là rug pull tiềm năng.
 - **KYC đội ngũ** qua dịch vụ như Assure DeFi/SolidProof KYC nếu founder không muốn công khai danh tính đầy đủ nhưng vẫn cần lòng tin.
 
-## 5. Lên sàn CEX nhỏ (bước tùy chọn, chỉ làm sau khi DEX có giao dịch)
+## 6. Lên sàn CEX nhỏ (bước tùy chọn, chỉ làm sau khi DEX có giao dịch)
 
 | Sàn | Chi phí tham khảo 2026 | Ghi chú |
 |---|---|---|
@@ -71,7 +89,7 @@ Sàn thường yêu cầu: contract verify, audit, thanh khoản DEX, cộng đ�
 
 **Lưu ý về BitMart:** sàn này đã thông báo dừng giao dịch từ 8/2026 và đóng cửa đầu 2027; không nộp đơn.
 
-## 6. Ngân sách rút gọn (USD)
+## 7. Ngân sách rút gọn (USD)
 
 | Hạng mục | Chỉ DEX | DEX + 1 CEX nhỏ |
 |---|---|---|
@@ -83,21 +101,21 @@ Sàn thường yêu cầu: contract verify, audit, thanh khoản DEX, cộng đ�
 | Phí niêm yết CEX + token ký quỹ + MM | — | 15,000–60,000 |
 | **Tổng** | **≈ 28,000–83,000** | **≈ 83,000–210,000** |
 
-## 7. Việc gì có thể bỏ so với kế hoạch Binance
+## 8. Việc gì có thể bỏ so với kế hoạch Binance
 
 - Không cần market maker chuyên nghiệp (PancakeSwap là AMM, tự tạo giá).
 - Không cần hồ sơ Binance (`docs/06`), pitch cho sàn lớn, KPI cộng đồng hàng chục nghìn người.
 - Không cần pháp nhân offshore phức tạp ngay lập tức, nhưng vẫn cần tư vấn luật sư về việc phát hành từ Việt Nam.
 - Audit đắt tiền (CertiK) không cần thiết cho contract chuẩn.
 
-## 8. Việc gì vẫn bắt buộc
+## 9. Việc gì vẫn bắt buộc
 
-- Sản phẩm hoặc lý do tồn tại của token; không có thì giá chỉ đi xuống sau ngày đầu.
+- Sản phẩm hoặc lý do tồn tại của token; không có thì giá chỉ đi xuống sau ngày đầu. Với LiXi đó là Lì Xì Bot (mục 1) — không ra mắt token khi bot chưa chạy được với pilot.
 - Khóa LP, vesting đội ngũ, multisig, mã nguồn verify.
 - Minh bạch với người mua: công bố phân bổ, địa chỉ ví, lịch unlock; không hứa hẹn giá.
 - Tuân thủ pháp luật: token vẫn là tài sản mã hóa; bán cho người Việt Nam và người nước ngoài đều có nghĩa vụ pháp lý.
 
-## 9. Checklist ngày ra mắt
+## 10. Checklist ngày ra mắt
 
 - [ ] Contract mainnet đã verify, không còn quyền admin
 - [ ] Token đã chuyển đúng vào ví vesting/Safe, ví deploy còn 0 token
@@ -107,3 +125,5 @@ Sàn thường yêu cầu: contract verify, audit, thanh khoản DEX, cộng đ�
 - [ ] Bài hướng dẫn mua có hình từng bước (thêm BNB Chain vào ví, dán địa chỉ contract, đặt slippage 0.5–1%)
 - [ ] Cảnh báo lừa đảo: chỉ có một địa chỉ contract chính thức, ghim ở mọi kênh
 - [ ] Form CoinGecko và CoinMarketCap đã nộp
+- [ ] Lì Xì Bot: 3 pilot đã chạy trên mainnet ≥ 1 tuần, hạn mức chống lạm dụng bật, rút về ví riêng hoạt động, số dư sổ cái khớp on-chain
+- [ ] Câu miễn trừ trách nhiệm hiển thị trong `/start` của bot và trên website

@@ -49,7 +49,7 @@ def test_example_config_sums_to_100():
     cfg = us.load_config(EXAMPLE)
     assert cfg.allocation_sum() == pytest.approx(100.0)
     assert cfg.total_supply == 1_000_000_000
-    assert cfg.ticker == "NEWC"
+    assert cfg.ticker == "LIXI"
 
 
 def test_sum_not_100_is_flagged():

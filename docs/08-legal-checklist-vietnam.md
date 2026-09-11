@@ -32,16 +32,16 @@ Tham chiếu: `docs/01-ke-hoach-tong-the.md` (Giai đoạn 2), `docs/02-checklis
 
 ### 1.1 Về khung pháp lý hiện hành
 
-1. Theo Luật Công nghiệp công nghệ số và các nghị định hướng dẫn hiện có, token NEWC (mô tả trong docs/05 mục 5)
+1. Theo Luật Công nghiệp công nghệ số và các nghị định hướng dẫn hiện có, token LIXI (mô tả trong docs/05 mục 5)
    được xếp vào loại tài sản số nào? Việc xếp loại đó kéo theo nghĩa vụ gì?
 2. Cơ chế thí điểm thị trường tài sản mã hóa (nghị quyết 2025) áp dụng cho ai? Một dự án như chúng tôi có
    **bắt buộc** tham gia thí điểm không, hay chỉ áp dụng khi phát hành/giao dịch trong nước qua tổ chức được cấp phép?
 3. Theo thông tin công khai, cơ chế thí điểm có thể giới hạn đối tượng được mua token phát hành trong nước và loại
-   token được phép — điều này đúng không, và có ảnh hưởng gì đến việc bán/airdrop NEWC cho người dùng tại Việt Nam?
+   token được phép — điều này đúng không, và có ảnh hưởng gì đến việc bán/airdrop LIXI cho người dùng tại Việt Nam?
 4. Nếu phát hành token từ một pháp nhân nước ngoài (mục 2 dưới đây) trong khi đội ngũ phát triển ở Việt Nam,
    rủi ro pháp lý tại Việt Nam là gì? Có bị coi là "phát hành tại Việt Nam" không?
 5. Quy định của Ngân hàng Nhà nước về việc không dùng tiền mã hóa làm phương tiện thanh toán ảnh hưởng thế nào
-   đến thiết kế tiện ích "trả phí bằng NEWC" trong sản phẩm, đặc biệt với người dùng tại Việt Nam?
+   đến thiết kế tiện ích "trả phí bằng LIXI" trong sản phẩm, đặc biệt với người dùng tại Việt Nam?
 6. Cơ quan nào sẽ quản lý hoạt động của chúng tôi (Bộ Tài chính, Ngân hàng Nhà nước, Bộ Khoa học và Công nghệ,
    cơ quan khác) và có cần đăng ký/thông báo gì không?
 7. Có văn bản hướng dẫn nào đang dự thảo mà chúng tôi cần theo dõi trong 6–12 tháng tới?
@@ -71,7 +71,7 @@ Tham chiếu: `docs/01-ke-hoach-tong-the.md` (Giai đoạn 2), `docs/02-checklis
     vốn" hoặc "chào bán chứng khoán" không?
 16. Airdrop cho người dùng Việt Nam có rủi ro gì? Cần KYC không?
 17. Tổ chức sự kiện, AMA, thuê KOL tại Việt Nam nói về token: cần disclaimer gì, KOL phải công bố gì?
-18. Nếu Binance hoặc sàn khác niêm yết NEWC và người Việt Nam giao dịch, chúng tôi có nghĩa vụ gì với họ không?
+18. Nếu Binance hoặc sàn khác niêm yết LIXI và người Việt Nam giao dịch, chúng tôi có nghĩa vụ gì với họ không?
 
 ---
 
@@ -95,7 +95,7 @@ Tham chiếu: `docs/01-ke-hoach-tong-the.md` (Giai đoạn 2), `docs/02-checklis
 
 ```
   Foundation / Token Issuer (Cayman, BVI, Panama, Thụy Sĩ)
-      │  phát hành NEWC, giữ treasury, ký thỏa thuận token với nhà đầu tư
+      │  phát hành LIXI, giữ treasury, ký thỏa thuận token với nhà đầu tư
       │
       ├── Hợp đồng dịch vụ phát triển ──► Công ty vận hành (Singapore Pte Ltd)
       │                                        │

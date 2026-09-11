@@ -12,7 +12,7 @@ Chỉ dùng thư viện chuẩn của Python + `matplotlib` (vẽ biểu đồ) 
 | File | Nội dung |
 |---|---|
 | `unlock_schedule.py` | Công cụ dòng lệnh: đọc config, tính lịch, kiểm tra red flag, ghi CSV/Markdown/PNG |
-| `config.example.json` | Cấu hình mẫu: tổng cung 1 tỷ NEWC, 8 nhóm theo cột "ví dụ tham khảo" của template |
+| `config.example.json` | Cấu hình mẫu: tổng cung 1 tỷ LIXI, 8 nhóm theo cột "ví dụ tham khảo" của template |
 | `test_unlock_schedule.py` | Unit test (pytest) |
 | `requirements.txt` | Phiên bản `matplotlib` và `pytest` đã ghim |
 | `out/` | Kết quả sinh từ config mẫu: `schedule.csv`, `schedule.md`, `unlock_chart.png` |
@@ -61,7 +61,7 @@ Sao chép `config.example.json` thành file mới (ví dụ `config.json`) rồi
 
 ```json
 {
-  "token": { "name": "New Coin", "ticker": "NEWC", "total_supply": 1000000000, "decimals": 18 },
+  "token": { "name": "LiXi", "ticker": "LIXI", "total_supply": 1000000000, "decimals": 18 },
   "horizon_months": 36,
   "rules": { "max_monthly_unlock_pct_of_prior_circ": 8.0 },
   "buckets": [

@@ -1,10 +1,10 @@
-# Lịch unlock New Coin (NEWC) — 36 tháng
+# Lịch unlock LiXi (LIXI) — 36 tháng
 
 _File này được sinh tự động bởi `unlock_schedule.py`; sửa `config` rồi chạy lại, không sửa tay._
 
 ## Tóm tắt
 
-- Tổng cung: **1,000,000,000 NEWC** (cố định)
+- Tổng cung: **1,000,000,000 LIXI** (cố định)
 - Lưu hành tại TGE (tháng 0): **148,600,000** = **14.86%** tổng cung
 - Lưu hành cuối tháng 3: 183,216,667 = 18.32%
 - Lưu hành cuối tháng 6: 224,083,333 = 22.41%

@@ -16,7 +16,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  [Logo]  NewCoin (NEWC)                       BNB Chain · BEP-20         │
+│  [Logo]  LiXi (LIXI)                       BNB Chain · BEP-20         │
 │  [[ĐIỀN: mô tả một dòng ≤ 20 từ]]                                        │
 │  Ví dụ: "Hạ tầng thanh toán và chia doanh thu on-chain cho cửa hàng     │
 │  bán lẻ nhỏ tại Đông Nam Á."                                             │
@@ -30,7 +30,7 @@
 │  [[ĐIỀN: sản phẩm làm gì, 2–3 câu; 1 câu về tại sao cần on-chain]]        │
 │  Trạng thái: [[Testnet / Beta / Mainnet từ tháng X]]  ·  Dùng thử: [[link]]│
 ├──────────────────────────────────┬──────────────────────────────────────┤
-│  TOKEN NEWC LÀM GÌ               │  SỐ LIỆU (nguồn kiểm chứng)          │
+│  TOKEN LIXI LÀM GÌ               │  SỐ LIỆU (nguồn kiểm chứng)          │
 │  1. [[Tiện ích 1 + chỉ số đo]]   │  Ví hoạt động 30 ngày: [[N]]         │
 │  2. [[Tiện ích 2 + chỉ số đo]]   │  Giao dịch 30 ngày: [[N]]            │
 │  3. [[Tiện ích 3 + chỉ số đo]]   │  Doanh thu/phí: [[N hoặc "chưa có"]] │
@@ -79,7 +79,7 @@
 
 ### Slide 1 — Tiêu đề
 
-- NewCoin (NEWC) · `[[ĐIỀN: mô tả một dòng]]`
+- LiXi (LIXI) · `[[ĐIỀN: mô tả một dòng]]`
 - BNB Chain · `[[Trạng thái sản phẩm]]` · `[[tháng/năm]]`
 - Người trình bày: `[[Tên, vai trò]]`
 
@@ -103,7 +103,7 @@
 - `[[ĐIỀN: điểm tập trung còn lại và lộ trình phi tập trung hóa]]`
 - BNB Chain: `[[ĐIỀN: lý do — phí, hệ sinh thái, công cụ]]`
 
-### Slide 5 — Token NEWC làm gì
+### Slide 5 — Token LIXI làm gì
 
 - Bảng 3 dòng: tiện ích → cơ chế → chỉ số on-chain đo được
 - Token là **bắt buộc** cho hành động nào trong sản phẩm
@@ -172,14 +172,14 @@
 
 **Mẫu:**
 
-> Tôi là `[[tên]]`, `[[vai trò]]` của NewCoin.
+> Tôi là `[[tên]]`, `[[vai trò]]` của LiXi.
 >
 > `[[ĐIỀN: người dùng mục tiêu]]` hiện đang `[[ĐIỀN: vấn đề, một câu có con số]]`.
 >
 > Chúng tôi xây `[[ĐIỀN: sản phẩm là gì]]` để họ `[[ĐIỀN: kết quả nhận được]]`. Nó chạy trên BNB Chain vì
 > `[[ĐIỀN: lý do on-chain, một câu]]`.
 >
-> Token NEWC được dùng để `[[ĐIỀN: tiện ích chính, một câu]]` — nghĩa là sản phẩm càng được dùng, token càng
+> Token LIXI được dùng để `[[ĐIỀN: tiện ích chính, một câu]]` — nghĩa là sản phẩm càng được dùng, token càng
 > được dùng.
 >
 > Hiện tại `[[ĐIỀN: trạng thái và một con số thật — hoặc "chúng tôi mở testnet vào tháng X"]]`.
@@ -190,10 +190,10 @@
 
 **Ví dụ hoàn chỉnh (chỉ minh họa cách viết, không phải nội dung dự án):**
 
-*"Tôi là A, CEO của NewCoin. Các cửa hàng bán lẻ nhỏ ở Đông Nam Á hiện mất khoảng 6 giờ mỗi tuần để đối soát
+*"Tôi là A, CEO của LiXi. Các cửa hàng bán lẻ nhỏ ở Đông Nam Á hiện mất khoảng 6 giờ mỗi tuần để đối soát
 doanh thu và trả 2–4% cho trung gian. Chúng tôi xây hạ tầng thanh toán và chia doanh thu tự động để chủ cửa hàng
 nhận tiền bằng stablecoin và chia cho nhà cung cấp ngay khi khách trả. Nó chạy trên BNB Chain vì các bên không tin
-nhau và cần một hợp đồng thực thi công khai, không sửa được. Token NEWC dùng để trả phí mạng lưới và staking để
+nhau và cần một hợp đồng thực thi công khai, không sửa được. Token LIXI dùng để trả phí mạng lưới và staking để
 vận hành node đối soát — sản phẩm càng được dùng, token càng được dùng. Hiện beta có 400 cửa hàng thật ở hai thành
 phố, số liệu công khai trên Dune. Đội ngũ 6 người toàn thời gian; tôi từng vận hành chuỗi bán lẻ 30 cửa hàng, CTO
 từng làm hạ tầng thanh toán tại một công ty fintech trong khu vực. Chúng tôi đang tìm đối tác tích hợp ví trên

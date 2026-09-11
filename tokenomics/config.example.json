@@ -1,7 +1,7 @@
 {
   "token": {
-    "name": "New Coin",
-    "ticker": "NEWC",
+    "name": "LiXi",
+    "ticker": "LIXI",
     "total_supply": 1000000000,
     "decimals": 18
   },

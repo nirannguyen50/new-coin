@@ -12,8 +12,8 @@
 
 | Trường | Giá trị |
 |---|---|
-| Tên dự án | NewCoin |
-| Ticker | NEWC |
+| Tên dự án | LiXi |
+| Ticker | LIXI |
 | Chain | BNB Chain (BEP-20) |
 | Tổng cung | 1.000.000.000 (cố định) |
 | Loại niêm yết đề nghị | Binance Alpha |
@@ -116,8 +116,8 @@ Tổng số người: `[[ĐIỀN]]` (toàn thời gian: `[[N]]`, bán thời gia
 
 | Trường | Giá trị |
 |---|---|
-| Tên token | NewCoin |
-| Ticker | NEWC |
+| Tên token | LiXi |
+| Ticker | LIXI |
 | Chain | BNB Chain (BSC), BEP-20 |
 | Địa chỉ hợp đồng | `[[ĐIỀN]]` |
 | Decimals | 18 |
@@ -140,7 +140,7 @@ Tổng số người: `[[ĐIỀN]]` (toàn thời gian: `[[N]]`, bán thời gia
 | `[[ĐIỀN]]` | `[[ĐIỀN]]` | `[[ĐIỀN]]` |
 | `[[ĐIỀN]]` | `[[ĐIỀN]]` | `[[ĐIỀN]]` |
 
-*Ví dụ: "Phí mạng lưới — mỗi giao dịch chia doanh thu trả 0,1% bằng NEWC; tháng gần nhất: [[N]] NEWC được dùng làm phí bởi [[N]] địa chỉ — [[link Dune]]."*
+*Ví dụ: "Phí mạng lưới — mỗi giao dịch chia doanh thu trả 0,1% bằng LIXI; tháng gần nhất: [[N]] LIXI được dùng làm phí bởi [[N]] địa chỉ — [[link Dune]]."*
 
 ---
 
@@ -267,7 +267,7 @@ Chương trình cộng đồng đang chạy: `[[ĐIỀN: quest, testnet có thư
 
 | Sàn / DEX | Cặp | Khối lượng 30 ngày (organic) | Độ sâu ±2% | Link |
 |---|---|---|---|---|
-| PancakeSwap | NEWC/BNB hoặc NEWC/USDT | `[[ĐIỀN]]` | | |
+| PancakeSwap | LIXI/BNB hoặc LIXI/USDT | `[[ĐIỀN]]` | | |
 | `[[Sàn tier 2 nếu có]]` | | | | |
 
 ### 7.2 Thanh khoản DEX
@@ -383,7 +383,7 @@ Sẵn sàng: `[[ĐIỀN: token dành riêng cho chương trình sàn (địa ch�
 
 ## 12. Danh sách tài liệu đính kèm
 
-> Chuẩn bị tất cả ở dạng PDF hoặc link công khai trước khi mở form. Đặt tên file rõ ràng: `NEWC_<tên>_<ngày>.pdf`.
+> Chuẩn bị tất cả ở dạng PDF hoặc link công khai trước khi mở form. Đặt tên file rõ ràng: `LIXI_<tên>_<ngày>.pdf`.
 
 - [ ] Whitepaper bản cuối có số phiên bản và ngày (docs/05 đã hoàn thiện)
 - [ ] One-pager (docs/07)
