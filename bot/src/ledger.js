@@ -186,7 +186,32 @@ function nextId(state, counterField) {
 }
 
 /** Ghi một bản ghi giao dịch vào lịch sử (không tự đổi số dư). */
+/**
+ * Danh sach DUY NHAT cac loai giao dich. Them loai moi thi phai them o day VA them
+ * nhan tieng Viet trong TX_LABELS (bot/src/commands/wallet.js), neu khong nguoi dung
+ * se thay ma noi bo kieu "envelope_hold" trong /lichsu. Co test chan viec nay.
+ */
+const TX_TYPES = Object.freeze([
+  'tip',
+  'transfer',
+  'credit',
+  'debit',
+  'reward',
+  'admin_credit',
+  'envelope_hold',
+  'envelope_claim',
+  'envelope_refund',
+  'withdrawal_hold',
+  'withdrawal_refund',
+]);
+
 function recordTransactionPure(state, tx, nowMs = Date.now()) {
+  // Chi chan khi chay test: production khong bao gio vo vi mot nhan bi thieu.
+  if (process.env.NODE_ENV === 'test' && tx && tx.type && !TX_TYPES.includes(tx.type)) {
+    throw new Error(
+      `Loai giao dich la: "${tx.type}". Them vao TX_TYPES (ledger.js) va TX_LABELS (wallet.js).`
+    );
+  }
   state.transactions = state.transactions || [];
   const id = nextId(state, 'nextTxId');
   const full = { id, ts: nowMs, ...tx };
@@ -1001,6 +1026,7 @@ class JsonLedger {
 
 module.exports = {
   LedgerError,
+  TX_TYPES,
   JsonLedger,
   DAY_MS,
   dateKey,

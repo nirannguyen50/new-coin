@@ -15,6 +15,8 @@ const TX_LABELS = {
   credit: 'Được cấp điểm',
   debit: 'Bị trừ điểm',
   reward: 'Thưởng hoạt động',
+  envelope_hold: 'Mở bao lì xì (tạm giữ điểm)',
+  envelope_claim: 'Nhận bao lì xì',
   envelope_refund: 'Hoàn điểm bao lì xì',
   withdrawal_hold: 'Giữ điểm để rút',
   withdrawal_refund: 'Hoàn điểm (rút bị từ chối)',
@@ -72,4 +74,4 @@ function register(bot, { storage }) {
   });
 }
 
-module.exports = { register, describeTx };
+module.exports = { register, describeTx, TX_LABELS };
