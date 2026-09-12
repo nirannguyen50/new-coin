@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thêm Lì Xì Bot vào nhóm Telegram trong 2 phút — bot lì xì, tip điểm và thưởng thành viên</title>
+  <meta name="description" content="Bot lì xì Telegram cho nhóm: tip điểm, bao lì xì, thưởng thành viên. Admin tự thêm Lì Xì Bot trong 2 phút, không cần liên hệ. Miễn phí, beta, điểm không phải tiền.">
+  <meta name="keywords" content="bot lì xì telegram, bot tip điểm cho nhóm telegram, bot thưởng thành viên nhóm, bao lì xì telegram, bot telegram tiếng việt">
+  <meta name="robots" content="index, follow">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Kiểu riêng cho trang hướng dẫn; màu và khoảng cách dùng lại biến trong style.css. */
+    .guide-hero { padding-block: clamp(32px, 6vw, 72px) clamp(24px, 4vw, 48px); }
+    .guide-hero .lead { max-width: 60ch; }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 20px; padding: 0; list-style: none; }
+    .badge-row li {
+      font-size: 0.8rem; font-weight: 600; color: var(--text-2);
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 4px 10px; border-radius: 999px;
+    }
+    .cmd {
+      display: block; font-family: var(--mono); font-size: 0.95rem;
+      background: var(--surface-alt); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 12px; margin: 10px 0;
+      overflow-x: auto; white-space: pre; color: var(--text);
+    }
+    .cmd-note { font-size: 0.85rem; color: var(--text-muted); margin: -4px 0 12px; }
+    .steps-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; counter-reset: step; }
+    .step { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 16px; align-items: start; }
+    .step-num {
+      counter-increment: step; width: 44px; height: 44px; border-radius: 50%;
+      display: grid; place-items: center; font-weight: 800; font-size: 1.1rem;
+      background: var(--accent); color: var(--accent-ink);
+    }
+    .step-num::before { content: counter(step); }
+    .step-body { min-width: 0; }
+    .step-body h3 { margin-bottom: 6px; }
+    .step-time { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; margin-left: 8px; }
+    .rights { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 12px 0; }
+    .rights > div { background: var(--surface-alt); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 0.92rem; }
+    .rights h4 { margin-bottom: 6px; font-size: 0.95rem; }
+    .rights ul { margin: 0; padding-left: 1.1em; }
+    .callout {
+      border-left: 4px solid var(--accent); background: var(--accent-soft);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 12px 16px; margin: 16px 0;
+    }
+    .callout-warn { border-left-color: var(--placeholder); background: var(--placeholder-bg); }
+    .callout p:last-child { margin-bottom: 0; }
+    .chat-demo {
+      background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px; margin: 12px 0; display: grid; gap: 8px; font-size: 0.92rem;
+    }
+    .bubble { max-width: 90%; padding: 8px 12px; border-radius: 14px; line-height: 1.45; }
+    .bubble-you { justify-self: end; background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 4px; }
+    .bubble-bot { justify-self: start; background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+    .bubble-bot .who { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 2px; }
+    .bubble .btn-fake {
+      display: inline-block; margin-top: 8px; font-size: 0.85rem; font-weight: 600;
+      border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; background: var(--surface-alt);
+    }
+    .cta-box { text-align: center; padding: clamp(24px, 4vw, 40px); }
+    .cta-box .btn { font-size: 1.05rem; padding: 14px 28px; }
+    .cmd-table td:first-child { font-family: var(--mono); white-space: nowrap; }
+    .breadcrumb { font-size: 0.85rem; color: var(--text-muted); margin: 12px auto 0; }
+    .breadcrumb a { color: var(--text-2); }
+    @media (max-width: 640px) {
+      .rights { grid-template-columns: minmax(0, 1fr); }
+      .step { grid-template-columns: 36px minmax(0, 1fr); gap: 12px; }
+      .step-num { width: 36px; height: 36px; font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Bỏ qua điều hướng</a>
+
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">L</span>
+        <span class="brand-name">LiXi</span>
+        <span class="ticker">LIXI</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="nav-toggle-bar" aria-hidden="true"></span>
+        <span class="nav-toggle-label">Menu</span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Điều hướng chính">
+        <a href="#cac-buoc">Các bước</a>
+        <a href="#quyen-admin">Quyền admin</a>
+        <a href="#lenh">Lệnh</a>
+        <a href="#faq">Hỏi đáp</a>
+        <a href="index.html">Về trang chủ</a>
+        <a class="nav-cta" href="[[LINK_BOT]]">Thêm bot vào nhóm</a>
+      </nav>
+    </div>
+  </header>
+
+  <p class="breadcrumb container"><a href="index.html">LiXi</a> › Thêm Lì Xì Bot vào nhóm</p>
+
+  <main id="main">
+
+    <!-- HERO -->
+    <section class="guide-hero" id="top">
+      <div class="container">
+        <p class="eyebrow">Hướng dẫn cho admin nhóm Telegram · Bản beta</p>
+        <h1>Thêm Lì Xì Bot vào nhóm của bạn trong 2 phút</h1>
+        <p class="lead">Lì Xì Bot là bot lì xì cho nhóm Telegram: thành viên tip điểm cho nhau, mở bao lì xì chia ngẫu nhiên, và nhận thưởng khi hoạt động. Bạn không cần liên hệ ai, không cần cài gì, không cần thẻ: bấm nút, cấp quyền admin, gõ ba lệnh.</p>
+        <ul class="badge-row" aria-label="Điểm chính">
+          <li>Miễn phí</li>
+          <li>Không cần liên hệ</li>
+          <li>Điểm không phải tiền</li>
+          <li>Gỡ bất cứ lúc nào</li>
+        </ul>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="[[LINK_BOT]]">Thêm Lì Xì Bot vào nhóm</a>
+          <a class="btn btn-secondary" href="#cac-buoc">Xem từng bước</a>
+        </div>
+        <p class="hero-note">Điểm LIXI trong bot <strong>chưa có giá trị tiền thật, không phải khoản đầu tư</strong> và có thể bị reset trong giai đoạn beta. Bot dùng để thưởng và cảm ơn nhau trong nhóm, không dùng để mua bán hay đổi tiền.</p>
+      </div>
+    </section>
+
+    <!-- BEFORE YOU START -->
+    <section class="section section-alt">
+      <div class="container narrow">
+        <h2>Bạn cần gì trước khi bắt đầu</h2>
+        <ul>
+          <li><strong>Là admin của nhóm</strong> (hoặc chủ nhóm) trên Telegram. Thành viên thường không thêm bot được.</li>
+          <li><strong>Ứng dụng Telegram</strong> trên điện thoại hoặc máy tính. Không cần cài thêm gì.</li>
+          <li><strong>Khoảng 2 phút.</strong> Bước lâu nhất là tìm mục "Quản trị viên" trong cài đặt nhóm.</li>
+        </ul>
+        <div class="callout callout-warn">
+          <p><strong>Chỉ có một Lì Xì Bot chính thức</strong> — là bot mà nút trên trang này mở ra. Bot khác tên, kể cả cùng logo, không phải của chúng tôi. Chúng tôi không bao giờ nhắn riêng cho bạn trước, không xin mật khẩu hay seed phrase, không yêu cầu chuyển tiền để "kích hoạt".</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEPS -->
+    <section class="section" id="cac-buoc">
+      <div class="container narrow">
+        <h2>Bảy bước, gõ đúng là chạy</h2>
+        <p class="section-intro">Mỗi lệnh gõ ngay trong nhóm (không gõ trong chat riêng với bot). Bot trả lời ngay trong nhóm, ai cũng thấy.</p>
+
+        <ol class="steps-list">
+
+          <li class="step">
+            <div class="step-num" aria-hidden="true"></div>
+            <div class="step-body card">
+              <h3>Bấm nút thêm bot, chọn nhóm <span class="step-time">20 giây</span></h3>
+              <p>Bấm <a href="[[LINK_BOT]]">Thêm Lì Xì Bot vào nhóm</a>. Telegram mở danh sách nhóm bạn đang quản lý; chọn nhóm rồi xác nhận. Vừa vào nhóm, bot tự đăng một lời chào ngắn: ba lệnh để bắt đầu và, nếu bạn chưa cấp quyền admin, nói rõ vì sao cần.</p>
+              <p class="cmd-note">Nếu nút không mở được (ví dụ Telegram bản web cũ): vào nhóm → <em>Thêm thành viên</em> → gõ tên bot → thêm như một thành viên bình thường.</p>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="step-num" aria-hidden="true"></div>
+            <div class="step-body card" id="quyen-admin">
+              <h3>Cấp quyền admin cho bot <span class="step-time">40 giây</span></h3>
+              <p>Mở thông tin nhóm → <em>Quản trị viên</em> (Administrators) → <em>Thêm quản trị viên</em> → chọn Lì Xì Bot → lưu. <strong>Không cần bật quyền nào cụ thể</strong>; chỉ cần bot có tên trong danh sách quản trị viên.</p>
+              <div class="rights">
+                <div>
+                  <h4>Vì sao cần admin</h4>
+                  <ul>
+                    <li>Để bot biết <strong>ai là admin</strong> của nhóm — chỉ admin mới nạp pot, cấp điểm, đổi cài đặt.</li>
+                    <li>Để bot <strong>đọc được tin nhắn</strong> và đếm số tin hợp lệ mỗi ngày cho thưởng hoạt động. Bot thường bị Telegram giới hạn, không đếm được.</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4>Bot không cần (tắt cũng được)</h4>
+                  <ul>
+                    <li>Xóa tin nhắn của người khác</li>
+                    <li>Cấm hoặc hạn chế thành viên</li>
+                    <li>Mời người, đổi tên hay ảnh nhóm</li>
+                    <li>Ghim tin nhắn, thêm admin khác</li>
+                  </ul>
+                </div>
+              </div>
+              <p class="cmd-note">Bot không bao giờ xóa tin, kick người hay đổi cài đặt nhóm — mã nguồn không có những lệnh đó.</p>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="step-num" aria-hidden="true"></div>
+            <div class="step-body card">
+              <h3>Gõ <code>/start</code> để chắc bot đang sống <span class="step-time">5 giây</span></h3>
+              <code class="cmd">/start</code>
+              <p>Bot trả lời bằng lời chào, câu lưu ý "điểm chưa có giá trị tiền thật" và danh sách lệnh. Gõ <code>/huongdan</code> bất cứ lúc nào để xem lại hướng dẫn ngắn. Nếu bot im lặng: kiểm tra bot đã ở trong nhóm và đã là admin chưa, rồi thử lại.</p>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="step-num" aria-hidden="true"></div>
+            <div class="step-body card">
+              <h3>Nạp pot của nhóm bằng <code>/nap</code> <span class="step-time">5 giây</span></h3>
+              <code class="cmd">/nap 1000</code>
+              <p>Pot là quỹ điểm chung của nhóm. Bot lấy điểm từ pot để phát <strong>thưởng hoạt động hằng ngày</strong> (nếu bạn bật ở bước 7). Số 1.000 chỉ là ví dụ; đây là điểm trong bot, không phải tiền, bạn không nạp gì từ ví hay tài khoản ngân hàng.</p>
+              <p class="cmd-note">Gõ <code>/nap 1000</code> <strong>không reply</strong> vào tin của ai — nếu đang reply, bot hiểu là bạn muốn cấp điểm cho người đó (bước 5).</p>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="step-num" aria-hidden="true"></div>
+            <div class="step-body card">
+              <h3>Cấp điểm cho một thành viên bằng cách reply <span class="step-time">10 giây</span></h3>
+              <p>Reply (trả lời) vào bất kỳ tin nhắn nào của người bạn muốn cấp điểm, rồi gõ:</p>
+              <code class="cmd">/nap 200</code>
+              <p>Cách này chạy với <strong>cả người không đặt @username</strong> — rất phổ biến. Nếu người đó có @username công khai, gõ <code>/nap @tenban 200</code> cũng được. Cấp cho chính mình bằng cách reply vào tin của bạn.</p>
+              <div class="chat-demo" aria-label="Ví dụ trò chuyện">
+                <div class="bubble bubble-you">/nap 200<br><small>(đang reply tin của An)</small></div>
+                <div class="bubble bubble-bot"><span class="who">Lì Xì Bot</span>✅ Đã cấp <strong>200 điểm</strong> trực tiếp cho <strong>An</strong>.</div>
+              </div>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="step-num" aria-hidden="true"></div>
+            <div class="step-body card">
+              <h3>Mở bao lì xì đầu tiên <span class="step-time">30 giây</span></h3>
+              <p>Mặc định bot yêu cầu một người phải ở trong nhóm <strong>3 ngày</strong> (tính từ lúc bot thấy người đó) mới được tip hay mở bao. Nhóm vừa thêm bot thì ai cũng "mới", nên để thử ngay, tạm tắt điều kiện này:</p>
+              <code class="cmd">/caidat thamnien 0</code>
+              <p>Cấp cho mình vài trăm điểm (bước 5, reply vào tin của chính bạn), rồi mở bao:</p>
+              <code class="cmd">/lixi 300 chia 3</code>
+              <p>Bot đăng một bao lì xì 300 điểm có nút <strong>🧧 Nhận lì xì</strong>. Ba người bấm đầu tiên nhận phần chia ngẫu nhiên. Sau 10 phút bao đóng; phần chưa ai nhận <strong>tự hoàn lại</strong> cho người mở.</p>
+              <div class="chat-demo" aria-label="Ví dụ bao lì xì">
+                <div class="bubble bubble-you">/lixi 300 chia 3</div>
+                <div class="bubble bubble-bot"><span class="who">Lì Xì Bot</span>🧧 <strong>Bạn</strong> vừa mở bao lì xì <strong>300 điểm</strong> cho <strong>3</strong> người!<br>Đã nhận: 0/3. Còn khoảng 10 phút để bấm nút nhận.<br><span class="btn-fake">🧧 Nhận lì xì</span></div>
+              </div>
+              <p class="cmd-note">Tip thẳng cho một người: <code>/lixi @tenban 50</code>, hoặc reply tin của người đó rồi gõ <code>/lixi 50</code>.</p>
+            </div>
+          </li>
+
+          <li class="step">
+            <div class="step-num" aria-hidden="true"></div>
+            <div class="step-body card">
+              <h3>Trước khi mở cho người lạ: bật lại thâm niên 3 ngày <span class="step-time">5 giây</span></h3>
+              <code class="cmd">/caidat thamnien 3</code>
+              <p>Đây là lớp chống lạm dụng quan trọng nhất: tài khoản ảo vừa vào nhóm không thể lập tức giật bao lì xì hay tip vòng tròn. Nếu nhóm bạn là nhóm công khai, đừng bỏ bước này.</p>
+              <div class="callout">
+                <p><strong>Tùy chọn — bật thưởng hoạt động hằng ngày:</strong> <code>/thuong 10 5</code> nghĩa là mỗi ngày, thành viên có từ 5 tin nhắn hợp lệ trở lên nhận 10 điểm từ pot (phát vào buổi sáng). Xem toàn bộ cài đặt bằng <code>/caidat</code>; số dư pot và nhật ký admin bằng <code>/pot</code>.</p>
+              </div>
+            </div>
+          </li>
+
+        </ol>
+
+        <div class="card cta-box" style="margin-top: 32px;">
+          <h3>Xong. Giờ để nhóm tự chơi.</h3>
+          <p>Ghim tin trả lời <code>/huongdan</code> của bot để thành viên mới biết lệnh. Thử reply "cảm ơn" một ai đó bằng <code>/lixi 20</code>, cuối tuần gõ <code>/bxh</code> xem ai được cảm ơn nhiều nhất — phần còn lại nhóm sẽ tự làm.</p>
+          <a class="btn btn-primary" href="[[LINK_BOT]]">Thêm Lì Xì Bot vào nhóm</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMMANDS -->
+    <section class="section section-alt" id="lenh">
+      <div class="container narrow">
+        <h2>Lệnh nhanh</h2>
+        <p class="section-intro">Bảng để ghim hoặc gửi cho thành viên. Mọi lệnh gõ trong nhóm.</p>
+        <div class="table-wrap">
+          <table class="data-table cmd-table">
+            <caption>Lệnh cho thành viên</caption>
+            <thead><tr><th scope="col">Lệnh</th><th scope="col">Làm gì</th></tr></thead>
+            <tbody>
+              <tr><td>/sodu</td><td>Xem số dư điểm của bạn trong nhóm này</td></tr>
+              <tr><td>/lixi @user 100</td><td>Tip 100 điểm cho một người (hoặc reply tin của họ rồi gõ <code>/lixi 100</code>)</td></tr>
+              <tr><td>/lixi 500 chia 5</td><td>Mở bao lì xì 500 điểm, chia ngẫu nhiên cho 5 người bấm nhận đầu tiên trong 10 phút</td></tr>
+              <tr><td>/lichsu</td><td>10 giao dịch gần nhất của bạn</td></tr>
+              <tr><td>/bxh</td><td>Top 10 người nhận nhiều điểm nhất trong 7 ngày qua (tip + bao lì xì; không hiện số dư)</td></tr>
+              <tr><td>/huongdan</td><td>Hướng dẫn ngắn: lệnh thành viên, lệnh admin, hai chốt chống lạm dụng</td></tr>
+              <tr><td>/start</td><td>Lời chào, lưu ý và danh sách lệnh</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table cmd-table">
+            <caption>Lệnh chỉ admin dùng được</caption>
+            <thead><tr><th scope="col">Lệnh</th><th scope="col">Làm gì</th></tr></thead>
+            <tbody>
+              <tr><td>/nap 1000</td><td>Nạp 1.000 điểm vào pot nhóm (không reply ai)</td></tr>
+              <tr><td>/nap 200 (reply)</td><td>Cấp 200 điểm cho người được reply; <code>/nap @user 200</code> nếu có @username</td></tr>
+              <tr><td>/pot</td><td>Số dư pot và nhật ký các lần admin nạp, cấp, đổi cài đặt</td></tr>
+              <tr><td>/thuong 10 5</td><td>Thưởng hoạt động: 10 điểm/ngày cho ai có ≥ 5 tin nhắn hợp lệ</td></tr>
+              <tr><td>/caidat</td><td>Xem cấu hình chống lạm dụng của nhóm</td></tr>
+              <tr><td>/caidat thamnien 3</td><td>Phải ở trong nhóm 3 ngày mới được tip/mở bao (0–30)</td></tr>
+              <tr><td>/caidat hanmuctip 500</td><td>Mỗi người tip tối đa 500 điểm/ngày</td></tr>
+              <tr><td>/caidat cooldown 3</td><td>Giãn cách 3 giây giữa hai lệnh của cùng một người</td></tr>
+              <tr><td>/caidat nguongduyet 2000</td><td>Giao dịch trên 2.000 điểm phải được admin <code>/duyet</code></td></tr>
+              <tr><td>/caidat thoigianbao 10</td><td>Bao lì xì mở trong 10 phút (1–1440)</td></tr>
+              <tr><td>/caidat songuoinhan 50</td><td>Mỗi bao tối đa 50 người nhận (1–100)</td></tr>
+              <tr><td>/caidat ngansachthuong 1000</td><td>Pot phát thưởng hoạt động tối đa 1.000 điểm/ngày</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="fine-print">Mọi lần admin nạp, cấp điểm hay đổi cài đặt đều ghi vào nhật ký xem được bằng <code>/pot</code>, để thành viên có thể hỏi và admin có thể trả lời.</p>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+      <div class="container narrow">
+        <h2>Câu hỏi thường gặp</h2>
+
+        <details class="faq-item">
+          <summary>Có mất phí không?</summary>
+          <p>Không. Thêm bot, nạp pot, cấp điểm, mở bao — tất cả miễn phí trong giai đoạn beta. Không có gói trả phí, không quảng cáo trong nhóm, không bán dữ liệu. Nếu sau này có tính năng trả phí, chúng tôi sẽ thông báo trước và tính năng hiện tại vẫn miễn phí.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Điểm LIXI có phải tiền không? Đổi ra tiền được không?</summary>
+          <p>Không. Điểm trong bot là số ghi trong cơ sở dữ liệu của bot, <strong>không có giá trị tiền thật, không phải khoản đầu tư</strong>, không mua bán được. Lệnh <code>/rut</code> chỉ ghi lại một yêu cầu để admin nhóm xử lý theo cách của nhóm mình (ví dụ đổi quà nội bộ); bot không chuyển tiền hay tài sản mã hóa nào. Ai nói với thành viên của bạn rằng điểm "sắp đổi ra tiền" là nói sai, kể cả khi họ tự nhận là chúng tôi.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Tôi có reset điểm của nhóm được không?</summary>
+          <p>Bản này chưa có lệnh reset tự phục vụ. Cách gần nhất: dùng <code>/caidat</code> để siết hạn mức về 0 tạm thời, hoặc để điểm cũ đó và bắt đầu chu kỳ mới bằng cách nạp pot và cấp điểm lại. Trong giai đoạn beta, toàn bộ điểm có thể bị chúng tôi reset khi nâng cấp — chúng tôi sẽ báo trước trên kênh chính thức. Nếu nhóm bạn cần xóa hẳn dữ liệu, gửi yêu cầu qua kênh liên hệ ở cuối trang; chúng tôi xóa và xác nhận.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Bot thấy những gì trong nhóm? Dữ liệu lưu ở đâu?</summary>
+          <p>Bot lưu, theo từng nhóm: mã số Telegram của thành viên, tên hiển thị và @username (nếu có), thời điểm bot thấy người đó lần đầu, <strong>số lượng</strong> tin nhắn văn bản mỗi ngày (để tính thưởng hoạt động — <strong>không lưu nội dung tin nhắn</strong>), số dư, lịch sử giao dịch điểm, cấu hình nhóm và nhật ký admin. Bot đọc được tin nhắn trong nhóm vì là admin (đây là cách Telegram hoạt động với mọi bot admin), nhưng không ghi lại nội dung, không lưu ảnh, file hay tin nhắn riêng. Dữ liệu nằm trên máy chủ của dự án, không chia sẻ cho bên thứ ba. Bạn có thể tự kiểm tra trong mã nguồn bot (link ở cuối trang).</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Gỡ bot ra khỏi nhóm thế nào?</summary>
+          <p>Như gỡ một thành viên: mở danh sách thành viên → chọn Lì Xì Bot → <em>Xóa khỏi nhóm</em>. Không cần báo ai, không có bước xác nhận với chúng tôi. Sau khi gỡ, bot không đọc được gì trong nhóm nữa. Dữ liệu điểm cũ vẫn còn trên máy chủ (để nếu bạn thêm lại, số dư không mất); muốn xóa hẳn, gửi yêu cầu qua kênh liên hệ ở cuối trang.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Thành viên gõ /lixi bị báo "chưa đủ thâm niên"?</summary>
+          <p>Đó là lớp chống lạm dụng mặc định: phải ở trong nhóm 3 ngày (tính từ lúc bot thấy người đó lần đầu) mới được tip, mở bao hay rút. Nhóm kín, toàn người quen thì admin có thể hạ bằng <code>/caidat thamnien 0</code>; nhóm công khai nên giữ 3. Xem số dư và lịch sử thì không bị giới hạn này.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Bot không trả lời?</summary>
+          <p>Kiểm tra theo thứ tự: (1) bot còn trong nhóm không; (2) bot đã là admin chưa; (3) bạn gõ trong nhóm chứ không phải chat riêng; (4) gõ lại <code>/start</code>. Đang beta nên đôi khi tin đầu tiên sau một lúc yên lặng mất vài giây. Nếu vẫn im, báo cho chúng tôi qua kênh ở cuối trang kèm giờ và lệnh đã gõ.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Nhóm tôi được lợi gì, và các bạn được gì?</summary>
+          <p>Nhóm bạn có một cách cảm ơn, khích lệ và chơi cùng nhau không tốn tiền, có lịch sử rõ ràng, admin không phải làm tay. Chúng tôi được thứ duy nhất đang cần: biết bot có được dùng thật mỗi ngày hay không, và lỗi ở đâu. Chúng tôi không thu phí, không đặt quảng cáo, không bán dữ liệu nhóm bạn.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="brand-name">LiXi (LIXI) · Lì Xì Bot</p>
+          <p>Bot lì xì, tip điểm và thưởng thành viên cho nhóm Telegram. Đang beta.</p>
+          <p><a href="index.html">Về trang chủ</a> · <a href="index.html#faq">Câu hỏi về dự án</a></p>
+        </div>
+        <nav aria-label="Kênh chính thức">
+          <p class="footer-heading">Kênh chính thức</p>
+          <ul class="footer-links">
+            <li><a href="[[LINK_BOT]]">Thêm Lì Xì Bot vào nhóm</a></li>
+            <li><a href="#" data-link="telegram">Kênh Telegram của bot</a></li>
+            <li><a href="#" data-link="github">Mã nguồn bot</a></li>
+            <li><a href="#" data-link="docs">Tài liệu</a></li>
+          </ul>
+        </nav>
+        <nav aria-label="Liên hệ">
+          <p class="footer-heading">Liên hệ và báo lỗi</p>
+          <ul class="footer-links">
+            <li><a href="#" data-link="community">Nhóm hỗ trợ admin</a></li>
+            <li><a href="#" data-link="privacy">Chính sách quyền riêng tư</a></li>
+          </ul>
+        </nav>
+      </div>
+
+      <div class="disclaimer">
+        <h2 class="disclaimer-title">Lưu ý</h2>
+        <p><strong>Điểm không phải tiền.</strong> Điểm LIXI trong Lì Xì Bot là điểm thưởng nội bộ trong giai đoạn beta, không có giá trị tiền thật, không phải khoản đầu tư, không mua bán được và có thể bị reset. Bot không chuyển tiền hay tài sản mã hóa. Không có lời hứa nào về việc điểm sẽ có giá trị trong tương lai.</p>
+        <p><strong>An toàn.</strong> Chỉ có một Lì Xì Bot chính thức, là bot mà nút trên trang này mở ra. Chúng tôi không bao giờ nhắn riêng trước, không xin seed phrase hay mật khẩu, không yêu cầu chuyển tiền để "kích hoạt", "xác minh" hay "nhận lì xì".</p>
+      </div>
+
+      <p class="copyright">© <span id="year"></span> LiXi. Trang tĩnh, không dùng cookie theo dõi, không tải tài nguyên từ bên thứ ba.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

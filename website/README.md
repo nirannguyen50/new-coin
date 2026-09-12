@@ -7,11 +7,16 @@ thưởng, tip, bao lì xì chia ngẫu nhiên). Một file HTML, không phụ t
 
 ```
 website/
-├── index.html   # nội dung (tiếng Việt)
-├── style.css    # giao diện, biến màu sáng/tối
-├── script.js    # CONFIG (link), ALLOCATIONS (tokenomics), biểu đồ, menu mobile
+├── index.html     # trang chủ (tiếng Việt)
+├── them-bot.html  # hướng dẫn admin tự thêm Lì Xì Bot vào nhóm trong 2 phút (tự phục vụ, có FAQ)
+├── style.css      # giao diện, biến màu sáng/tối (dùng chung cho cả hai trang)
+├── script.js      # CONFIG (link), ALLOCATIONS (tokenomics), biểu đồ, menu mobile (dùng chung)
 └── README.md
 ```
+
+`them-bot.html` dùng chung `style.css` và `script.js` với trang chủ, chỉ thêm một khối `<style>` nhỏ cho bố cục
+các bước. Trang được viết cho admin nhóm Telegram đọc xong là làm được, không cần liên hệ đội ngũ; mọi câu chữ
+giữ nguyên nguyên tắc: điểm trong bot chưa có giá trị tiền, không hứa hẹn giá trị, không nói về giá.
 
 ## Xem thử trên máy
 
@@ -29,7 +34,13 @@ Mọi chỗ cần điền đều có dạng `[[ĐIỀN: ...]]` và được tô 
 
 1. **Liệt kê chỗ cần điền:**
    ```bash
-   grep -n "ĐIỀN" index.html script.js
+   grep -n "ĐIỀN\|LINK_BOT" index.html them-bot.html script.js
+   ```
+   Riêng `them-bot.html` có placeholder `[[LINK_BOT]]` (xuất hiện nhiều lần, trong `href`): thay **toàn bộ** bằng
+   link thêm bot vào nhóm dạng `https://t.me/<username_bot>?startgroup=true` (username lấy từ BotFather; khi đổi
+   username bot thì đổi lại link này). Ví dụ:
+   ```bash
+   sed -i 's#\[\[LINK_BOT\]\]#https://t.me/<username_bot>?startgroup=true#g' them-bot.html
    ```
 2. **Link kênh chính thức** — sửa object `CONFIG` ở đầu `script.js`. Link để trống sẽ trỏ về `#` và
    được đánh dấu `*` trên trang; điền URL thật thì dấu `*` tự mất. Khóa `pancakeswap` (link pool LIXI)
@@ -100,10 +111,10 @@ gốc về `website/`, không cần build.
 ```bash
 # 1. HTML đóng mở thẻ đúng (script Python dùng html.parser, xem ví dụ trong lịch sử repo hoặc tự viết)
 # 2. Không tải tài nguyên ngoài:
-grep -nE "https?://|//cdn|@import|url\(" website/index.html website/style.css website/script.js
+grep -nE "https?://|//cdn|@import|url\(" website/index.html website/them-bot.html website/style.css website/script.js
 #    → không được có dòng nào (README này không tính vì không được trình duyệt tải).
 # 3. Còn placeholder chưa điền?
-grep -n "ĐIỀN" website/index.html website/script.js
+grep -n "ĐIỀN\|LINK_BOT" website/index.html website/them-bot.html website/script.js
 ```
 
 Kiểm tra thủ công: thu cửa sổ về ~400px (menu chuyển thành nút *Menu*, biểu đồ xếp dọc), bật chế độ tối
