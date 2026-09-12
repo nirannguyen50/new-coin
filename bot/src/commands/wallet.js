@@ -21,13 +21,20 @@ const TX_LABELS = {
   admin_credit: 'Admin cấp điểm',
 };
 
-function describeTx(tx, userId) {
+/**
+ * Một dòng lịch sử. `state` dùng để tra TÊN của người ở đầu kia giao dịch — không có
+ * state (hoặc chưa lưu tên) thì `ledger.memberLabel` trả về "người dùng #<id>".
+ *
+ * Tên do người dùng tự đặt nên luôn phải `escapeHtml` trước khi ghép vào tin nhắn HTML.
+ */
+function describeTx(tx, userId, state = null) {
   const key = String(userId);
   const label = TX_LABELS[tx.type] || tx.type;
   const time = formatVNDateTime(tx.ts);
+  const who = (id) => escapeHtml(ledger.memberLabel(state, id));
   let direction = '';
-  if (tx.to === key && tx.from) direction = ` từ ${tx.from === 'pot' ? 'pot' : `#${tx.from}`}`;
-  if (tx.from === key && tx.to) direction = ` cho #${tx.to}`;
+  if (tx.to === key && tx.from) direction = ` từ ${tx.from === 'pot' ? 'pot' : who(tx.from)}`;
+  if (tx.from === key && tx.to) direction = ` cho ${tx.to === 'pot' ? 'pot' : who(tx.to)}`;
   const sign = tx.to === key ? '+' : tx.from === key ? '-' : '';
   const note = tx.note ? ` — ${escapeHtml(tx.note)}` : '';
   return `• [${time}] ${label}${direction}: ${sign}${tx.amount} điểm${note}`;
@@ -39,7 +46,7 @@ function register(bot, { storage }) {
     const chatId = ctx.chat.id;
     const userId = ctx.from.id;
     const balance = await storage.withGroup(chatId, (state) => {
-      ledger.ensureMember(state, userId);
+      ledger.rememberMember(state, ctx.from);
       return ledger.getBalance(state, userId);
     });
     await ctx.replyWithHTML(`💰 Số dư của bạn trong nhóm này: <b>${balance} điểm LIXI</b>.`);
@@ -49,7 +56,7 @@ function register(bot, { storage }) {
     if (!(await requireGroup(ctx))) return;
     const chatId = ctx.chat.id;
     const userId = ctx.from.id;
-    await storage.ensureMember(chatId, userId);
+    await storage.withGroup(chatId, (state) => ledger.rememberMember(state, ctx.from));
     // Dùng phương thức của kho lưu trữ (không lọc trong bộ nhớ): với kho Postgres đây là
     // một truy vấn có chỉ mục, nên vẫn đúng cả khi nhóm đã có rất nhiều giao dịch.
     const txs = await storage.listRecentTransactions(chatId, userId, 10);
@@ -57,7 +64,10 @@ function register(bot, { storage }) {
       await ctx.reply('Bạn chưa có giao dịch nào trong nhóm này.');
       return;
     }
-    const lines = txs.map((tx) => describeTx(tx, userId));
+    // Đọc state (chỉ đọc, không khoá) để tra TÊN của người ở đầu kia mỗi giao dịch —
+    // trước đây dòng lịch sử hiện số id Telegram, đọc lên không biết là ai.
+    const state = await storage.readGroup(chatId);
+    const lines = txs.map((tx) => describeTx(tx, userId, state));
     await ctx.replyWithHTML(`🧾 <b>10 giao dịch gần nhất của bạn:</b>\n${lines.join('\n')}`);
   });
 }

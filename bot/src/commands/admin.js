@@ -51,14 +51,20 @@ function register(bot, { superAdminIds = [], storage } = {}) {
         : recentLog
             .map((entry) => {
               const when = formatVNDateTime(entry.ts);
+              // Tên người, không phải số id: `memberLabel` trả chuỗi THÔ do người dùng
+              // tự đặt nên BẮT BUỘC escapeHtml trước khi ghép vào tin nhắn HTML.
+              const admin = escapeHtml(ledger.memberLabel(state, entry.adminId));
               // Log đổi cấu hình (/caidat) dùng chung bảng này nhưng không phải "cấp điểm".
               if (String(entry.target || '').startsWith('config:')) {
-                return `• [${when}] admin #${entry.adminId} ${escapeHtml(
+                return `• [${when}] admin ${admin} ${escapeHtml(
                   entry.note || `đổi cấu hình ${entry.target.slice('config:'.length)}`
                 )}`;
               }
-              const target = entry.target === 'pot' ? 'pot nhóm' : `#${entry.target}`;
-              return `• [${when}] admin #${entry.adminId} cấp ${entry.amount} điểm cho ${target}${
+              const target =
+                entry.target === 'pot'
+                  ? 'pot nhóm'
+                  : escapeHtml(ledger.memberLabel(state, entry.target));
+              return `• [${when}] admin ${admin} cấp ${entry.amount} điểm cho ${target}${
                 entry.note ? ` — ${escapeHtml(entry.note)}` : ''
               }`;
             })
@@ -128,7 +134,13 @@ function register(bot, { superAdminIds = [], storage } = {}) {
       if (!target) {
         try {
           const chat = await ctx.telegram.getChat(`@${usernameMention}`);
-          if (chat && chat.id) target = { id: chat.id, first_name: chat.first_name || chat.username };
+          if (chat && chat.id) {
+            target = {
+              id: chat.id,
+              first_name: chat.first_name || chat.username,
+              username: chat.username || usernameMention,
+            };
+          }
         } catch (err) {
           target = null;
         }
@@ -146,11 +158,25 @@ function register(bot, { superAdminIds = [], storage } = {}) {
     }
 
     if (target) {
-      const entry = await storage.withGroup(chatId, (state) => {
-        ledger.ensureMember(state, target.id, now);
-        return ledger.adminCreditUser(state, adminId, target.id, amount, 'Admin cấp điểm trực tiếp', now);
+      const outcome = await storage.withGroup(chatId, (state) => {
+        // Ghi luôn tên người được reply/nhắc (`reply_to_message.from` hoặc text_mention)
+        // để câu xác nhận — và mọi tin nhắn sau — gọi tên thay vì số id.
+        ledger.rememberMember(state, target, now);
+        const entry = ledger.adminCreditUser(
+          state,
+          adminId,
+          target.id,
+          amount,
+          'Admin cấp điểm trực tiếp',
+          now
+        );
+        return { entry, label: ledger.memberLabel(state, target.id) };
       });
-      await ctx.replyWithHTML(`✅ Đã cấp <b>${entry.amount} điểm</b> trực tiếp cho #${entry.target}.`);
+      await ctx.replyWithHTML(
+        `✅ Đã cấp <b>${outcome.entry.amount} điểm</b> trực tiếp cho <b>${escapeHtml(
+          outcome.label
+        )}</b>.`
+      );
       return;
     }
 
@@ -257,16 +283,22 @@ function register(bot, { superAdminIds = [], storage } = {}) {
     const chatId = ctx.chat.id;
     const adminId = ctx.from.id;
     try {
-      const record = await storage.withGroup(
+      const outcome = await storage.withGroup(
         chatId,
-        (state) => ledger.decideWithdrawal(state, id[1], decision, adminId, Date.now()),
+        (state) => {
+          const record = ledger.decideWithdrawal(state, id[1], decision, adminId, Date.now());
+          // Tên người rút (lấy trong mutator — chỉ ở đây mới có state của nhóm).
+          return { record, label: ledger.memberLabel(state, record.userId) };
+        },
         // Kho Postgres chỉ nạp sẵn các yêu cầu đang chờ; hỏi đích danh mã này để
         // yêu cầu ĐÃ xử lý cũng được nạp (báo "đã xử lý rồi" thay vì "không tìm thấy").
         { withdrawalIds: [String(id[1])] }
       );
+      const { record } = outcome;
       const verb = decision === 'approve' ? 'duyệt' : 'từ chối (đã hoàn điểm)';
       await ctx.replyWithHTML(
-        `✅ Đã ${verb} yêu cầu rút <b>#${record.id}</b> (${record.amount} điểm, ${record.address}).`
+        `✅ Đã ${verb} yêu cầu rút <b>#${record.id}</b> của <b>${escapeHtml(outcome.label)}</b> ` +
+          `(${record.amount} điểm, ${escapeHtml(record.address)}).`
       );
     } catch (err) {
       await ctx.reply(`Không xử lý được: ${safeErrorMessage(err)}`);
@@ -286,17 +318,27 @@ function register(bot, { superAdminIds = [], storage } = {}) {
     const chatId = ctx.chat.id;
     const adminId = ctx.from.id;
     try {
-      const approval = await storage.withGroup(
+      const outcome = await storage.withGroup(
         chatId,
-        (state) =>
-          decision === 'approve'
-            ? ledger.approveQueuedTransfer(state, id[1], adminId, Date.now())
-            : ledger.rejectQueuedTransfer(state, id[1], adminId, Date.now()),
+        (state) => {
+          const approval =
+            decision === 'approve'
+              ? ledger.approveQueuedTransfer(state, id[1], adminId, Date.now())
+              : ledger.rejectQueuedTransfer(state, id[1], adminId, Date.now());
+          // Tên hai bên phải lấy TRONG mutator (chỉ ở đây mới có state của nhóm).
+          return {
+            approval,
+            fromLabel: ledger.memberLabel(state, approval.fromUserId),
+            toLabel: ledger.memberLabel(state, approval.toUserId),
+          };
+        },
         { approvalIds: [id[1]] }
       );
+      const { approval } = outcome;
       const verb = decision === 'approve' ? 'duyệt' : 'từ chối';
       await ctx.replyWithHTML(
-        `✅ Đã ${verb} giao dịch <b>#${approval.id}</b> (tip ${approval.amount} điểm từ #${approval.fromUserId} cho #${approval.toUserId}).`
+        `✅ Đã ${verb} giao dịch <b>#${approval.id}</b> (tip ${approval.amount} điểm từ ` +
+          `<b>${escapeHtml(outcome.fromLabel)}</b> cho <b>${escapeHtml(outcome.toLabel)}</b>).`
       );
     } catch (err) {
       await ctx.reply(`Không xử lý được: ${safeErrorMessage(err)}`);

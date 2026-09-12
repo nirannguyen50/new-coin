@@ -81,11 +81,91 @@ function ensureMember(state, userId, nowMs = Date.now()) {
       balance: 0,
       firstSeenAt: nowMs,
       lastCommandAt: 0,
+      displayName: null, // tên để hiển thị trong tin nhắn (first_name, hoặc username)
+      username: null, // @username công khai nếu có (không bắt buộc)
       dailyTipUsed: {}, // dateKey -> tổng điểm đã tip trong ngày
       messageCounts: {}, // dateKey -> số tin nhắn hợp lệ trong ngày
     };
   }
   return state.members[key];
+}
+
+// ----------------------------------------------------------------------------
+// Tên hiển thị của thành viên — để tin nhắn nói "Đã cấp 2000 điểm cho Lan" thay vì
+// "cho #985735377" (người đọc không biết số đó là ai).
+//
+// Tên là DỮ LIỆU KHÔNG TIN CẬY: người dùng tự đặt first_name/username trên Telegram,
+// nên có thể chứa `<`, `>`, `&` hoặc dài hàng trăm ký tự. Vì vậy:
+//   - luôn cắt bớt khoảng trắng và giới hạn độ dài (MAX_DISPLAY_NAME_LENGTH) trước khi
+//     lưu, để một cái tên cố ý dài không phình bản ghi/dòng database;
+//   - lớp lệnh PHẢI bọc `escapeHtml(...)` quanh kết quả `memberLabel` trước khi ghép
+//     vào tin nhắn HTML (xem src/commands/*.js). Hàm ở đây trả về chuỗi THÔ.
+// ----------------------------------------------------------------------------
+
+/** Độ dài tối đa của tên hiển thị được lưu (ký tự). */
+const MAX_DISPLAY_NAME_LENGTH = 64;
+
+/**
+ * Chuẩn hoá một cái tên do người dùng tự đặt: gộp khoảng trắng, cắt hai đầu, giới hạn
+ * độ dài. Trả về `null` nếu sau khi chuẩn hoá không còn gì (chuỗi rỗng, chỉ khoảng
+ * trắng, hoặc không phải chuỗi).
+ */
+function normalizeDisplayName(raw) {
+  if (raw == null) return null;
+  if (typeof raw === 'object') return null;
+  const collapsed = String(raw).replace(/\s+/g, ' ').trim();
+  if (!collapsed) return null;
+  const capped = collapsed.slice(0, MAX_DISPLAY_NAME_LENGTH).trim();
+  return capped || null;
+}
+
+/**
+ * Tên hiển thị suy ra từ một đối tượng user của Telegram: ưu tiên `first_name`, sau đó
+ * `username`, không có gì thì `null` (KHÔNG bao giờ trả về số id — số id là thứ ta đang
+ * muốn tránh hiện ra).
+ */
+function displayNameFromUser(user) {
+  if (!user || typeof user !== 'object') return null;
+  return normalizeDisplayName(user.first_name) || normalizeDisplayName(user.username) || null;
+}
+
+/**
+ * "Đã thấy" một thành viên KÈM tên: ensureMember + cập nhật lại tên mỗi lần gặp, nên
+ * người đổi tên trên Telegram thì lần sau bot gọi đúng tên mới.
+ *
+ * Chỉ ghi khi có tên thật: một update thiếu `first_name`/`username` KHÔNG được xoá cái
+ * tên đã biết trước đó.
+ *
+ * @param {object} state state của nhóm
+ * @param {{id: string|number, first_name?: string, username?: string}} user user Telegram
+ * @returns {object|null} member record, hoặc null nếu `user` không có id.
+ */
+function rememberMember(state, user, nowMs = Date.now()) {
+  if (!user || user.id === undefined || user.id === null) return null;
+  const member = ensureMember(state, user.id, nowMs);
+  const displayName = displayNameFromUser(user);
+  if (displayName) member.displayName = displayName;
+  const username = normalizeDisplayName(user.username);
+  if (username) member.username = username;
+  return member;
+}
+
+/**
+ * Tên để hiển thị cho `userId` trong nhóm này — HÀM THUẦN, trả về chuỗi THÔ (lớp lệnh
+ * phải `escapeHtml` trước khi đưa vào tin nhắn HTML).
+ *
+ * Số id chỉ xuất hiện khi thật sự CHƯA có tên nào trên sổ (thành viên cũ từ trước khi
+ * bot lưu tên, hoặc người chưa từng nhắn gì kể từ lúc nâng cấp) — lần tới họ xuất hiện
+ * là tên được ghi vào và các tin nhắn sau đó gọi đúng tên.
+ */
+function memberLabel(state, userId) {
+  const key = String(userId);
+  const member = state && state.members ? state.members[key] : null;
+  if (member) {
+    const name = normalizeDisplayName(member.displayName) || normalizeDisplayName(member.username);
+    if (name) return name;
+  }
+  return `người dùng #${key}`;
 }
 
 function getBalance(state, userId) {
@@ -925,6 +1005,11 @@ module.exports = {
   DAY_MS,
   dateKey,
   ensureMember,
+  MAX_DISPLAY_NAME_LENGTH,
+  normalizeDisplayName,
+  displayNameFromUser,
+  rememberMember,
+  memberLabel,
   getBalance,
   creditPure,
   debitPure,

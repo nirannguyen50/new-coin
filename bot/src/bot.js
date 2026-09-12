@@ -53,7 +53,9 @@ function createBot(token, { superAdminIds = [], storage } = {}) {
         settled = await storage.withGroup(
           ctx.chat.id,
           (state) => {
-            ledger.ensureMember(state, ctx.from.id, now);
+            // `rememberMember` (thay cho `ensureMember`) ghi/làm mới luôn TÊN hiển thị
+            // của người gửi, để mọi tin nhắn sau đó gọi tên thay vì số id Telegram.
+            ledger.rememberMember(state, ctx.from, now);
             return ledger.settleDueEnvelopes(state, now);
           },
           { nowMs: now }
@@ -76,6 +78,7 @@ function createBot(token, { superAdminIds = [], storage } = {}) {
     const isCommand = !!(msg.text && msg.text.startsWith('/'));
     if (isTrackedGroup(ctx) && msg.text && !isCommand) {
       await storage.withGroup(ctx.chat.id, (state) => {
+        ledger.rememberMember(state, ctx.from);
         ledger.recordMessage(state, ctx.from.id);
       });
     }

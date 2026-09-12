@@ -178,6 +178,8 @@ const SCHEMA_STATEMENTS = [
      balance         BIGINT NOT NULL DEFAULT 0 CHECK (balance >= 0),
      first_seen_at   BIGINT NOT NULL,
      last_command_at BIGINT NOT NULL DEFAULT 0,
+     display_name    TEXT,
+     username        TEXT,
      PRIMARY KEY (chat_id, user_id)
    )`,
 
@@ -295,6 +297,41 @@ const SCHEMA_STATEMENTS = [
    )`,
 ];
 
+/**
+ * DI TRÚ CỘNG THÊM (additive migration) — CHO DATABASE ĐÃ TỒN TẠI.
+ *
+ * VÌ SAO PHẢI CÓ RIÊNG: mọi câu ở `SCHEMA_STATEMENTS` đều là `CREATE TABLE IF NOT
+ * EXISTS`. Trên một database ĐÃ được tạo bởi bản deploy trước, câu đó KHÔNG làm gì cả —
+ * nên một cột mới thêm vào phần `CREATE TABLE` sẽ không bao giờ xuất hiện ở đó. Muốn
+ * database cũ có cột mới thì phải `ALTER TABLE ... ADD COLUMN`.
+ *
+ * QUY TẮC cho mọi câu đặt ở đây:
+ *   1. Chỉ THÊM (add column, add index). TUYỆT ĐỐI không DROP/RENAME/đổi kiểu cột, không
+ *      tạo lại bảng — số dư của người dùng đang nằm trong đó.
+ *   2. Luôn `IF NOT EXISTS` để chạy lại bao nhiêu lần cũng vô hại (idempotent).
+ *   3. Cột mới phải cho phép NULL (hoặc có DEFAULT) — các dòng cũ không có giá trị, và
+ *      code phải đọc được dòng thiếu giá trị mà không lỗi.
+ *
+ * Được chạy ở hai chỗ: `ensureSchema()` (khi mở `/api/setup`) và một lần cho mỗi tiến
+ * trình ngay trước thao tác ghi đầu tiên (`_ensureAdditiveMigrations`), nên một bản
+ * deploy cũ tự có cột mới ở lần "khởi động nguội" (cold start) kế tiếp.
+ */
+const MIGRATION_STATEMENTS = [
+  // Tên hiển thị của thành viên (2026-09) — để tin nhắn gọi tên thay vì số id Telegram.
+  `ALTER TABLE $SCHEMA$.lixi_members ADD COLUMN IF NOT EXISTS display_name TEXT`,
+  `ALTER TABLE $SCHEMA$.lixi_members ADD COLUMN IF NOT EXISTS username TEXT`,
+];
+
+/**
+ * Cache "đã chạy di trú cộng thêm" theo (chuỗi kết nối + schema), dùng chung cho cả
+ * tiến trình. Giá trị là Promise<boolean>: true = các cột mới chắc chắn có.
+ */
+const migrationCache = new Map();
+
+function migrationCacheKey(connectionString, schema) {
+  return `${connectionString}::${schema}`;
+}
+
 /** Tên schema chỉ được chứa chữ/số/gạch dưới — chặn SQL injection qua biến môi trường. */
 function assertSafeSchemaName(schema) {
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(String(schema))) {
@@ -341,7 +378,11 @@ class PostgresLedger {
     return getPool(this.connectionString);
   }
 
-  /** Tạo toàn bộ bảng nếu chưa có. Gọi lại bao nhiêu lần cũng an toàn (idempotent). */
+  /**
+   * Tạo toàn bộ bảng nếu chưa có, RỒI thêm những cột mới vào các bảng đã tồn tại từ
+   * bản deploy trước (xem `MIGRATION_STATEMENTS`). Gọi lại bao nhiêu lần cũng an toàn
+   * (idempotent) và KHÔNG xoá/tạo lại gì — số dư đang có không bị ảnh hưởng.
+   */
   async ensureSchema() {
     const client = await this.pool.connect();
     try {
@@ -349,10 +390,60 @@ class PostgresLedger {
       for (const statement of SCHEMA_STATEMENTS) {
         await client.query(statement.split('$SCHEMA$').join(this.schema));
       }
+      // Database cũ: bảng đã có nên CREATE TABLE IF NOT EXISTS ở trên không làm gì —
+      // các cột thêm sau này chỉ vào được bằng ALTER TABLE ADD COLUMN IF NOT EXISTS.
+      for (const statement of MIGRATION_STATEMENTS) {
+        await client.query(statement.split('$SCHEMA$').join(this.schema));
+      }
     } finally {
       client.release();
     }
+    // Đã chắc chắn có các cột mới -> khỏi chạy lại phần di trú lười bên dưới.
+    migrationCache.set(
+      migrationCacheKey(this.connectionString, this.schema),
+      Promise.resolve(true)
+    );
     return { ok: true, schema: this.schema };
+  }
+
+  /**
+   * Chạy phần di trú cộng thêm MỘT LẦN cho mỗi tiến trình, trước thao tác ghi đầu tiên.
+   *
+   * Vì sao cần: trên Vercel, `ensureSchema()` chỉ chạy khi ai đó mở `/api/setup`. Nếu
+   * chỉ dựa vào đó thì một bản deploy đã có database cũ sẽ thiếu cột mới cho tới khi
+   * chủ bot nhớ mở trang cài đặt. Ở đây bot tự thêm cột ở lần khởi động nguội kế tiếp.
+   *
+   * KHÔNG BAO GIỜ ném lỗi ra ngoài: nếu ALTER TABLE thất bại (chưa có bảng, hoặc tài
+   * khoản database không có quyền ALTER) thì trả về `false` và lớp ghi bên dưới tự
+   * dùng câu lệnh KHÔNG có cột mới — bot vẫn chạy đúng, chỉ là chưa hiện được tên.
+   *
+   * @returns {Promise<boolean>} các cột mới đã chắc chắn tồn tại chưa.
+   */
+  _ensureAdditiveMigrations() {
+    const key = migrationCacheKey(this.connectionString, this.schema);
+    const cached = migrationCache.get(key);
+    if (cached) return cached;
+    const schema = this.schema;
+    const promise = (async () => {
+      const client = await this.pool.connect();
+      try {
+        for (const statement of MIGRATION_STATEMENTS) {
+          await client.query(statement.split('$SCHEMA$').join(schema));
+        }
+        return true;
+      } finally {
+        client.release();
+      }
+    })().catch((err) => {
+      console.error(
+        'Không thêm được cột mới vào bảng lixi_members (bot vẫn chạy, tạm thời hiện ' +
+          'số id thay cho tên). Mở /api/setup để thử lại:',
+        safeErrorMessage(err)
+      );
+      return false;
+    });
+    migrationCache.set(key, promise);
+    return promise;
   }
 
   /** Xoá toàn bộ bảng (CHỈ dùng trong test — không có lệnh bot nào gọi hàm này). */
@@ -363,6 +454,8 @@ class PostgresLedger {
     } finally {
       client.release();
     }
+    // Bảng vừa bị xoá -> "đã di trú" không còn đúng nữa.
+    migrationCache.delete(migrationCacheKey(this.connectionString, this.schema));
   }
 
   async close() {
@@ -391,12 +484,16 @@ class PostgresLedger {
    */
   async withGroup(chatId, mutator, opts = {}) {
     const key = String(chatId);
+    // Thêm cột mới cho database cũ — một lần cho mỗi tiến trình, NGOÀI transaction
+    // (ALTER TABLE khoá bảng rất ngắn, không nên nằm trong transaction đang giữ khoá
+    // hàng của nhóm). Không bao giờ ném lỗi: false = ghi theo lược đồ cũ.
+    const hasNameColumns = await this._ensureAdditiveMigrations();
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
       const { state, snapshot } = await this._loadState(client, key, opts);
       const result = mutator(state);
-      await this._persist(client, key, state, snapshot);
+      await this._persist(client, key, state, snapshot, { hasNameColumns });
       await client.query('COMMIT');
       return result;
     } catch (err) {
@@ -491,6 +588,11 @@ class PostgresLedger {
         balance: toNumber(row.balance),
         firstSeenAt: toNumber(row.first_seen_at),
         lastCommandAt: toNumber(row.last_command_at),
+        // `?? null`: database cũ chưa có cột này (row.display_name là `undefined`) và
+        // các dòng cũ chưa có tên (NULL) — cả hai đều thành null, `memberLabel` tự
+        // dùng bản dự phòng "người dùng #<id>" cho tới khi gặp lại người đó.
+        displayName: row.display_name ?? null,
+        username: row.username ?? null,
         dailyTipUsed: {},
         messageCounts: {},
       };
@@ -631,7 +733,7 @@ class PostgresLedger {
   // Ghi lại phần đã thay đổi
   // -------------------------------------------------------------------------
 
-  async _persist(client, chatId, state, snapshot) {
+  async _persist(client, chatId, state, snapshot, { hasNameColumns = true } = {}) {
     const s = this.schema;
 
     // --- Nhóm (pot, các bộ đếm id, quy tắc thưởng, cấu hình) ---
@@ -665,14 +767,34 @@ class PostgresLedger {
     //     CHECK (balance >= 0) ở đây sẽ huỷ cả transaction nếu số dư âm lọt xuống. ---
     for (const [userId, member] of Object.entries(state.members || {})) {
       const before = snapshot.members[userId];
+      const displayName = ledger.normalizeDisplayName(member.displayName);
+      const username = ledger.normalizeDisplayName(member.username);
       if (
         before &&
         before.balance === member.balance &&
         before.firstSeenAt === member.firstSeenAt &&
-        before.lastCommandAt === member.lastCommandAt
+        before.lastCommandAt === member.lastCommandAt &&
+        (!hasNameColumns ||
+          (before.displayName === displayName && before.username === username))
       ) {
-        // không đổi gì ở phần số dư — vẫn phải kiểm tra bộ đếm ngày bên dưới
+        // không đổi gì ở phần số dư / tên — vẫn phải kiểm tra bộ đếm ngày bên dưới
+      } else if (hasNameColumns) {
+        await client.query(
+          `INSERT INTO ${s}.lixi_members
+             (chat_id, user_id, balance, first_seen_at, last_command_at, display_name, username)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (chat_id, user_id) DO UPDATE SET
+             balance         = EXCLUDED.balance,
+             first_seen_at   = LEAST(${s}.lixi_members.first_seen_at, EXCLUDED.first_seen_at),
+             last_command_at = GREATEST(${s}.lixi_members.last_command_at, EXCLUDED.last_command_at),
+             -- COALESCE: một lần ghi không kèm tên KHÔNG được xoá tên đã biết.
+             display_name    = COALESCE(EXCLUDED.display_name, ${s}.lixi_members.display_name),
+             username        = COALESCE(EXCLUDED.username, ${s}.lixi_members.username)`,
+          [chatId, userId, member.balance, member.firstSeenAt, member.lastCommandAt, displayName, username]
+        );
       } else {
+        // Database cũ chưa thêm được cột tên (xem `_ensureAdditiveMigrations`): ghi
+        // theo lược đồ cũ để số dư vẫn đúng, tên sẽ được ghi sau khi di trú xong.
         await client.query(
           `INSERT INTO ${s}.lixi_members (chat_id, user_id, balance, first_seen_at, last_command_at)
            VALUES ($1, $2, $3, $4, $5)
@@ -1020,6 +1142,8 @@ function snapshotOf(state) {
       balance: m.balance,
       firstSeenAt: m.firstSeenAt,
       lastCommandAt: m.lastCommandAt,
+      displayName: ledger.normalizeDisplayName(m.displayName),
+      username: ledger.normalizeDisplayName(m.username),
       dailyTipUsed: { ...m.dailyTipUsed },
       messageCounts: { ...m.messageCounts },
     };
@@ -1046,6 +1170,7 @@ function snapshotOf(state) {
 module.exports = {
   PostgresLedger,
   SCHEMA_STATEMENTS,
+  MIGRATION_STATEMENTS,
   RECENT_TX_LIMIT,
   POOL_MAX_CLIENTS,
   buildPoolConfig,

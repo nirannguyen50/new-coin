@@ -62,7 +62,12 @@ function defaultConfig() {
 function defaultGroupState(chatId) {
   return {
     chatId: String(chatId),
-    members: {}, // userId(string) -> member record (xem ledger.js)
+    // userId(string) -> member record (xem `ensureMember` trong ledger.js):
+    // { userId, balance, firstSeenAt, lastCommandAt, displayName, username,
+    //   dailyTipUsed, messageCounts }
+    // `displayName` là tên để hiển thị trong tin nhắn (thay cho số id); bản ghi cũ
+    // chưa có tên thì là null/undefined và `ledger.memberLabel` tự dùng bản dự phòng.
+    members: {},
     transactions: [], // lịch sử giao dịch, mới nhất ở cuối
     nextTxId: 1,
     envelopes: {}, // envelopeId(string) -> envelope record đang hoạt động hoặc đã đóng

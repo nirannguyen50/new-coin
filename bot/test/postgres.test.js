@@ -21,6 +21,8 @@ const assert = require('node:assert/strict');
 const ledger = require('../src/ledger');
 const {
   PostgresLedger,
+  SCHEMA_STATEMENTS,
+  MIGRATION_STATEMENTS,
   buildPoolConfig,
   needsSsl,
   assertSafeSchemaName,
@@ -459,6 +461,154 @@ test('PostgresLedger (cần Postgres thật)', async (t) => {
       assert.equal(again.config.cooldownSeconds, 0);
       ledger.recordCommandTime(again, 'a', now);
       assert.equal(ledger.checkCooldown(again, 'a', now).ok, true);
+    });
+
+    // -----------------------------------------------------------------------
+    // DI TRÚ CỘNG THÊM trên DATABASE ĐÃ TỒN TẠI.
+    //
+    // Vì sao test này quan trọng: database thật của chủ bot (Neon) đã được bản deploy
+    // TRƯỚC tạo xong bảng. Mọi câu trong `SCHEMA_STATEMENTS` là `CREATE TABLE IF NOT
+    // EXISTS`, nên thêm cột mới vào phần CREATE TABLE sẽ KHÔNG bao giờ tới được database
+    // đó — phải `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`. Ở đây ta giả lập đúng tình
+    // huống đó: tạo bảng rồi XOÁ hai cột mới (thành bảng y như bản cũ), sau đó kiểm tra
+    // cột được thêm lại, số dư cũ còn nguyên, và tên ghi/đọc được.
+    // -----------------------------------------------------------------------
+    await t.test('di trú cộng thêm: database cũ (thiếu cột tên) được nâng cấp, không mất số dư', async () => {
+      const legacySchema = `${SCHEMA}_legacy`;
+      const coldStartSchema = `${SCHEMA}_cold`;
+
+      /** Dựng lược đồ GIỐNG bản deploy cũ: đủ bảng, nhưng lixi_members chưa có cột tên. */
+      async function createLegacySchema(schema) {
+        const client = await db.pool.connect();
+        try {
+          await client.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+          for (const statement of SCHEMA_STATEMENTS) {
+            await client.query(statement.split('$SCHEMA$').join(schema));
+          }
+          await client.query(
+            `ALTER TABLE ${schema}.lixi_members
+               DROP COLUMN display_name, DROP COLUMN username`
+          );
+        } finally {
+          client.release();
+        }
+      }
+
+      async function memberColumns(schema) {
+        const { rows } = await db.pool.query(
+          `SELECT column_name FROM information_schema.columns
+            WHERE table_schema = $1 AND table_name = 'lixi_members'`,
+          [schema]
+        );
+        return rows.map((r) => r.column_name);
+      }
+
+      /** Số dư có từ trước, ghi bằng SQL thô theo lược đồ CŨ (không qua code mới). */
+      async function seedLegacyBalance(schema, chatId, userId, balance) {
+        await db.pool.query(
+          `INSERT INTO ${schema}.lixi_groups (chat_id) VALUES ($1)
+           ON CONFLICT (chat_id) DO NOTHING`,
+          [chatId]
+        );
+        await db.pool.query(
+          `INSERT INTO ${schema}.lixi_members (chat_id, user_id, balance, first_seen_at)
+           VALUES ($1, $2, $3, $4)`,
+          [chatId, userId, balance, Date.now() - 30 * ledger.DAY_MS]
+        );
+      }
+
+      try {
+        assert.ok(
+          MIGRATION_STATEMENTS.every((st) => /ADD COLUMN IF NOT EXISTS/i.test(st)),
+          'mọi câu di trú phải là ADD COLUMN IF NOT EXISTS (chỉ thêm, không xoá)'
+        );
+        assert.ok(
+          !MIGRATION_STATEMENTS.some((st) => /\b(DROP|RENAME|TRUNCATE)\b/i.test(st)),
+          'câu di trú KHÔNG được xoá/đổi tên gì'
+        );
+
+        // === 1) Đường chính: chủ bot mở /api/setup -> ensureSchema() ==========
+        await createLegacySchema(legacySchema);
+        const legacyCols = await memberColumns(legacySchema);
+        assert.equal(legacyCols.includes('display_name'), false, 'phải bắt đầu từ bảng CŨ');
+        assert.ok(legacyCols.includes('balance'));
+
+        await seedLegacyBalance(legacySchema, 'g-cu', 'nguoi-cu', 4321);
+
+        const upgraded = new PostgresLedger(CONNECTION_STRING, { schema: legacySchema });
+        await upgraded.ensureSchema();
+        // Chạy lại: vẫn phải an toàn (api/setup có thể bị bấm nhiều lần).
+        await upgraded.ensureSchema();
+
+        const afterCols = await memberColumns(legacySchema);
+        assert.ok(afterCols.includes('display_name'), 'thiếu cột display_name sau di trú');
+        assert.ok(afterCols.includes('username'), 'thiếu cột username sau di trú');
+        assert.equal(
+          await upgraded.getBalance('g-cu', 'nguoi-cu'),
+          4321,
+          'số dư có từ trước PHẢI còn nguyên sau di trú'
+        );
+
+        // Dòng cũ chưa có tên -> hiện bản dự phòng, không có gì bị lỗi.
+        const before = await upgraded.readGroup('g-cu');
+        assert.equal(before.members['nguoi-cu'].displayName, null);
+        assert.equal(ledger.memberLabel(before, 'nguoi-cu'), 'người dùng #nguoi-cu');
+
+        // Gặp lại người đó -> tên được ghi, và một instance khác đọc lại đúng.
+        await upgraded.withGroup('g-cu', (state) =>
+          ledger.rememberMember(state, {
+            id: 'nguoi-cu',
+            first_name: 'Bác Cũ',
+            username: 'bac_cu',
+          })
+        );
+        const fresh = new PostgresLedger(CONNECTION_STRING, { schema: legacySchema });
+        const reloaded = await fresh.readGroup('g-cu');
+        assert.equal(reloaded.members['nguoi-cu'].displayName, 'Bác Cũ');
+        assert.equal(reloaded.members['nguoi-cu'].username, 'bac_cu');
+        assert.equal(ledger.memberLabel(reloaded, 'nguoi-cu'), 'Bác Cũ');
+        assert.equal(reloaded.members['nguoi-cu'].balance, 4321, 'di trú không đụng số dư');
+
+        // Tên dài bị cắt trước khi vào database (giới hạn cũng áp ở kho Postgres).
+        await fresh.withGroup('g-cu', (state) =>
+          ledger.rememberMember(state, { id: 'nguoi-cu', first_name: 'Z'.repeat(300) })
+        );
+        const capped = await new PostgresLedger(CONNECTION_STRING, {
+          schema: legacySchema,
+        }).readGroup('g-cu');
+        assert.equal(
+          capped.members['nguoi-cu'].displayName.length,
+          ledger.MAX_DISPLAY_NAME_LENGTH
+        );
+
+        // === 2) Đường "khởi động nguội": KHÔNG ai gọi ensureSchema ===========
+        // Trên Vercel, ensureSchema chỉ chạy khi mở /api/setup. Bot vẫn phải tự thêm
+        // cột ở lần khởi động nguội kế tiếp, và không được làm sai số dư trong lúc đó.
+        await createLegacySchema(coldStartSchema);
+        await seedLegacyBalance(coldStartSchema, 'g-nguoi', 'u2', 100);
+
+        const coldStart = new PostgresLedger(CONNECTION_STRING, { schema: coldStartSchema });
+        await coldStart.withGroup('g-nguoi', (state) => {
+          ledger.rememberMember(state, { id: 'u2', first_name: 'Tự Thêm' });
+          ledger.creditPure(state, 'u2', 5, { type: 'admin_credit' });
+        });
+
+        const coldCols = await memberColumns(coldStartSchema);
+        assert.ok(coldCols.includes('display_name'), 'cold start phải tự thêm cột');
+        const coldState = await new PostgresLedger(CONNECTION_STRING, {
+          schema: coldStartSchema,
+        }).readGroup('g-nguoi');
+        assert.equal(coldState.members.u2.displayName, 'Tự Thêm');
+        assert.equal(coldState.members.u2.balance, 105, 'số dư cũ + lần cộng mới');
+      } finally {
+        for (const schema of [legacySchema, coldStartSchema]) {
+          try {
+            await db.pool.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);
+          } catch (err) {
+            console.error(`Không xoá được schema test ${schema}:`, err.message);
+          }
+        }
+      }
     });
 
   } finally {

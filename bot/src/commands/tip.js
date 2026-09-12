@@ -97,8 +97,9 @@ async function handleTip(ctx, parsed, storage) {
   const outcome = await storage.withGroup(
     chatId,
     (state) => {
-      ledger.ensureMember(state, sender.id, now);
-      ledger.ensureMember(state, target.id, now);
+      // `rememberMember` ghi/làm mới TÊN của cả hai bên (thay cho `ensureMember`).
+      ledger.rememberMember(state, sender, now);
+      ledger.rememberMember(state, target, now);
 
       const cooldown = ledger.checkCooldown(state, sender.id, now);
       if (!cooldown.ok) return { type: 'cooldown', waitMs: cooldown.waitMs };
@@ -171,10 +172,16 @@ async function replyTipOutcome(ctx, outcome, target) {
 // Bao lì xì: /lixi <amount> chia <n>
 // ---------------------------------------------------------------------------
 
-function renderEnvelopeText(envelope) {
+/**
+ * `state` (không bắt buộc) dùng để tra tên người gửi khi bản ghi bao lì xì chưa lưu
+ * `senderName` — ví dụ bao được tạo bởi bản bot cũ. Tên luôn được `escapeHtml`.
+ */
+function renderEnvelopeText(envelope, state = null) {
   const claimed = envelope.claimOrder.length;
   const total = envelope.totalRecipients;
-  const senderLabel = envelope.senderName ? escapeHtml(envelope.senderName) : `người dùng #${envelope.senderId}`;
+  const senderLabel = escapeHtml(
+    ledger.normalizeDisplayName(envelope.senderName) || ledger.memberLabel(state, envelope.senderId)
+  );
   const header = `🧧 <b>${senderLabel}</b> vừa mở bao lì xì <b>${envelope.totalAmount} điểm</b> cho <b>${total}</b> người!`;
   let statusLine;
   if (envelope.status === 'active') {
@@ -202,7 +209,7 @@ async function handleEnvelope(ctx, parsed, storage) {
   const outcome = await storage.withGroup(
     chatId,
     (state) => {
-      ledger.ensureMember(state, sender.id, now);
+      ledger.rememberMember(state, sender, now);
 
       const cooldown = ledger.checkCooldown(state, sender.id, now);
       if (!cooldown.ok) return { type: 'cooldown', waitMs: cooldown.waitMs };
@@ -230,7 +237,13 @@ async function handleEnvelope(ctx, parsed, storage) {
       const windowMs = state.config.envelopeWindowMinutes * 60 * 1000;
       const envelope = ledger.createEnvelope(
         state,
-        { senderId: sender.id, senderName: sender.first_name || sender.username, amount, recipientCount: n, windowMs },
+        {
+          senderId: sender.id,
+          senderName: ledger.displayNameFromUser(sender),
+          amount,
+          recipientCount: n,
+          windowMs,
+        },
         now
       );
       return { type: 'created', envelope, windowMs };
@@ -305,7 +318,7 @@ async function renderEnvelopeMessage(telegram, storage, chatId, envelopeId) {
   const envelope = state.envelopes && state.envelopes[String(envelopeId)];
   if (!envelope || !envelope.messageId) return;
   try {
-    await telegram.editMessageText(chatId, envelope.messageId, undefined, renderEnvelopeText(envelope), {
+    await telegram.editMessageText(chatId, envelope.messageId, undefined, renderEnvelopeText(envelope, state), {
       parse_mode: 'HTML',
       reply_markup: envelopeKeyboard(envelope),
     });
@@ -347,7 +360,7 @@ async function handleClaim(ctx, envelopeId, storage) {
     (state) => {
       const envelope = state.envelopes && state.envelopes[String(envelopeId)];
       if (!envelope) return { ok: false, reason: 'not_found' };
-      ledger.ensureMember(state, userId, now);
+      ledger.rememberMember(state, ctx.from, now);
       const age = ledger.checkMinAccountAge(state, userId, now);
       if (!age.ok) {
         return { ok: false, reason: 'too_new', minDays: age.minDays, ageDays: age.ageDays };

@@ -127,6 +127,12 @@ Biến môi trường tuỳ chọn khác trong `.env.example`:
   lưu vào file JSON trong `bot/data/` như trước giờ. Nếu có, bot tự chuyển sang lưu vào
   Postgres và tự tạo bảng lúc khởi động (không phải chạy lệnh migration nào).
 
+  **Nâng cấp trên database ĐÃ CÓ dữ liệu:** khi bản mới cần thêm cột, bot dùng các câu
+  `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` (xem `MIGRATION_STATEMENTS` trong
+  `src/postgres-store.js`) — chỉ THÊM, không bao giờ xoá hay tạo lại bảng, nên **số dư
+  hiện có không bị ảnh hưởng**. Các câu này chạy khi mở `/api/setup`, và cũng tự chạy một
+  lần ở lần khởi động nguội (cold start) kế tiếp, nên bản deploy cũ tự nâng cấp được.
+
 Lúc khởi động, bot luôn in rõ đang chạy ở chế độ nào ("CHẾ ĐỘ LONG POLLING" hoặc "CHẾ ĐỘ
 WEBHOOK"), không in token hay bất kỳ giá trị bí mật nào.
 
@@ -612,6 +618,8 @@ không đụng vào dữ liệu thật và chạy song song được. Nhóm test
 database thật mới chứng minh được:
 
 - tạo bảng hai lần vẫn an toàn (idempotent);
+- **di trú cộng thêm**: database tạo bởi bản deploy cũ (thiếu cột mới) được thêm cột mà
+  không mất số dư, và dữ liệu mới ghi/đọc lại đúng;
 - tip chuyển điểm nguyên tử, tổng điểm nhóm không đổi;
 - số dư không đủ thì bị từ chối và **không ai bị đổi số dư**;
 - ràng buộc `CHECK` chặn ghi số dư âm ngay cả khi ghi thẳng bằng SQL;

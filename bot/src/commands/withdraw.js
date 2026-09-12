@@ -35,7 +35,7 @@ function register(bot, { storage }) {
     let outcome;
     try {
       outcome = await storage.withGroup(chatId, (state) => {
-        ledger.ensureMember(state, userId, now);
+        ledger.rememberMember(state, ctx.from, now);
 
         const cooldown = ledger.checkCooldown(state, userId, now);
         if (!cooldown.ok) return { type: 'cooldown', waitMs: cooldown.waitMs };

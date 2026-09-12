@@ -371,3 +371,171 @@ test('/caidat thâmniên 0: đổi cấu hình nhóm, cảnh báo tắt bảo v�
   );
   assert.match(lastText(), /Đã tip/);
 });
+
+// ---------------------------------------------------------------------------
+// TÊN thay cho SỐ ID trong mọi tin nhắn người đọc.
+//
+// Lỗi thật gặp khi dùng: bot trả lời "✅ Đã cấp 2000 điểm trực tiếp cho #985735377" —
+// không ai biết số đó là ai; `/lichsu` thì cả trang toàn số. Nhóm test này chốt lại
+// hành vi đúng cho từng lệnh, và chốt cả việc ESCAPE tên (tên do người dùng tự đặt).
+// ---------------------------------------------------------------------------
+
+const USER_EVIL = 666; // tên chứa thẻ HTML, cố ý phá tin nhắn của bot
+
+/** Như `textUpdate` nhưng đặt được `first_name` của người gửi. */
+function namedTextUpdate(id, userId, text, firstName) {
+  const base = textUpdate(id, userId, text);
+  return {
+    ...base,
+    message: { ...base.message, from: { ...base.message.from, first_name: firstName } },
+  };
+}
+
+test('/nap khi reply: câu xác nhận gọi TÊN người nhận, không phải số id', async () => {
+  const { bot } = makeBot();
+  await bot.handleUpdate(
+    replyUpdate(50, USER_A, '/nap 2000', {
+      id: USER_NO_NAME,
+      is_bot: false,
+      first_name: 'Chị Lan',
+    })
+  );
+  const text = lastText();
+  assert.match(text, /Đã cấp/);
+  assert.match(text, /Chị Lan/, 'phải gọi tên người nhận');
+  assert.ok(!text.includes(`#${USER_NO_NAME}`), `vẫn còn số id trong: ${text}`);
+
+  // Tên cũng được ghi vào sổ để các lệnh sau dùng lại.
+  const state = await storage.readGroup(CHAT_ID);
+  assert.equal(state.members[String(USER_NO_NAME)].displayName, 'Chị Lan');
+});
+
+test('/nap: tên chứa HTML bị escape — thẻ thô KHÔNG lọt vào tin nhắn', async () => {
+  const { bot } = makeBot();
+  await bot.handleUpdate(
+    replyUpdate(51, USER_A, '/nap 10', {
+      id: USER_EVIL,
+      is_bot: false,
+      first_name: '<script>alert(1)</script> & "bạn"',
+    })
+  );
+  const text = lastText();
+  assert.ok(!text.includes('<script'), `thẻ thô lọt vào tin nhắn: ${text}`);
+  assert.ok(!text.includes('</script>'), `thẻ thô lọt vào tin nhắn: ${text}`);
+  assert.match(text, /&lt;script&gt;/, 'tên phải được escape thành &lt;script&gt;');
+  assert.match(text, /&amp;/, 'dấu & trong tên cũng phải được escape');
+});
+
+test('/nap: tên dài bị cắt còn 64 ký tự trước khi lưu (chống tên phá bản ghi)', async () => {
+  const { bot } = makeBot();
+  await bot.handleUpdate(
+    replyUpdate(52, USER_A, '/nap 10', {
+      id: 777,
+      is_bot: false,
+      first_name: 'X'.repeat(300),
+    })
+  );
+  const state = await storage.readGroup(CHAT_ID);
+  assert.equal(state.members['777'].displayName.length, ledger.MAX_DISPLAY_NAME_LENGTH);
+  assert.equal(lastText().includes('X'.repeat(65)), false, 'tin nhắn cũng chỉ chứa tên đã cắt');
+});
+
+test('/lichsu: hiện TÊN ở cả hai chiều (nhận từ ai, gửi cho ai), không hiện số id', async () => {
+  const { bot } = makeBot();
+  const now = Date.now();
+
+  // Dựng sẵn hai chiều giao dịch giữa A và B, và tên của cả hai.
+  await storage.withGroup(CHAT_ID, (state) => {
+    ledger.rememberMember(state, { id: USER_A, first_name: 'Anh Admin' }, now);
+    ledger.rememberMember(state, { id: USER_B, first_name: 'Bảo Béo' }, now);
+    ledger.creditPure(state, USER_A, 100, { type: 'admin_credit' }, now);
+    ledger.creditPure(state, USER_B, 100, { type: 'admin_credit' }, now);
+    ledger.transferPure(state, USER_A, USER_B, 7, { type: 'tip' }, now); // A -> B
+    ledger.transferPure(state, USER_B, USER_A, 9, { type: 'tip' }, now); // B -> A
+  });
+
+  await bot.handleUpdate(namedTextUpdate(53, USER_A, '/lichsu', 'Anh Admin'));
+  const text = lastText();
+  assert.match(text, /cho Bảo Béo/, 'chiều gửi phải gọi tên người nhận');
+  assert.match(text, /từ Bảo Béo/, 'chiều nhận phải gọi tên người gửi');
+  assert.ok(!text.includes(`#${USER_B}`), `vẫn còn số id trong: ${text}`);
+  assert.ok(!text.includes(`#${USER_A}`), `vẫn còn số id trong: ${text}`);
+});
+
+test('/lichsu: người chưa có tên trên sổ hiện "người dùng #<id>" (không crash)', async () => {
+  const { bot } = makeBot();
+  const now = Date.now();
+  const GHOST = 888; // thành viên cũ: có số dư nhưng chưa từng được ghi tên
+
+  await storage.withGroup(CHAT_ID, (state) => {
+    ledger.rememberMember(state, { id: USER_B, first_name: 'Bảo Béo' }, now);
+    ledger.creditPure(state, GHOST, 50, { type: 'admin_credit' }, now);
+    // Xoá tên cho giống bản ghi cũ trước khi bot biết lưu tên.
+    delete state.members[String(GHOST)].displayName;
+    delete state.members[String(GHOST)].username;
+    ledger.transferPure(state, GHOST, USER_B, 5, { type: 'tip' }, now);
+  });
+
+  await bot.handleUpdate(namedTextUpdate(54, USER_B, '/lichsu', 'Bảo Béo'));
+  const text = lastText();
+  assert.match(text, new RegExp(`từ người dùng #${GHOST}`));
+});
+
+test('/pot: log admin gọi TÊN admin và TÊN người được cấp, không hiện số id', async () => {
+  const { bot } = makeBot();
+  const now = Date.now();
+
+  await storage.withGroup(CHAT_ID, (state) => {
+    ledger.rememberMember(state, { id: USER_A, first_name: 'Anh Admin' }, now);
+    ledger.rememberMember(state, { id: USER_B, first_name: 'Bảo Béo' }, now);
+    ledger.adminCreditUser(state, USER_A, USER_B, 25, 'Admin cấp điểm trực tiếp', now);
+  });
+
+  await bot.handleUpdate(namedTextUpdate(55, USER_A, '/pot', 'Anh Admin'));
+  const text = lastText();
+  assert.match(text, /admin Anh Admin cấp 25 điểm cho Bảo Béo/);
+  assert.ok(!text.includes(`admin #${USER_A}`), `vẫn còn số id admin trong: ${text}`);
+  assert.ok(!text.includes(`#${USER_B}`), `vẫn còn số id người nhận trong: ${text}`);
+});
+
+test('/pot: tên admin chứa HTML cũng bị escape trong log', async () => {
+  const { bot } = makeBot();
+  const now = Date.now();
+  await storage.withGroup(CHAT_ID, (state) => {
+    ledger.rememberMember(state, { id: USER_EVIL, first_name: '<i>xấu</i>' }, now);
+    ledger.adminCreditPot(state, USER_EVIL, 5, 'Nạp pot thủ công', now);
+  });
+  await bot.handleUpdate(namedTextUpdate(56, USER_A, '/pot', 'Anh Admin'));
+  const text = lastText();
+  assert.match(text, /&lt;i&gt;xấu&lt;\/i&gt;/);
+  assert.ok(!text.includes('<i>xấu</i>'), `thẻ thô lọt vào tin nhắn: ${text}`);
+});
+
+test('/duyet: câu xác nhận giao dịch lớn gọi tên hai bên thay cho số id', async () => {
+  const { bot } = makeBot();
+  const now = Date.now();
+
+  const approvalId = await storage.withGroup(CHAT_ID, (state) => {
+    ledger.rememberMember(state, { id: USER_A, first_name: 'Anh Admin' }, now);
+    ledger.rememberMember(state, { id: USER_B, first_name: 'Bảo Béo' }, now);
+    ledger.creditPure(state, USER_A, 5000, { type: 'admin_credit' }, now);
+    return ledger.queueTipApproval(state, USER_A, USER_B, 2500, now).id;
+  });
+
+  await bot.handleUpdate(namedTextUpdate(57, USER_A, `/duyet ${approvalId}`, 'Anh Admin'));
+  const text = lastText();
+  assert.match(text, /từ <b>Anh Admin<\/b> cho <b>Bảo Béo<\/b>/);
+  assert.ok(!text.includes(`#${USER_B}`), `vẫn còn số id trong: ${text}`);
+});
+
+test('tin nhắn thường: tên được ghi/làm mới mỗi lần thấy người đó nói', async () => {
+  const { bot } = makeBot();
+  await bot.handleUpdate(namedTextUpdate(58, USER_B, 'chào cả nhà', 'Bảo Tên Cũ'));
+  let state = await storage.readGroup(CHAT_ID);
+  assert.equal(state.members[String(USER_B)].displayName, 'Bảo Tên Cũ');
+
+  // Đổi tên trên Telegram -> lần nói tiếp theo bot cập nhật luôn.
+  await bot.handleUpdate(namedTextUpdate(59, USER_B, 'vẫn là tôi', 'Bảo Tên Mới'));
+  state = await storage.readGroup(CHAT_ID);
+  assert.equal(state.members[String(USER_B)].displayName, 'Bảo Tên Mới');
+});
