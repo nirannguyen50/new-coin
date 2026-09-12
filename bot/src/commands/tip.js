@@ -22,6 +22,7 @@
  */
 
 const ledger = require('../ledger');
+const growth = require('../growth');
 const { requireGroup, mentionHtml, escapeHtml } = require('./helpers');
 
 // ---------------------------------------------------------------------------
@@ -195,9 +196,18 @@ function renderEnvelopeText(envelope, state = null) {
   return `${header}\n${statusLine}`;
 }
 
-function envelopeKeyboard(envelope) {
-  if (envelope.status !== 'active') return { inline_keyboard: [] };
-  return { inline_keyboard: [[{ text: '🧧 Nhận lì xì', callback_data: `envcl:${envelope.id}` }]] };
+/**
+ * Bàn phím dưới tin nhắn bao lì xì:
+ *   - đang mở  → nút "Nhận lì xì";
+ *   - đã đóng (đủ người / hết giờ) → nút "➕ Thêm Lì Xì Bot vào nhóm của bạn" (nếu biết
+ *     `addToGroupUrl`) — đây là lúc vài người vừa nhận điểm, là chỗ DUY NHẤT trong nhóm mà
+ *     lời mời xuất hiện (xem src/growth.js); không có URL thì không nút nào cả.
+ */
+function envelopeKeyboard(envelope, { addToGroupUrl = null } = {}) {
+  if (envelope.status === 'active') {
+    return { inline_keyboard: [[{ text: '🧧 Nhận lì xì', callback_data: `envcl:${envelope.id}` }]] };
+  }
+  return growth.addToGroupKeyboard(addToGroupUrl) || { inline_keyboard: [] };
 }
 
 async function handleEnvelope(ctx, parsed, storage) {
@@ -312,15 +322,27 @@ async function replyEnvelopeOutcome(ctx, outcome) {
 // Nút "Nhận lì xì" + cập nhật lại tin nhắn sau khi đóng bao
 // ---------------------------------------------------------------------------
 
-/** Sửa lại tin nhắn bao lì xì cho khớp trạng thái hiện tại (đếm người nhận, hết giờ...). */
-async function renderEnvelopeMessage(telegram, storage, chatId, envelopeId) {
+/**
+ * Sửa lại tin nhắn bao lì xì cho khớp trạng thái hiện tại (đếm người nhận, hết giờ...).
+ * `identity` (tuỳ chọn, xem growth.createBotIdentity) cung cấp URL cho nút "thêm vào nhóm"
+ * khi bao đã đóng; không có / chưa biết username thì tin nhắn vẫn được sửa, chỉ không có nút.
+ */
+async function renderEnvelopeMessage(telegram, storage, chatId, envelopeId, { identity = null } = {}) {
   const state = await storage.readGroup(chatId, { envelopeIds: [String(envelopeId)] });
   const envelope = state.envelopes && state.envelopes[String(envelopeId)];
   if (!envelope || !envelope.messageId) return;
+  let addToGroupUrl = null;
+  if (envelope.status !== 'active' && identity) {
+    try {
+      addToGroupUrl = await identity.addToGroupUrl(chatId);
+    } catch (err) {
+      addToGroupUrl = null; // không bao giờ để lời mời làm hỏng việc cập nhật tin nhắn
+    }
+  }
   try {
     await telegram.editMessageText(chatId, envelope.messageId, undefined, renderEnvelopeText(envelope, state), {
       parse_mode: 'HTML',
-      reply_markup: envelopeKeyboard(envelope),
+      reply_markup: envelopeKeyboard(envelope, { addToGroupUrl }),
     });
   } catch (err) {
     // Bỏ qua lỗi "message is not modified" hoặc tin nhắn đã bị xoá — không quan trọng ở đây.
@@ -331,10 +353,10 @@ async function renderEnvelopeMessage(telegram, storage, chatId, envelopeId) {
  * Sau khi dọn lười đóng một loạt bao lì xì hết giờ, sửa lại các tin nhắn tương ứng.
  * Lỗi Telegram ở đây không được làm hỏng lệnh mà người dùng vừa gõ.
  */
-async function renderSettledEnvelopes(telegram, storage, chatId, settled) {
+async function renderSettledEnvelopes(telegram, storage, chatId, settled, { identity = null } = {}) {
   for (const item of settled || []) {
     try {
-      await renderEnvelopeMessage(telegram, storage, chatId, item.id);
+      await renderEnvelopeMessage(telegram, storage, chatId, item.id, { identity });
     } catch (err) {
       /* bỏ qua — chỉ là cập nhật hiển thị */
     }
@@ -350,7 +372,7 @@ const CLAIM_FAIL_MESSAGES = {
   full: 'Bao lì xì này đã có đủ người nhận.',
 };
 
-async function handleClaim(ctx, envelopeId, storage) {
+async function handleClaim(ctx, envelopeId, storage, { identity = null } = {}) {
   const chatId = ctx.chat.id;
   const userId = ctx.from.id;
   const now = Date.now();
@@ -384,16 +406,16 @@ async function handleClaim(ctx, envelopeId, storage) {
       // là cơ hội để tin nhắn khớp lại với trạng thái thật (không phải chờ tới lần bấm
       // sai kế tiếp).
       await storage.settleDueEnvelopes(chatId, now);
-      await renderEnvelopeMessage(ctx.telegram, storage, chatId, envelopeId);
+      await renderEnvelopeMessage(ctx.telegram, storage, chatId, envelopeId, { identity });
     }
     return;
   }
 
   await ctx.answerCbQuery(`🎉 Bạn nhận được ${result.amount} điểm!`);
-  await renderEnvelopeMessage(ctx.telegram, storage, chatId, envelopeId);
+  await renderEnvelopeMessage(ctx.telegram, storage, chatId, envelopeId, { identity });
 }
 
-function register(bot, { storage }) {
+function register(bot, { storage, identity = null }) {
   bot.command('lixi', async (ctx) => {
     if (!(await requireGroup(ctx))) return;
     const parsed = parseLixiArgs(ctx.message.text || '');
@@ -413,13 +435,14 @@ function register(bot, { storage }) {
   });
 
   bot.action(/^envcl:(\d+)$/, async (ctx) => {
-    await handleClaim(ctx, ctx.match[1], storage);
+    await handleClaim(ctx, ctx.match[1], storage, { identity });
   });
 }
 
 module.exports = {
   register,
   parseLixiArgs,
+  envelopeKeyboard,
   renderEnvelopeText,
   renderEnvelopeMessage,
   renderSettledEnvelopes,

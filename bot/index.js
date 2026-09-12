@@ -109,6 +109,21 @@ async function main() {
     storage,
   });
 
+  // Lấy username bot một lần lúc khởi động (getMe, có cache) — cần cho nút "Thêm Lì Xì Bot
+  // vào nhóm của bạn". Thất bại thì bot vẫn chạy, nút tạm ẩn và sẽ tự thử lại sau.
+  bot.botIdentity
+    .getUsername()
+    .then((username) => {
+      if (username) {
+        console.log(`Bot Telegram: @${username} — nút "Thêm vào nhóm" đã sẵn sàng.`);
+      } else {
+        console.warn(
+          'Chưa lấy được username bot (getMe) — nút "Thêm vào nhóm" tạm ẩn, bot sẽ tự thử lại.'
+        );
+      }
+    })
+    .catch(() => {});
+
   const rewardTimer = startDailyRewardJob(storage, config.dailyRewardCheckIntervalMinutes);
 
   if (config.mode === 'webhook') {

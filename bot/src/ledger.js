@@ -257,9 +257,25 @@ function transferPure(state, fromUserId, toUserId, amount, meta = {}, nowMs = Da
     throw new LedgerError('SELF_TRANSFER', 'Không thể tự chuyển điểm cho chính mình.');
   }
   assertPositiveInteger(amount, 'INVALID_AMOUNT');
-  const fromTx = debitPure(state, fromUserId, amount, { type: meta.type || 'transfer', to: String(toUserId), ...meta }, nowMs);
-  const toTx = creditPure(state, toUserId, amount, { type: meta.type || 'transfer', from: String(fromUserId), ...meta }, nowMs);
-  return { fromTx, toTx };
+  const from = ensureMember(state, fromUserId, nowMs);
+  const to = ensureMember(state, toUserId, nowMs);
+  if (from.balance < amount) {
+    throw new LedgerError(
+      'INSUFFICIENT_BALANCE',
+      `Số dư không đủ: có ${from.balance}, cần ${amount}.`
+    );
+  }
+  from.balance -= amount;
+  to.balance += amount;
+  // MỘT bản ghi cho một lần chuyển, có cả `from` lẫn `to`. Trước đây hàm này gọi
+  // debitPure + creditPure nên ghi HAI bản ghi giống hệt nhau, và /lichsu hiện một lần tip
+  // thành hai dòng "-100" cho người gửi (số dư vẫn đúng, chỉ hiển thị sai).
+  const tx = recordTransactionPure(
+    state,
+    { type: meta.type || 'transfer', from: String(fromUserId), to: String(toUserId), amount, ...meta },
+    nowMs
+  );
+  return { tx, fromTx: tx, toTx: tx };
 }
 
 /** Lấy tối đa `limit` giao dịch gần nhất liên quan tới userId, mới nhất trước. */
@@ -268,6 +284,54 @@ function listRecentTransactionsPure(state, userId, limit = 10) {
   const all = state.transactions || [];
   const related = all.filter((tx) => tx.from === key || tx.to === key);
   return related.slice(-limit).reverse();
+}
+
+// ----------------------------------------------------------------------------
+// Điểm NHẬN ĐƯỢC từ tip và bao lì xì — cho bảng xếp hạng (/bxh) và thống kê (/thongke).
+//
+// Xếp hạng theo điểm NHẬN ĐƯỢC chứ không theo số dư, để admin được /nap hàng nghìn điểm
+// không chiếm hết bảng. Chỉ tính hai loại: 'tip' và 'envelope_claim'.
+//
+// Mỗi lần tip là MỘT bản ghi 'tip' có cả `from` lẫn `to`; tip lớn được admin duyệt là một
+// bản ghi credit chỉ có `to`. Cả hai đều đếm trọn `amount` một lần. SQL trong
+// `growthStats` (postgres-store.js) dùng đúng quy tắc này — hai kho phải cho cùng con số.
+// ----------------------------------------------------------------------------
+
+/** Loại giao dịch được tính là "nhận lì xì". */
+const RECEIVED_TX_TYPES = Object.freeze(['tip', 'envelope_claim']);
+
+/**
+ * Tổng điểm nhận được theo từng người: { userId: amount }. HÀM THUẦN.
+ * @param {object[]} transactions danh sách giao dịch (bất kỳ thứ tự)
+ * @param {{sinceMs?: number, untilMs?: number, types?: string[]}} [opts]
+ */
+function receivedTotals(transactions, { sinceMs = 0, untilMs = Infinity, types = RECEIVED_TX_TYPES } = {}) {
+  const totals = {};
+  for (const tx of transactions || []) {
+    if (!tx || !types.includes(tx.type)) continue;
+    if (!tx.to || tx.to === 'pot') continue;
+    const ts = Number(tx.ts) || 0;
+    if (ts < sinceMs || ts > untilMs) continue;
+    const amount = Number(tx.amount) || 0;
+    if (amount <= 0) continue;
+    totals[tx.to] = (totals[tx.to] || 0) + amount;
+  }
+  return totals;
+}
+
+/** Top `limit` người nhận nhiều nhất, giảm dần; hoà thì theo userId để thứ tự ổn định. */
+function rankReceivers(transactions, { sinceMs = 0, untilMs = Infinity, limit = 10 } = {}) {
+  return Object.entries(receivedTotals(transactions, { sinceMs, untilMs }))
+    .filter(([, amount]) => amount > 0)
+    .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+    .slice(0, Math.max(0, limit))
+    .map(([userId, amount]) => ({ userId, amount }));
+}
+
+/** Tổng điểm đã tip (loại 'tip') trong cửa sổ thời gian — cho /thongke. */
+function tipVolume(transactions, { sinceMs = 0, untilMs = Infinity } = {}) {
+  const totals = receivedTotals(transactions, { sinceMs, untilMs, types: ['tip'] });
+  return Object.values(totals).reduce((sum, x) => sum + x, 0);
 }
 
 // ----------------------------------------------------------------------------
@@ -1110,6 +1174,10 @@ module.exports = {
   transferPure,
   recordTransactionPure,
   listRecentTransactionsPure,
+  RECEIVED_TX_TYPES,
+  receivedTotals,
+  rankReceivers,
+  tipVolume,
   checkDailyTipLimit,
   recordDailyTipUsage,
   checkCooldown,

@@ -7,6 +7,7 @@
 const http = require('http');
 const { Telegraf } = require('telegraf');
 const ledger = require('./ledger');
+const { createBotIdentity } = require('./growth');
 const { safeErrorMessage } = require('./redact');
 const {
   buildWebhookUrl,
@@ -20,6 +21,7 @@ const walletCmd = require('./commands/wallet');
 const tipCmd = require('./commands/tip');
 const withdrawCmd = require('./commands/withdraw');
 const adminCmd = require('./commands/admin');
+const growthCmd = require('./commands/growth');
 
 function isTrackedGroup(ctx) {
   return !!ctx.chat && (ctx.chat.type === 'group' || ctx.chat.type === 'supergroup') && !!ctx.from;
@@ -29,15 +31,22 @@ function isTrackedGroup(ctx) {
  * Tạo bot Telegraf và đăng ký toàn bộ lệnh.
  *
  * @param {string} token token bot từ @BotFather
- * @param {{superAdminIds?: string[], storage: object}} options
+ * @param {{superAdminIds?: string[], storage: object, botUsername?: string|null}} options
  *        `storage` là kho lưu trữ đã chọn (JSON hoặc Postgres — xem src/storage.js).
  *        Mọi lệnh chỉ nói chuyện với `storage`, nên đổi kho KHÔNG phải sửa lệnh nào.
+ *        `botUsername` (tuỳ chọn): username bot để dựng nút "Thêm vào nhóm"; không truyền
+ *        thì bot tự hỏi Telegram (`getMe`) một lần và cache — test truyền thẳng để khỏi
+ *        gọi mạng (xem `growth.createBotIdentity`).
  */
-function createBot(token, { superAdminIds = [], storage } = {}) {
+function createBot(token, { superAdminIds = [], storage, botUsername = null } = {}) {
   if (!storage) {
     throw new Error('createBot: thiếu tham số `storage` (kho lưu trữ).');
   }
   const bot = new Telegraf(token);
+  // Danh tính bot (username qua getMe, cache) — dùng cho các nút "thêm vào nhóm".
+  // Gắn lên `bot` để điểm khởi động (index.js) làm ấm cache và log username lúc chạy.
+  const identity = createBotIdentity(bot.telegram, { botUsername });
+  bot.botIdentity = identity;
 
   // 1) Đánh dấu "đã thấy" người gửi trong nhóm — dùng cho hạn tuổi tài khoản
   //    (min account age) — VÀ "dọn lười" các bao lì xì đã hết giờ của nhóm này.
@@ -64,7 +73,7 @@ function createBot(token, { superAdminIds = [], storage } = {}) {
         console.error('Lỗi khi dọn bao lì xì hết giờ:', safeErrorMessage(err));
       }
       if (settled && settled.length) {
-        await tipCmd.renderSettledEnvelopes(ctx.telegram, storage, ctx.chat.id, settled);
+        await tipCmd.renderSettledEnvelopes(ctx.telegram, storage, ctx.chat.id, settled, { identity });
       }
     }
     return next();
@@ -85,11 +94,12 @@ function createBot(token, { superAdminIds = [], storage } = {}) {
     return next();
   });
 
-  startCmd.register(bot, { storage });
+  startCmd.register(bot, { storage, identity });
   walletCmd.register(bot, { storage });
-  tipCmd.register(bot, { storage });
+  tipCmd.register(bot, { storage, identity });
   withdrawCmd.register(bot, { storage });
   adminCmd.register(bot, { superAdminIds, storage });
+  growthCmd.register(bot, { superAdminIds, storage });
 
   bot.catch((err, ctx) => {
     // Không để một lỗi lệnh làm crash cả tiến trình bot.

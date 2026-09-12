@@ -131,6 +131,27 @@ class JsonGroupStorage {
     return this.withGroup(chatId, (state) => ledger.ensureMember(state, userId, nowMs));
   }
 
+  /**
+   * Giao dịch của nhóm kể từ mốc `sinceMs` (tuỳ chọn lọc theo loại), cũ nhất trước.
+   * Dùng cho bảng xếp hạng /bxh — kho JSON giữ toàn bộ lịch sử trong file nên chỉ cần lọc.
+   */
+  async listTransactionsSince(chatId, sinceMs, types = null) {
+    const state = store.readGroupState(chatId);
+    return (state.transactions || [])
+      .filter((tx) => (Number(tx.ts) || 0) >= sinceMs && (!types || types.includes(tx.type)))
+      .sort((a, b) => a.id - b.id);
+  }
+
+  /**
+   * Thống kê tăng trưởng cho chủ bot (/thongke) — chỉ số đếm, gộp từ mọi nhóm.
+   * Cùng định nghĩa với `PostgresLedger.growthStats` (xem `growth.aggregateGrowthStats`).
+   */
+  async growthStats(sinceMs) {
+    const growth = require('./growth'); // require tại chỗ: growth.js cũng require ledger/store
+    const states = store.listGroupIds().map((chatId) => store.readGroupState(chatId));
+    return growth.aggregateGrowthStats(states, { sinceMs });
+  }
+
   async claimEnvelope(chatId, envelopeId, userId, nowMs = Date.now()) {
     return this.withGroup(chatId, (state) =>
       ledger.claimEnvelopeAndCredit(state, envelopeId, userId, nowMs)

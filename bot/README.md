@@ -24,6 +24,7 @@ chưa có vốn/ví để nạp thanh khoản, nên bot chạy bằng điểm n�
 - [Chạy 24/7 với chi phí thấp hoặc miễn phí](#chạy-247-với-chi-phí-thấp-hoặc-miễn-phí)
 - [Backup dữ liệu](#backup-dữ-liệu)
 - [Danh sách lệnh đầy đủ](#danh-sách-lệnh-đầy-đủ)
+- [Bot tự lan truyền như thế nào](#bot-tự-lan-truyền-như-thế-nào)
 - [Cấu trúc mã nguồn](#cấu-trúc-mã-nguồn)
 - [Chạy test](#chạy-test)
 
@@ -81,6 +82,12 @@ Xem chi tiết ở `docs/11-quyet-dinh-bot-off-chain-truoc.md`. Vài điểm qua
    tả và ảnh đại diện của bot.
 
 ## Thêm bot vào nhóm và cấp quyền admin
+
+Cách nhanh nhất: mở chat riêng với bot, gõ `/start` và bấm nút **➕ Thêm Lì Xì Bot vào nhóm
+của bạn** — Telegram cho chọn nhóm bạn đang quản trị và thêm bot chỉ với một chạm (nút này
+cũng hiện dưới mỗi bao lì xì đã đóng, xem [Bot tự lan truyền như thế nào](#bot-tự-lan-truyền-như-thế-nào)).
+Ngay khi vào nhóm, bot tự đăng một lời chào ngắn cho admin: ba lệnh để bắt đầu, và nói rõ
+nếu còn thiếu quyền admin. Cách thủ công:
 
 1. Mở nhóm Telegram (nhóm pilot), bấm **Thêm thành viên** (Add members).
 2. Tìm đúng username bot vừa tạo (ví dụ `@LiXiPilotBot`) và thêm vào nhóm.
@@ -494,7 +501,9 @@ Tất cả lệnh chạy trong nhóm (không dùng trong chat riêng với bot),
 
 | Lệnh | Ai dùng được | Mô tả | Ví dụ |
 |---|---|---|---|
-| `/start` | Mọi người | Chào mừng + câu miễn trừ trách nhiệm | `/start` |
+| `/start` | Mọi người | Chào mừng + câu miễn trừ trách nhiệm. Trong **chat riêng** kèm nút **➕ Thêm Lì Xì Bot vào nhóm của bạn** | `/start` |
+| `/huongdan` | Mọi người (nhóm hoặc chat riêng) | Hướng dẫn ngắn: lệnh cho thành viên, lệnh cho admin, hai chốt chống lạm dụng (`thamnien`, `nguongduyet`) | `/huongdan` |
+| `/bxh` | Mọi người | Top 10 người **nhận** nhiều điểm nhất trong 7 ngày qua (tip + bao lì xì) — tính theo điểm nhận được, không theo số dư, nên admin được `/nap` không chiếm bảng | `/bxh` |
 | `/lixi @user <số>` | Thành viên đủ điều kiện* | Tip điểm cho một người (hoặc reply vào tin nhắn người đó rồi gõ `/lixi <số>`) | `/lixi @an 100` |
 | `/lixi <số> chia <n>` | Thành viên đủ điều kiện* | Mở bao lì xì, chia ngẫu nhiên cho `n` người bấm nút nhận đầu tiên (trong 10 phút) | `/lixi 500 chia 5` |
 | `/sodu` | Mọi người | Xem số dư điểm LIXI của bạn trong nhóm này | `/sodu` |
@@ -511,6 +520,7 @@ Tất cả lệnh chạy trong nhóm (không dùng trong chat riêng với bot),
 | `/rut_huy <mã>` | Chỉ admin | Từ chối một yêu cầu rút đang chờ, hoàn điểm lại (`pending` → `rejected`) | `/rut_huy 3` |
 | `/duyet <mã>` | Chỉ admin | Duyệt một giao dịch tip lớn đang chờ (vượt ngưỡng cần xác nhận) | `/duyet 7` |
 | `/tuchoi <mã>` | Chỉ admin | Từ chối một giao dịch tip lớn đang chờ | `/tuchoi 7` |
+| `/thongke` | Chỉ **chủ bot** (`BOT_SUPER_ADMIN_IDS`), dùng được trong chat riêng | Số nhóm có bot, nhóm hoạt động 7 ngày qua, thành viên đã thấy, bao lì xì đã mở và điểm đã tip 7 ngày qua, số nhóm đến từ nút "Thêm vào nhóm". **Chỉ số đếm** — không tên, không id | `/thongke` |
 
 *"Thành viên đủ điều kiện": đã tham gia nhóm ít nhất **3 ngày** (mặc định, có thể chỉnh) — đây
 là một trong các quy tắc chống lạm dụng bên dưới. `/sodu`, `/lichsu`, `/start` vẫn dùng được
@@ -537,6 +547,35 @@ spam). Hai giá trị đó chỉ nên dùng khi đang thử nghiệm trong nhóm
 cảnh báo ngay trong câu trả lời. Nhóm mới lập muốn thử `/lixi` ngay thì đặt `thamnien 0`,
 xong việc nhớ đặt lại `3`.
 
+## Bot tự lan truyền như thế nào
+
+Mục tiêu: bot tự lớn lên qua việc dùng bình thường (product-led growth), để chủ dự án không
+phải đi mời từng nhóm bằng tay. Cơ chế nằm ở `src/growth.js` và `src/commands/growth.js`:
+
+1. **Nút một chạm "➕ Thêm Lì Xì Bot vào nhóm của bạn"** — deep link
+   `https://t.me/<bot>?startgroup=<payload>` của Telegram. Nút CHỈ xuất hiện ở hai chỗ:
+   dưới tin nhắn **bao lì xì đã đóng** (đủ người nhận hoặc hết giờ — lúc vài người vừa nhận
+   điểm) và trong trả lời `/start` ở **chat riêng**. Không gắn vào mọi tin nhắn.
+2. **Tự chào mừng khi được thêm vào nhóm** (update `my_chat_member`): hai dòng bot làm gì,
+   ba lệnh để bắt đầu (`/nap 1000` → reply + `/nap 100` → `/lixi 100 chia 3`), câu "điểm
+   chưa có giá trị tiền thật", và `/huongdan`. Nếu bot được thêm **không có quyền admin**,
+   lời chào nói rõ cần cấp admin và vì sao (chỉ admin mới đọc được tin nhắn thường để phát
+   thưởng hoạt động). Mỗi nhóm chỉ chào **đúng một lần** (cờ `growth.onboardedAt`).
+3. **Ghi nhận nhóm mới đến từ đâu**: payload của nút mã hoá id nhóm đang hiện nút; khi bot
+   vào nhóm mới, Telegram gửi `/start <payload>` và bot ghi `growth.referredByChatId` +
+   `referredAt` vào nhóm mới. Chỉ để chủ bot xem qua `/thongke`; **không bao giờ** in id
+   nhóm nguồn ra tin nhắn ở nhóm khác.
+4. **`/thongke`** cho chủ bot: con số cần theo dõi mỗi tuần là **nhóm hoạt động 7 ngày qua**.
+
+**Quy tắc trung thực (không đổi):** không tài khoản giả; không nhắn cho ai chưa từng tương
+tác với bot; không gửi tin nhắn không ai yêu cầu; lời mời chỉ nằm trong tin nhắn bot vốn đã
+gửi, ở nhóm vốn đã dùng bot; thống kê chỉ đếm số, không tên, không id.
+
+Lưu ý vận hành: nút cần username của bot — bot tự hỏi Telegram (`getMe`) một lần lúc khởi
+động và cache; nếu chưa lấy được thì tin nhắn vẫn gửi bình thường, chỉ tạm thiếu nút. Lời
+chào khi vào nhóm cần bot nhận được update `my_chat_member` (Telegram gửi mặc định; nếu
+webhook được đăng ký với `allowed_updates` tự đặt thì phải có `my_chat_member` trong đó).
+
 ## Cấu trúc mã nguồn
 
 ```
@@ -560,9 +599,11 @@ bot/
     webhook.js               # hàm thuần cho chế độ webhook (chọn chế độ, suy ra đường dẫn/secret)
     serverless.js            # phần dùng chung cho api/: kiểm tra quyền, suy ra địa chỉ deploy
     redact.js                # xoá token/mật khẩu khỏi thông báo lỗi trước khi in ra
+    growth.js                # bot tự lan truyền: deep link ?startgroup=, chào mừng khi vào nhóm, thống kê
     bot.js                   # khởi tạo Telegraf, đăng ký lệnh, job định kỳ, khởi động 2 chế độ
     commands/
-      start.js                # /start
+      start.js                # /start (+ nút "Thêm vào nhóm" ở chat riêng, ghi nhận nhóm giới thiệu)
+      growth.js                # my_chat_member (chào mừng), /huongdan, /bxh, /thongke
       wallet.js                # /sodu, /lichsu
       tip.js                   # /lixi (tip + bao lì xì) + nút "Nhận lì xì"
       withdraw.js              # /rut

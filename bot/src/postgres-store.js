@@ -61,7 +61,7 @@
 const { Pool } = require('pg');
 const ledger = require('./ledger');
 const { safeErrorMessage } = require('./redact');
-const { defaultConfig, defaultGroupState } = require('./store');
+const { defaultConfig, defaultGroupState, defaultGrowth } = require('./store');
 
 /** Số giao dịch gần nhất nạp vào bộ nhớ mỗi lần mở nhóm (đủ cho lệnh /lichsu 10 dòng). */
 const RECENT_TX_LIMIT = 200;
@@ -166,6 +166,7 @@ const SCHEMA_STATEMENTS = [
      next_approval_id    BIGINT NOT NULL DEFAULT 1,
      reward_rule         JSONB,
      config              JSONB NOT NULL DEFAULT '{}'::jsonb,
+     growth              JSONB NOT NULL DEFAULT '{}'::jsonb,
      created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
      updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
    )`,
@@ -209,6 +210,8 @@ const SCHEMA_STATEMENTS = [
    )`,
   `CREATE INDEX IF NOT EXISTS lixi_tx_from_idx ON $SCHEMA$.lixi_transactions (chat_id, from_user, id DESC)`,
   `CREATE INDEX IF NOT EXISTS lixi_tx_to_idx   ON $SCHEMA$.lixi_transactions (chat_id, to_user, id DESC)`,
+  // Bảng xếp hạng /bxh (giao dịch của nhóm trong 7 ngày) và /thongke (nhóm hoạt động).
+  `CREATE INDEX IF NOT EXISTS lixi_tx_ts_idx   ON $SCHEMA$.lixi_transactions (chat_id, ts)`,
 
   // --- Yêu cầu rút ---
   `CREATE TABLE IF NOT EXISTS $SCHEMA$.lixi_withdrawals (
@@ -325,6 +328,11 @@ const MIGRATION_STATEMENTS = [
   // Tip lớn chờ duyệt giữ điểm người gửi ngay khi xếp hàng (2026-09) — xem
   // `queueTipApproval` trong ledger.js. Dòng cũ mặc định false = chưa giữ.
   `ALTER TABLE $SCHEMA$.lixi_approvals ADD COLUMN IF NOT EXISTS held BOOLEAN NOT NULL DEFAULT false`,
+  // Trạng thái tăng trưởng của nhóm (2026-09): bot còn trong nhóm, đã chào mừng, nhóm
+  // nguồn giới thiệu — xem `defaultGrowth` (store.js) và `src/growth.js`.
+  // (Chỉ mục `lixi_tx_ts_idx` cho /bxh KHÔNG nằm ở đây — danh sách này chỉ gồm ADD COLUMN;
+  // chỉ mục là tối ưu, được tạo khi mở /api/setup vì `ensureSchema` chạy lại SCHEMA_STATEMENTS.)
+  `ALTER TABLE $SCHEMA$.lixi_groups ADD COLUMN IF NOT EXISTS growth JSONB NOT NULL DEFAULT '{}'::jsonb`,
 ];
 
 /**
@@ -354,6 +362,19 @@ function toNumber(value, fallback = 0) {
   if (value === null || value === undefined) return fallback;
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+/** Một hàng `lixi_transactions` → bản ghi giao dịch cùng hình dạng với kho JSON. */
+function rowToTransaction(row) {
+  return {
+    id: toNumber(row.id),
+    ts: toNumber(row.ts),
+    type: row.type,
+    ...(row.from_user ? { from: row.from_user } : {}),
+    ...(row.to_user ? { to: row.to_user } : {}),
+    ...(row.amount === null ? {} : { amount: toNumber(row.amount) }),
+    ...(row.meta || {}),
+  };
 }
 
 /** Ngày hôm nay + hôm qua (UTC) — luôn phải nạp để hạn mức/ngày tính đúng. */
@@ -580,6 +601,8 @@ class PostgresLedger {
       state.nextApprovalId = toNumber(groupRow.next_approval_id, 1);
       state.rewardRule = groupRow.reward_rule || null;
       state.config = { ...defaultConfig(), ...(groupRow.config || {}) };
+      // Database cũ chưa có cột `growth` (undefined) → giữ mặc định.
+      state.growth = { ...defaultGrowth(), ...(groupRow.growth || {}) };
     }
 
     // 2) Thành viên — KHOÁ luôn để không ai sửa số dư song song.
@@ -624,15 +647,7 @@ class PostgresLedger {
        ) recent ORDER BY id ASC`,
       [chatId, RECENT_TX_LIMIT]
     );
-    state.transactions = txRes.rows.map((row) => ({
-      id: toNumber(row.id),
-      ts: toNumber(row.ts),
-      type: row.type,
-      ...(row.from_user ? { from: row.from_user } : {}),
-      ...(row.to_user ? { to: row.to_user } : {}),
-      ...(row.amount === null ? {} : { amount: toNumber(row.amount) }),
-      ...(row.meta || {}),
-    }));
+    state.transactions = txRes.rows.map(rowToTransaction);
 
     // 5) Bao lì xì: các bao đang mở + bao được hỏi đích danh (để render lại tin nhắn).
     const envRes = await client.query(
@@ -747,12 +762,14 @@ class PostgresLedger {
     const hasNameColumns = migrated;
     const s = this.schema;
 
-    // --- Nhóm (pot, các bộ đếm id, quy tắc thưởng, cấu hình) ---
+    // --- Nhóm (pot, các bộ đếm id, quy tắc thưởng, cấu hình, trạng thái tăng trưởng) ---
+    // Cột `growth` chỉ có sau di trú cộng thêm; database cũ chưa di trú được thì ghi theo
+    // lược đồ cũ (mất phần tăng trưởng, KHÔNG mất điểm).
     await client.query(
       `INSERT INTO ${s}.lixi_groups
          (chat_id, pot_balance, next_tx_id, next_envelope_id, next_withdrawal_id,
-          next_approval_id, reward_rule, config, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, now())
+          next_approval_id, reward_rule, config, updated_at${migrated ? ', growth' : ''})
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, now()${migrated ? ', $9::jsonb' : ''})
        ON CONFLICT (chat_id) DO UPDATE SET
          pot_balance        = EXCLUDED.pot_balance,
          next_tx_id         = EXCLUDED.next_tx_id,
@@ -761,7 +778,7 @@ class PostgresLedger {
          next_approval_id   = EXCLUDED.next_approval_id,
          reward_rule        = EXCLUDED.reward_rule,
          config             = EXCLUDED.config,
-         updated_at         = now()`,
+         updated_at         = now()${migrated ? ',\n         growth             = EXCLUDED.growth' : ''}`,
       [
         chatId,
         ledger.getPotBalance(state),
@@ -771,6 +788,7 @@ class PostgresLedger {
         state.nextApprovalId,
         state.rewardRule ? JSON.stringify(state.rewardRule) : null,
         JSON.stringify(state.config || {}),
+        ...(migrated ? [JSON.stringify({ ...defaultGrowth(), ...(state.growth || {}) })] : []),
       ]
     );
 
@@ -1041,15 +1059,79 @@ class PostgresLedger {
         LIMIT $3`,
       [String(chatId), key, Math.max(1, Number(limit) || 10)]
     );
-    return rows.map((row) => ({
-      id: toNumber(row.id),
-      ts: toNumber(row.ts),
-      type: row.type,
-      ...(row.from_user ? { from: row.from_user } : {}),
-      ...(row.to_user ? { to: row.to_user } : {}),
-      ...(row.amount === null ? {} : { amount: toNumber(row.amount) }),
-      ...(row.meta || {}),
-    }));
+    return rows.map(rowToTransaction);
+  }
+
+  /**
+   * Giao dịch của nhóm kể từ mốc `sinceMs` (tuỳ chọn lọc theo loại), cũ nhất trước.
+   * Truy vấn thẳng database (chỉ mục `lixi_tx_ts_idx`) thay vì lọc `RECENT_TX_LIMIT`
+   * giao dịch trong bộ nhớ: nhóm sôi nổi có thể vượt 200 giao dịch trong 7 ngày, và bảng
+   * xếp hạng /bxh phải ĐÚNG trước đã.
+   */
+  async listTransactionsSince(chatId, sinceMs, types = null) {
+    const params = [String(chatId), Number(sinceMs) || 0];
+    let typeFilter = '';
+    if (Array.isArray(types) && types.length) {
+      params.push(types.map(String));
+      typeFilter = ` AND type = ANY($${params.length}::text[])`;
+    }
+    const { rows } = await this.pool.query(
+      `SELECT * FROM ${this.schema}.lixi_transactions
+        WHERE chat_id = $1 AND ts >= $2${typeFilter}
+        ORDER BY id ASC`,
+      params
+    );
+    return rows.map(rowToTransaction);
+  }
+
+  /**
+   * Thống kê tăng trưởng cho chủ bot (/thongke) — CHỈ SỐ ĐẾM, gộp toàn bộ nhóm bằng một
+   * truy vấn (không nạp state từng nhóm). Định nghĩa từng con số PHẢI khớp với
+   * `growth.aggregateGrowthStats` (kho JSON):
+   *   - groupsTotal:     nhóm có bot (loại nhóm mà update my_chat_member gần nhất báo bot đã
+   *                      rời/bị gỡ; nhóm chưa rõ trạng thái tính là còn).
+   *   - groupsActive:    nhóm có ít nhất một giao dịch kể từ `sinceMs`.
+   *   - membersSeen:     số người khác nhau đã thấy trên mọi nhóm.
+   *   - envelopesOpened: bao lì xì tạo kể từ `sinceMs`.
+   *   - pointsTipped:    tổng điểm tip kể từ `sinceMs`; mỗi bản ghi 'tip' là một lần tip,
+   *                      đếm trọn `amount` (cùng quy tắc với `receivedTotals` trong ledger.js).
+   *   - groupsReferred:  nhóm có `growth.referredByChatId` (đến từ nút "Thêm vào nhóm").
+   */
+  async growthStats(sinceMs) {
+    const s = this.schema;
+    const since = Number(sinceMs) || 0;
+    // Không có cột `growth` (database cũ chưa di trú được) thì hai con số dựa vào nó
+    // dùng giá trị "không biết": mọi nhóm đều tính là còn bot, không nhóm nào là giới thiệu.
+    const migrated = await this._ensureAdditiveMigrations();
+    const groupsTotalSql = migrated
+      ? `SELECT COUNT(*) FROM ${s}.lixi_groups
+           WHERE COALESCE(growth->>'botStatus', '') NOT IN ('left', 'kicked')`
+      : `SELECT COUNT(*) FROM ${s}.lixi_groups`;
+    const groupsReferredSql = migrated
+      ? `SELECT COUNT(*) FROM ${s}.lixi_groups WHERE growth->>'referredByChatId' IS NOT NULL`
+      : `SELECT 0`;
+    const { rows } = await this.pool.query(
+      `SELECT
+         (${groupsTotalSql}) AS groups_total,
+         (${groupsReferredSql}) AS groups_referred,
+         (SELECT COUNT(DISTINCT chat_id) FROM ${s}.lixi_transactions WHERE ts >= $1) AS groups_active,
+         (SELECT COUNT(DISTINCT user_id) FROM ${s}.lixi_members) AS members_seen,
+         (SELECT COUNT(*) FROM ${s}.lixi_envelopes WHERE created_at >= $1) AS envelopes_opened,
+         (SELECT COALESCE(SUM(amount), 0)
+            FROM ${s}.lixi_transactions
+           WHERE ts >= $1 AND type = 'tip' AND to_user IS NOT NULL AND to_user <> 'pot'
+             AND amount IS NOT NULL AND amount > 0) AS points_tipped`,
+      [since]
+    );
+    const row = rows[0] || {};
+    return {
+      groupsTotal: toNumber(row.groups_total),
+      groupsActive: toNumber(row.groups_active),
+      groupsReferred: toNumber(row.groups_referred),
+      membersSeen: toNumber(row.members_seen),
+      envelopesOpened: toNumber(row.envelopes_opened),
+      pointsTipped: toNumber(row.points_tipped),
+    };
   }
 
   // =========================================================================

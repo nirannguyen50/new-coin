@@ -40,7 +40,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const DATA_DIR = path.join(__dirname, '..', 'data', 'groups');
+// `LIXI_DATA_DIR` (tuỳ chọn) đổi thư mục dữ liệu — test dùng để cách ly file của từng lần chạy.
+const DATA_DIR = process.env.LIXI_DATA_DIR
+  ? path.resolve(process.env.LIXI_DATA_DIR)
+  : path.join(__dirname, '..', 'data', 'groups');
 
 /**
  * Cấu hình chống lạm dụng mặc định — mỗi nhóm chỉnh riêng được bằng lệnh admin
@@ -56,6 +59,23 @@ function defaultConfig() {
     minAccountAgeDays: 3, // số ngày tối thiểu "đã ở trong nhóm" để dùng lệnh chuyển điểm
     adminApprovalThreshold: 2000, // giao dịch lớn hơn mức này phải chờ admin duyệt
     envelopeWindowMinutes: 10, // thời gian chờ nhận bao lì xì
+  };
+}
+
+/**
+ * Trạng thái TĂNG TRƯỞNG của nhóm (xem `src/growth.js`): bot còn trong nhóm không, đã
+ * chào mừng chưa (đúng một lần), và nhóm này đến từ nhóm nào qua nút "Thêm vào nhóm".
+ * `referredByChatId` CHỈ dùng cho thống kê của chủ bot — không bao giờ in ra tin nhắn.
+ */
+function defaultGrowth() {
+  return {
+    botStatus: null, // 'member' | 'administrator' | 'left' | 'kicked' | null (chưa rõ)
+    onboardedAt: null, // mốc đã đăng lời chào mừng (idempotent)
+    onboardedAsAdmin: null, // lúc chào mừng bot có quyền admin không
+    adminConfirmedAt: null, // mốc đã báo "đã nhận quyền admin" (sau khi được cấp thêm)
+    leftAt: null, // mốc bot bị gỡ khỏi nhóm (nếu có)
+    referredByChatId: null, // id nhóm nguồn (chuỗi) — chỉ để thống kê
+    referredAt: null,
   };
 }
 
@@ -81,6 +101,7 @@ function defaultGroupState(chatId) {
     pendingApprovals: [], // giao dịch lớn đang chờ admin duyệt: {id, type, ...}
     nextApprovalId: 1,
     config: defaultConfig(),
+    growth: defaultGrowth(), // trạng thái tăng trưởng (xem defaultGrowth / src/growth.js)
   };
 }
 
@@ -112,6 +133,7 @@ function readGroupState(chatId) {
     ...fallback,
     ...parsed,
     config: { ...fallback.config, ...(parsed.config || {}) },
+    growth: { ...fallback.growth, ...(parsed.growth || {}) },
   };
 }
 
@@ -164,6 +186,7 @@ module.exports = {
   DATA_DIR,
   flushPendingWrites,
   defaultConfig,
+  defaultGrowth,
   defaultGroupState,
   ensureDataDir,
   groupFilePath,
