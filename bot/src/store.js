@@ -18,19 +18,22 @@
  * số giao dịch tăng lên nhiều (nên chuyển sang SQLite/Postgres/OnChainLedger khi đó).
  *
  * ===========================================================================
- * TODO (bước kế tiếp, BẮT BUỘC trước khi mời người thật dùng trên Render):
- * thay kho lưu trữ file JSON này bằng một kho DỮ LIỆU BỀN VỮNG ngoài tiến trình —
- * Postgres miễn phí (ví dụ Neon/Supabase/Render Postgres free) hoặc Redis miễn phí
- * (ví dụ Upstash) — implement ĐÚNG interface `Ledger` mô tả ở đầu `src/ledger.js`
- * (getBalance, credit, debit, transfer, recordTransaction, listRecentTransactions),
- * đúng tinh thần `docs/11-quyet-dinh-bot-off-chain-truoc.md`: đổi một module lưu trữ,
- * KHÔNG sửa lệnh bot và không sửa logic chống lạm dụng.
+ * ĐÃ CÓ KHO BỀN VỮNG — KHI NÀO DÙNG FILE NÀY, KHI NÀO DÙNG POSTGRES
+ * ===========================================================================
+ * Kho JSON này giờ chỉ là MỘT trong hai lựa chọn:
  *
- * Lý do gấp: gói miễn phí của Render KHÔNG có đĩa bền vững (no persistent disk) —
- * toàn bộ `bot/data/` bị xoá sạch sau mỗi lần restart/redeploy/spin down. Khi chưa
- * làm xong việc này, dữ liệu điểm chạy trên Render chỉ mang tính tạm thời.
- * Chưa implement trong lần thay đổi này (cố ý), xem `bot/README.md` mục
- * "Chạy 24/7 miễn phí trên Render".
+ *   - Chạy ở MÁY CÁ NHÂN, không khai báo database → dùng file JSON (file này).
+ *   - Có chuỗi kết nối Postgres trong biến môi trường (DATABASE_URL, POSTGRES_URL,
+ *     ... — xem `src/storage.js`) → dùng `src/postgres-store.js`, dữ liệu BỀN VỮNG.
+ *
+ * Việc chọn nằm ở `src/storage.js`; lệnh bot KHÔNG biết mình đang ghi vào đâu, đúng
+ * tinh thần `docs/11-quyet-dinh-bot-off-chain-truoc.md`: đổi kho lưu trữ là đổi một
+ * module, không sửa lệnh bot và không sửa logic chống lạm dụng.
+ *
+ * KHÔNG dùng file JSON khi deploy lên hosting không có đĩa bền vững:
+ *   - Render gói miễn phí: `bot/data/` bị xoá sạch sau mỗi lần restart/redeploy.
+ *   - Vercel (serverless): hệ thống file CHỈ ĐỌC, ghi sẽ lỗi ngay.
+ * Trong hai trường hợp đó BẮT BUỘC gắn Postgres — xem `bot/README.md`.
  * ===========================================================================
  */
 

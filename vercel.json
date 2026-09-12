@@ -1,0 +1,22 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm ci --prefix bot",
+  "outputDirectory": "public",
+  "functions": {
+    "api/telegram.js": {
+      "maxDuration": 30
+    },
+    "api/setup.js": {
+      "maxDuration": 30
+    },
+    "api/cron.js": {
+      "maxDuration": 30
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 1 * * *"
+    }
+  ]
+}

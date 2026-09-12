@@ -15,9 +15,9 @@
  *   /tuchoi <id>                 — từ chối giao dịch tip lớn đang chờ trong hàng đợi
  */
 
-const store = require('../store');
 const ledger = require('../ledger');
 const { requireGroup, isChatAdmin, formatVNDateTime, escapeHtml } = require('./helpers');
+const { safeErrorMessage } = require('../redact');
 
 function requireAdmin(superAdminIds) {
   return async (ctx, next) => {
@@ -31,12 +31,12 @@ function requireAdmin(superAdminIds) {
   };
 }
 
-function register(bot, { superAdminIds = [] } = {}) {
+function register(bot, { superAdminIds = [], storage } = {}) {
   const adminGate = requireAdmin(superAdminIds);
 
   bot.command('pot', adminGate, async (ctx) => {
     const chatId = ctx.chat.id;
-    const state = store.readGroupState(chatId);
+    const state = await storage.readGroup(chatId);
     const potBalance = ledger.getPotBalance(state);
     const circulating = ledger.getTotalCirculatingBalance(state);
     const recentLog = (state.adminCreditLog || []).slice(-10).reverse();
@@ -94,7 +94,7 @@ function register(bot, { superAdminIds = [] } = {}) {
         await ctx.reply('Số điểm phải là số nguyên dương.');
         return;
       }
-      const entry = store.withGroupState(chatId, (state) => {
+      const entry = await storage.withGroup(chatId, (state) => {
         ledger.ensureMember(state, target.id, now);
         return ledger.adminCreditUser(state, adminId, target.id, amount, 'Admin cấp điểm trực tiếp', now);
       });
@@ -108,7 +108,7 @@ function register(bot, { superAdminIds = [] } = {}) {
         await ctx.reply('Số điểm phải là số nguyên dương.');
         return;
       }
-      const entry = store.withGroupState(chatId, (state) =>
+      const entry = await storage.withGroup(chatId, (state) =>
         ledger.adminCreditPot(state, adminId, amount, 'Nạp pot thủ công (off-chain, xem docs/11)', now)
       );
       await ctx.replyWithHTML(`✅ Đã nạp <b>${entry.amount} điểm</b> vào pot nhóm.`);
@@ -138,7 +138,7 @@ function register(bot, { superAdminIds = [] } = {}) {
     const chatId = ctx.chat.id;
     const adminId = ctx.from.id;
     const now = Date.now();
-    store.withGroupState(chatId, (state) => {
+    await storage.withGroup(chatId, (state) => {
       state.rewardRule = { pointsPerDay, minMessages, updatedAt: now, updatedBy: String(adminId) };
     });
     await ctx.replyWithHTML(
@@ -160,15 +160,19 @@ function register(bot, { superAdminIds = [] } = {}) {
     const chatId = ctx.chat.id;
     const adminId = ctx.from.id;
     try {
-      const record = store.withGroupState(chatId, (state) =>
-        ledger.decideWithdrawal(state, id[1], decision, adminId, Date.now())
+      const record = await storage.withGroup(
+        chatId,
+        (state) => ledger.decideWithdrawal(state, id[1], decision, adminId, Date.now()),
+        // Kho Postgres chỉ nạp sẵn các yêu cầu đang chờ; hỏi đích danh mã này để
+        // yêu cầu ĐÃ xử lý cũng được nạp (báo "đã xử lý rồi" thay vì "không tìm thấy").
+        { withdrawalIds: [String(id[1])] }
       );
       const verb = decision === 'approve' ? 'duyệt' : 'từ chối (đã hoàn điểm)';
       await ctx.replyWithHTML(
         `✅ Đã ${verb} yêu cầu rút <b>#${record.id}</b> (${record.amount} điểm, ${record.address}).`
       );
     } catch (err) {
-      await ctx.reply(`Không xử lý được: ${err.message}`);
+      await ctx.reply(`Không xử lý được: ${safeErrorMessage(err)}`);
     }
   }
 
@@ -185,17 +189,20 @@ function register(bot, { superAdminIds = [] } = {}) {
     const chatId = ctx.chat.id;
     const adminId = ctx.from.id;
     try {
-      const approval = store.withGroupState(chatId, (state) =>
-        decision === 'approve'
-          ? ledger.approveQueuedTransfer(state, id[1], adminId, Date.now())
-          : ledger.rejectQueuedTransfer(state, id[1], adminId, Date.now())
+      const approval = await storage.withGroup(
+        chatId,
+        (state) =>
+          decision === 'approve'
+            ? ledger.approveQueuedTransfer(state, id[1], adminId, Date.now())
+            : ledger.rejectQueuedTransfer(state, id[1], adminId, Date.now()),
+        { approvalIds: [id[1]] }
       );
       const verb = decision === 'approve' ? 'duyệt' : 'từ chối';
       await ctx.replyWithHTML(
         `✅ Đã ${verb} giao dịch <b>#${approval.id}</b> (tip ${approval.amount} điểm từ #${approval.fromUserId} cho #${approval.toUserId}).`
       );
     } catch (err) {
-      await ctx.reply(`Không xử lý được: ${err.message}`);
+      await ctx.reply(`Không xử lý được: ${safeErrorMessage(err)}`);
     }
   }
 }

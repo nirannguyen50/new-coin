@@ -6,7 +6,6 @@
  * trong nhóm (per docs/09: "/sodu, /lichsu, /start" vẫn dùng được cho user mới).
  */
 
-const store = require('../store');
 const ledger = require('../ledger');
 const { requireGroup, formatVNDateTime, escapeHtml } = require('./helpers');
 
@@ -34,12 +33,12 @@ function describeTx(tx, userId) {
   return `• [${time}] ${label}${direction}: ${sign}${tx.amount} điểm${note}`;
 }
 
-function register(bot) {
+function register(bot, { storage }) {
   bot.command('sodu', async (ctx) => {
     if (!(await requireGroup(ctx))) return;
     const chatId = ctx.chat.id;
     const userId = ctx.from.id;
-    const balance = store.withGroupState(chatId, (state) => {
+    const balance = await storage.withGroup(chatId, (state) => {
       ledger.ensureMember(state, userId);
       return ledger.getBalance(state, userId);
     });
@@ -50,10 +49,10 @@ function register(bot) {
     if (!(await requireGroup(ctx))) return;
     const chatId = ctx.chat.id;
     const userId = ctx.from.id;
-    const txs = store.withGroupState(chatId, (state) => {
-      ledger.ensureMember(state, userId);
-      return ledger.listRecentTransactionsPure(state, userId, 10);
-    });
+    await storage.ensureMember(chatId, userId);
+    // Dùng phương thức của kho lưu trữ (không lọc trong bộ nhớ): với kho Postgres đây là
+    // một truy vấn có chỉ mục, nên vẫn đúng cả khi nhóm đã có rất nhiều giao dịch.
+    const txs = await storage.listRecentTransactions(chatId, userId, 10);
     if (txs.length === 0) {
       await ctx.reply('Bạn chưa có giao dịch nào trong nhóm này.');
       return;

@@ -474,6 +474,31 @@ function claimEnvelope(envelope, userId, nowMs = Date.now()) {
 }
 
 /**
+ * Nhận lì xì VÀ cộng điểm cho người nhận, trong cùng một lần ghi state.
+ *
+ * `claimEnvelope` ở trên chỉ ghi vào bản ghi bao lì xì (ai nhận phần nào) — nó không
+ * biết tới state của nhóm nên không cộng được số dư. Hàm này ghép hai việc lại:
+ * người gửi đã bị trừ đủ `totalAmount` lúc mở bao (`envelope_hold`), nên mỗi phần được
+ * nhận phải được cộng vào số dư người nhận, phần không ai nhận sẽ hoàn lại cho người
+ * gửi lúc hết giờ (`settleExpiredEnvelope`). Nhờ vậy tổng điểm trong nhóm không đổi.
+ */
+function claimEnvelopeAndCredit(state, envelopeId, userId, nowMs = Date.now()) {
+  const envelope = state.envelopes && state.envelopes[String(envelopeId)];
+  if (!envelope) return { ok: false, reason: 'not_found' };
+  const result = claimEnvelope(envelope, userId, nowMs);
+  if (result.ok) {
+    creditPure(
+      state,
+      userId,
+      result.amount,
+      { type: 'envelope_claim', envelopeId: envelope.id, note: 'Nhận bao lì xì' },
+      nowMs
+    );
+  }
+  return result;
+}
+
+/**
  * Hết giờ (hoặc gọi thủ công) mà bao lì xì chưa nhận hết -> hoàn lại phần chưa nhận
  * cho người gửi. Idempotent: gọi nhiều lần trên envelope đã 'expired'/'completed' không
  * hoàn tiền lần hai.
@@ -496,6 +521,30 @@ function settleExpiredEnvelope(state, envelope, nowMs = Date.now()) {
   }
   envelope.status = 'expired';
   return { refunded: refundAmount };
+}
+
+/**
+ * "Dọn lười" (lazy settlement): đóng MỌI bao lì xì của nhóm đã quá giờ và hoàn phần
+ * chưa ai nhận cho người gửi.
+ *
+ * VÌ SAO CẦN: bản cũ hẹn giờ đóng bao bằng `setTimeout` trong RAM của tiến trình bot.
+ * Trên môi trường serverless (Vercel) KHÔNG có tiến trình chạy liên tục — hàm chỉ sống
+ * vài giây rồi tắt, nên `setTimeout` không bao giờ chạy. Thay vào đó:
+ *   (a) mỗi khi có bất kỳ hoạt động nào trong nhóm, gọi hàm này TRƯỚC (dọn lười), và
+ *   (b) một cron chạy mỗi ngày quét toàn bộ nhóm làm lưới an toàn (xem api/cron.js).
+ *
+ * Idempotent: bao đã 'completed'/'expired' không bị hoàn tiền lần hai.
+ * Trả về danh sách các bao vừa được đóng: [{ id, refunded }].
+ */
+function settleDueEnvelopes(state, nowMs = Date.now()) {
+  const settled = [];
+  for (const envelope of Object.values(state.envelopes || {})) {
+    if (envelope.status !== 'active') continue;
+    if (envelope.expiresAt > nowMs) continue;
+    const { refunded } = settleExpiredEnvelope(state, envelope, nowMs);
+    settled.push({ id: envelope.id, refunded, messageId: envelope.messageId });
+  }
+  return settled;
 }
 
 // ----------------------------------------------------------------------------
@@ -673,7 +722,9 @@ module.exports = {
   splitEnvelope,
   createEnvelope,
   claimEnvelope,
+  claimEnvelopeAndCredit,
   settleExpiredEnvelope,
+  settleDueEnvelopes,
   recordMessage,
   runDailyReward,
   getPotBalance,

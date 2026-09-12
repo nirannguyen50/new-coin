@@ -1,8 +1,12 @@
 # Lì Xì Bot (bản off-chain, beta)
 
 Bot Telegram để cả nhóm tip nhau, mở bao lì xì ngẫu nhiên, và nhận thưởng hoạt động bằng
-**điểm LIXI**. Đây là bản **off-chain**: điểm được lưu trong file dữ liệu của bot
-(`bot/data/`), **không phải token BEP-20 thật, chưa có ví, chưa có blockchain**.
+**điểm LIXI**. Đây là bản **off-chain**: điểm được lưu trong kho dữ liệu của bot (PostgreSQL
+khi deploy, hoặc file JSON trong `bot/data/` khi chạy ở máy cá nhân), **không phải token
+BEP-20 thật, chưa có ví, chưa có blockchain**.
+
+> **Muốn bot chạy 24/7 ngay?** Đọc mục [Chạy trên Vercel (khuyến nghị)](#chạy-trên-vercel-khuyến-nghị)
+> — miễn phí, không cần thẻ ngân hàng, và **dữ liệu điểm được giữ lại**.
 
 Quyết định xây off-chain trước được giải thích ở `docs/11-quyet-dinh-bot-off-chain-truoc.md`;
 phạm vi lệnh gốc nằm ở mục 1 của `docs/09-ke-hoach-rut-gon-dex-va-san-nho.md`. Tóm gọn: dự án
@@ -15,7 +19,8 @@ chưa có vốn/ví để nạp thanh khoản, nên bot chạy bằng điểm n�
 - [Tạo bot qua @BotFather](#tạo-bot-qua-botfather)
 - [Thêm bot vào nhóm và cấp quyền admin](#thêm-bot-vào-nhóm-và-cấp-quyền-admin)
 - [Chạy bot ở máy của bạn](#chạy-bot-ở-máy-của-bạn)
-- [Chạy 24/7 miễn phí trên Render](#chạy-247-miễn-phí-trên-render)
+- [**Chạy trên Vercel (khuyến nghị)**](#chạy-trên-vercel-khuyến-nghị)
+- [Chạy 24/7 miễn phí trên Render (phương án dự phòng)](#chạy-247-miễn-phí-trên-render-phương-án-dự-phòng)
 - [Chạy 24/7 với chi phí thấp hoặc miễn phí](#chạy-247-với-chi-phí-thấp-hoặc-miễn-phí)
 - [Backup dữ liệu](#backup-dữ-liệu)
 - [Danh sách lệnh đầy đủ](#danh-sách-lệnh-đầy-đủ)
@@ -33,20 +38,31 @@ Xem chi tiết ở `docs/11-quyet-dinh-bot-off-chain-truoc.md`. Vài điểm qua
   `/rut_duyet` hoặc `/rut_huy`.
 - **`/pot` không đọc block on-chain.** Admin "nạp pot" bằng lệnh `/nap`, ghi log rõ ràng đây
   là hành động thủ công/off-chain, không phải giao dịch blockchain.
-- **Dữ liệu chỉ nằm trên máy chạy bot** (file JSON trong `bot/data/`). Nếu máy mất dữ liệu thì
-  mất luôn lịch sử điểm — cần chạy `npm run backup` định kỳ (xem [Backup dữ liệu](#backup-dữ-liệu)).
-  Riêng khi chạy trên **Render gói miễn phí**, máy chủ **không có ổ đĩa bền vững**: dữ liệu bị
-  xoá sạch sau mỗi lần restart/deploy lại — xem
-  [Chạy 24/7 miễn phí trên Render](#chạy-247-miễn-phí-trên-render).
+- **Dữ liệu nằm ở đâu là tuỳ cấu hình.** Bot tự chọn một trong hai kho:
+  - **PostgreSQL** — khi có chuỗi kết nối trong biến môi trường (`DATABASE_URL`,
+    `POSTGRES_URL`, …). Dữ liệu **bền vững**, sống sót qua mọi lần deploy lại. Đây là cách
+    dùng khi chạy trên Vercel hoặc Render.
+  - **File JSON** trong `bot/data/` — khi không có biến nào ở trên. Dùng khi chạy ở máy cá
+    nhân; nhớ chạy `npm run backup` định kỳ (xem [Backup dữ liệu](#backup-dữ-liệu)).
+
+  **Không bao giờ dùng kho JSON khi deploy lên Vercel hay Render gói miễn phí**: Vercel có
+  hệ thống file **chỉ đọc**, còn Render free **không có ổ đĩa bền vững** (dữ liệu bị xoá sạch
+  sau mỗi lần restart). Xem [Chạy trên Vercel (khuyến nghị)](#chạy-trên-vercel-khuyến-nghị).
 - **Không dùng dependency cần build native** (như better-sqlite3) — cố tình để bot chạy được
-  trên hosting rẻ/free tier không có toolchain build C++.
-- **Job thưởng hoạt động dùng `setInterval` trong tiến trình bot**, không phải cron thật. Đủ
-  cho quy mô beta (3 nhóm pilot); trước khi mở rộng nên thay bằng scheduler ngoài tiến trình.
-- **Hẹn giờ đóng bao lì xì dùng `setTimeout` trong RAM** — nếu bot restart giữa lúc một bao lì
-  xì đang mở, bot sẽ tự kiểm tra lại lúc khởi động (bao đã hết giờ được đóng ngay, bao còn hạn
-  được hẹn giờ lại), nhưng vẫn nên tránh restart bot khi có nhiều bao lì xì đang mở.
-- Lưu trữ theo file JSON/nhóm (không dùng database thật) phù hợp với vài chục thành viên và
-  vài nghìn giao dịch mỗi nhóm — **đủ cho 3 nhóm pilot, không phù hợp nếu mở rộng nhiều hơn**.
+  trên hosting rẻ/free tier không có toolchain build C++. (Driver `pg` là JavaScript thuần.)
+- **Thưởng hoạt động và đóng bao lì xì không dùng hẹn giờ trong RAM nữa.** Bản trước dùng
+  `setInterval`/`setTimeout`, chỉ chạy được khi có một tiến trình sống liên tục — điều không
+  có trên serverless. Nay có hai lớp:
+  - **Dọn lười**: mỗi khi nhóm có hoạt động, bot đóng ngay các bao lì xì đã quá giờ và hoàn
+    phần chưa ai nhận cho người gửi.
+  - **Cron hằng ngày** (`/api/cron` trên Vercel, hoặc job định kỳ khi chạy ở máy cá nhân):
+    phát thưởng hoạt động + quét các bao lì xì còn sót.
+
+  Hệ quả cần biết: nếu nhóm **im lặng hẳn** sau khi bao lì xì hết giờ, tin nhắn vẫn còn hiện
+  nút “Nhận lì xì” cho tới lần dọn kế tiếp — nhưng bấm vào sẽ bị từ chối vì đã hết giờ, nên
+  **không ai nhận nhầm và không có điểm nào bị sai**.
+- Kho JSON (không phải database thật) phù hợp với vài chục thành viên và vài nghìn giao dịch
+  mỗi nhóm — **đủ cho 3 nhóm pilot**. Kho PostgreSQL thì không có giới hạn đó.
 
 ## Tạo bot qua @BotFather
 
@@ -107,11 +123,189 @@ Biến môi trường tuỳ chọn khác trong `.env.example`:
   cá nhân** — khi đó bot chạy ở **chế độ long polling** như trước giờ (bot tự hỏi Telegram, không
   cần mở cổng, không cần tên miền).
 - `PORT`: cổng HTTP khi chạy ở chế độ webhook (mặc định 3000). Không cần đặt khi chạy ở máy cá nhân.
+- `DATABASE_URL`: chuỗi kết nối PostgreSQL. **Để trống khi chạy ở máy cá nhân** — khi đó bot
+  lưu vào file JSON trong `bot/data/` như trước giờ. Nếu có, bot tự chuyển sang lưu vào
+  Postgres và tự tạo bảng lúc khởi động (không phải chạy lệnh migration nào).
 
 Lúc khởi động, bot luôn in rõ đang chạy ở chế độ nào ("CHẾ ĐỘ LONG POLLING" hoặc "CHẾ ĐỘ
 WEBHOOK"), không in token hay bất kỳ giá trị bí mật nào.
 
-## Chạy 24/7 miễn phí trên Render
+## Chạy trên Vercel (khuyến nghị)
+
+Đây là cách **được khuyến nghị** để bot chạy suốt ngày đêm: **miễn phí, không cần thẻ ngân
+hàng**, và quan trọng nhất — **dữ liệu điểm được giữ lại** nhờ một database PostgreSQL miễn
+phí (Neon) gắn thẳng vào dự án. Khác hẳn Render gói free, nơi điểm của cả nhóm bị xoá về 0
+sau mỗi lần dịch vụ khởi động lại.
+
+Toàn bộ quá trình khoảng **15 phút**, chỉ bấm chuột. Hãy đọc mục
+[Hạn chế của gói Hobby](#hạn-chế-của-gói-hobby-đọc-trước-khi-mời-người-thật-vào) ở cuối
+**trước khi** mời thành viên thật vào dùng.
+
+### Chuẩn bị
+
+- **Token bot** lấy từ @BotFather (xem [Tạo bot qua @BotFather](#tạo-bot-qua-botfather)).
+  Dạng `123456789:ABCdef...` — giữ kín.
+- **Hai chuỗi bí mật do bạn tự nghĩ ra.** Không cần phức tạp, chỉ cần dài và khó đoán, ví dụ
+  `lixi-cron-2026-xyz-9f3k` và `lixi-setup-2026-abc-7d2m`. Ghi tạm vào đâu đó, lát nữa sẽ dán.
+
+### Bước 1 — Đăng nhập Vercel bằng GitHub
+
+1. Mở trình duyệt, vào **https://vercel.com**.
+2. Bấm nút **Sign Up** (hoặc **Log In** nếu đã có tài khoản) ở góc trên bên phải.
+3. Chọn **Continue with GitHub** → đăng nhập tài khoản GitHub đang chứa mã nguồn →
+   bấm **Authorize Vercel**.
+4. Nếu Vercel hỏi chọn loại tài khoản, chọn **Hobby** (gói miễn phí) và điền tên bất kỳ.
+
+### Bước 2 — Nhập (import) repo `new-coin`
+
+1. Ở trang chính (**Dashboard**), bấm nút **Add New…** ở góc trên bên phải → chọn **Project**.
+2. Vercel hiện danh sách repo GitHub của bạn. Tìm **`new-coin`** → bấm **Import** bên cạnh nó.
+   - Không thấy repo? Bấm **Adjust GitHub App Permissions** (hoặc **Configure GitHub App**)
+     ở cuối danh sách, chọn repo `new-coin` rồi **Save**, quay lại và thử lại.
+3. Ở màn hình cấu hình, tìm phần **Git Branch** (có thể nằm trong mục **Build and Output
+   Settings** hoặc ngay dưới tên repo) và đổi nhánh thành **`claude/binance-coin-plan-rthkem`**.
+   **Chọn sai nhánh thì sẽ không có mã nguồn của bot.**
+   - Nếu màn hình import không cho đổi nhánh, cứ import với nhánh mặc định, rồi sau đó vào
+     **Settings → Git → Production Branch**, đổi thành `claude/binance-coin-plan-rthkem`,
+     bấm **Save**, và deploy lại ở Bước 5.
+4. **Framework Preset** để nguyên **Other**. **Không cần sửa** Build Command / Output Directory
+   — file `vercel.json` ở gốc repo đã cấu hình sẵn (giải thích từng dòng ở `VERCEL.md`).
+
+### Bước 3 — Thêm biến môi trường
+
+Vẫn ở màn hình import, mở mục **Environment Variables** (bấm vào để bung ra). Thêm **ba** biến,
+mỗi biến gõ tên vào ô **Key**, giá trị vào ô **Value**, rồi bấm **Add**:
+
+| Key | Value | Để làm gì |
+|---|---|---|
+| `TELEGRAM_BOT_TOKEN` | token lấy từ @BotFather | Để bot đăng nhập Telegram. |
+| `CRON_SECRET` | chuỗi bí mật thứ nhất bạn đã nghĩ ra | Để **chỉ Vercel** kích hoạt được việc phát thưởng hằng ngày. Thiếu biến này thì **thưởng hoạt động sẽ không được phát**. |
+| `SETUP_KEY` | chuỗi bí mật thứ hai | Để **chỉ bạn** mở được trang cài đặt ở Bước 6. |
+
+### Bước 4 — Deploy lần đầu
+
+Bấm nút **Deploy** màu đen. Chờ khoảng **1–3 phút**. Khi xong Vercel hiện pháo giấy và một
+ảnh chụp trang web — **chưa xong đâu**, còn hai bước nữa.
+
+Bấm **Continue to Dashboard** để về trang quản lý dự án.
+
+### Bước 5 — Tạo database Neon miễn phí (bước quan trọng nhất)
+
+Không có bước này, bot **không lưu được điểm** (hệ thống file của Vercel chỉ đọc).
+
+1. Trong trang dự án, bấm tab **Storage** ở thanh trên cùng.
+2. Bấm **Create Database**.
+3. Trong danh sách, chọn **Neon** (ghi chú *Serverless Postgres*) → bấm **Continue**.
+4. Chọn gói **Free** → bấm **Continue**.
+5. Đặt tên tuỳ ý (ví dụ `lixi-db`), chọn khu vực gần Việt Nam nhất nếu có (ví dụ *Singapore*),
+   rồi bấm **Create**.
+6. Màn hình tiếp theo hỏi kết nối database vào dự án nào — chọn dự án bot của bạn, đánh dấu
+   cả ba môi trường (**Production / Preview / Development**) nếu được hỏi, rồi bấm **Connect**.
+
+Vercel **tự động thêm chuỗi kết nối** (`DATABASE_URL` và vài biến tương tự) vào biến môi
+trường của dự án — **bạn không phải gõ tay gì cả**, và cũng không nên copy chuỗi đó đi đâu.
+
+**Deploy lại để bot nhìn thấy database mới:**
+
+7. Bấm tab **Deployments**.
+8. Ở dòng trên cùng (bản mới nhất), bấm dấu **…** bên phải → chọn **Redeploy** → bấm
+   **Redeploy** để xác nhận. Chờ thêm 1–2 phút.
+
+### Bước 6 — Mở trang cài đặt một lần
+
+1. Bấm tab **Project** (hoặc **Overview**) và copy **địa chỉ** của dự án — dạng
+   `https://new-coin-xxxx.vercel.app` (nằm ngay dưới tên dự án, mục **Domains**).
+2. Mở một tab trình duyệt mới và dán địa chỉ đó, **thêm vào cuối**:
+   `/api/setup?key=` rồi dán tiếp `SETUP_KEY` bạn đã đặt ở Bước 3.
+
+   Kết quả trông như:
+   ```
+   https://new-coin-xxxx.vercel.app/api/setup?key=lixi-setup-2026-abc-7d2m
+   ```
+3. Nhấn Enter. Trang sẽ hiện tiếng Việt, mỗi việc một dòng:
+
+   ```
+   🎉 Cài đặt xong!
+   ✅ Đã tạo/kiểm tra xong các bảng trong database PostgreSQL (…)
+   ✅ Đã báo cho Telegram gửi tin nhắn về https://…/api/telegram (…)
+   ✅ Đã đặt CRON_SECRET — công việc hằng ngày sẽ chạy được.
+   ```
+
+   Dòng nào có ❌ thì bên cạnh có ghi rõ phải bấm nút nào để sửa. Sửa xong → **Redeploy**
+   (Bước 5.8) → mở lại chính địa chỉ này.
+
+   Trang này **không bao giờ hiển thị** token, mã bí mật hay chuỗi kết nối database.
+4. **Xong.** Mở Telegram, thêm bot vào nhóm, cấp **quyền admin** (xem
+   [Thêm bot vào nhóm và cấp quyền admin](#thêm-bot-vào-nhóm-và-cấp-quyền-admin)), rồi gõ
+   `/start` trong nhóm. Bot phải trả lời ngay.
+
+Sau này mỗi khi mã nguồn trên nhánh đó được cập nhật, Vercel **tự deploy lại**. Bạn **không
+phải mở lại** `/api/setup`, trừ khi đổi tên miền của dự án.
+
+### Nếu bot không trả lời
+
+- Mở `https://<địa-chỉ-dự-án>/api/telegram` bằng trình duyệt: phải thấy
+  `{"ok":true,"mode":"vercel-webhook"}`. Nếu thấy, máy chủ đang sống → vấn đề nằm ở token
+  hoặc ở webhook; mở lại `/api/setup?key=…` để đăng ký lại.
+- Mở lại `/api/setup?key=…` và đọc các dòng ❌ — mỗi dòng đều nói rõ phải bấm nút nào.
+- Vào tab **Logs** (hoặc **Observability → Logs**) của dự án trên Vercel để đọc dòng lỗi
+  tiếng Việt. Bot **không bao giờ in token** ra log.
+- Thấy dòng `Thiếu biến môi trường TELEGRAM_BOT_TOKEN` → vào **Settings → Environment
+  Variables**, kiểm tra lại, rồi **Redeploy**.
+
+### Hạn chế của gói Hobby (đọc trước khi mời người thật vào)
+
+- **⚠️ Gói Hobby KHÔNG cho phép sử dụng vào mục đích thương mại.** Điều khoản của Vercel quy
+  định gói Hobby chỉ dành cho dự án **cá nhân, phi thương mại**. Chạy thử nghiệm, làm demo,
+  nhóm bạn bè — được. Nhưng ngay khi bot phục vụ một hoạt động **có doanh thu, có bán token,
+  có quảng cáo, hoặc gắn với một công ty**, bạn **phải** chuyển sang gói trả phí (Pro) hoặc
+  sang một nơi chạy khác (VPS, Render trả phí). Đây là điều kiện pháp lý, không phải giới hạn
+  kỹ thuật — Vercel có quyền khoá dự án nếu vi phạm.
+- **Cron chỉ chạy MỘT LẦN MỖI NGÀY.** Gói Hobby cho tối đa **2 lịch cron** mỗi dự án và
+  **tần suất tối thiểu là một lần mỗi ngày** (không thể đặt mỗi giờ). Vercel còn chạy vào một
+  thời điểm **bất kỳ trong khung giờ** đã đặt, không đúng phút. Hệ quả:
+  - Thưởng hoạt động hằng ngày được phát vào khoảng **08:00–09:00 giờ Việt Nam**, không cố định
+    phút. Số điểm **không bị ảnh hưởng** vì thưởng tính theo **ngày**, không theo giờ.
+  - Bao lì xì hết giờ **không** chờ cron: bot đóng ngay khi nhóm có hoạt động tiếp theo
+    (“dọn lười”). Cron chỉ là lưới an toàn cho nhóm im lặng hẳn.
+- **Mỗi lời gọi tối đa ~60 giây.** Quá đủ cho một lệnh bot, nhưng nếu số nhóm tăng lên rất
+  nhiều thì việc phát thưởng cho tất cả trong một lần chạy có thể chạm giới hạn — lúc đó cần
+  chia nhỏ công việc hoặc chuyển sang gói trả phí.
+- **Neon gói Free cũng có hạn mức** (dung lượng và số giờ tính toán mỗi tháng). Với vài nhóm
+  pilot thì không tới đâu, nhưng đừng coi đây là hạ tầng cho hàng nghìn người dùng.
+- **Đọc lại các giới hạn của bản off-chain** ở đầu README này: điểm LIXI chưa có giá trị tiền
+  thật, `/rut` chưa gửi crypto thật.
+
+### Dành cho người rành kỹ thuật
+
+- Không muốn đặt `SETUP_KEY`? Bot chấp nhận cả mã bí mật suy ra từ token, lấy bằng:
+
+  ```bash
+  node -e "console.log(require('crypto').createHash('sha256').update('lixi-bot:webhook-secret:v1:'+process.env.TELEGRAM_BOT_TOKEN).digest('hex').slice(0,48))"
+  ```
+
+  Chuỗi này cũng dùng được cho `/api/cron?key=…` khi muốn chạy phát thưởng ngay bằng tay.
+- Ba hàm serverless nằm ở `api/telegram.js`, `api/cron.js`, `api/setup.js` — mỗi file đều có
+  chú thích đầy đủ về ranh giới bảo mật ở đầu file.
+- Trên Vercel, đường dẫn webhook **cố định** là `/api/telegram` (không bí mật được, vì đường
+  dẫn của serverless function chính là tên file). Ranh giới bảo mật là header
+  `X-Telegram-Bot-Api-Secret-Token` mà Telegram gửi kèm mọi request.
+- Muốn dùng Postgres khi chạy ở máy cá nhân: đặt `DATABASE_URL` trong `bot/.env` rồi
+  `npm start` như bình thường — bot tự nhận ra và tự tạo bảng.
+- **Thông báo lỗi luôn được lọc trước khi in ra.** Thư viện Telegram ném lỗi kèm nguyên URL
+  đã gọi (`https://api.telegram.org/bot<TOKEN>/...`), tức là thông báo lỗi thô chứa trọn vẹn
+  token bot. `src/redact.js` xoá token, mật khẩu database và các mã bí mật khỏi mọi thông báo
+  trước khi chúng lên log hoặc lên trang `/api/setup` (có test riêng trong
+  `test/redact.test.js`).
+
+## Chạy 24/7 miễn phí trên Render (phương án dự phòng)
+
+> **Ghi chú:** cách này vẫn hoạt động và vẫn được hỗ trợ, nhưng **không còn là cách được
+> khuyến nghị**. Gói miễn phí của Render **không có ổ đĩa bền vững**, nên nếu dùng kho JSON
+> thì điểm của cả nhóm bị xoá về 0 sau mỗi lần khởi động lại. Nếu vẫn muốn dùng Render, hãy
+> gắn thêm một database Postgres miễn phí và đặt biến `DATABASE_URL` — khi đó dữ liệu được
+> giữ y như trên Vercel. Xem [Chạy trên Vercel (khuyến nghị)](#chạy-trên-vercel-khuyến-nghị)
+> và `docs/12-chay-bot-o-dau.md`.
 
 Đây là cách **miễn phí, không cần thẻ ngân hàng, không cần biết kỹ thuật** để bot chạy suốt
 ngày đêm. Hãy đọc hết mục [Hạn chế của gói miễn phí](#hạn-chế-của-gói-miễn-phí-đọc-trước-khi-mời-người-thật-vào)
@@ -191,24 +385,24 @@ webhook với địa chỉ mới, bạn không phải làm gì.
 - **750 giờ chạy/tháng** cho toàn bộ tài khoản miễn phí. Một dịch vụ chạy liên tục cả tháng tốn
   khoảng 730 giờ → **đủ cho đúng một bot**, nhưng nếu bạn "ping" cho bot thức 24/7 thì gần như
   dùng hết hạn mức, và không còn dư cho dịch vụ miễn phí nào khác.
-- **KHÔNG có ổ đĩa lưu trữ bền vững.** Đây là hạn chế **quan trọng nhất**:
-  - Toàn bộ "sổ cái" điểm LIXI nằm trong file JSON ở `bot/data/`. Trên Render free, thư mục này
-    nằm trong bộ nhớ tạm của container.
+- **KHÔNG có ổ đĩa lưu trữ bền vững.** Đây là hạn chế **quan trọng nhất** — và là lý do
+  Vercel + Neon đã thay Render làm cách chạy được khuyến nghị:
+  - Nếu **không** gắn database, "sổ cái" điểm LIXI nằm trong file JSON ở `bot/data/`. Trên
+    Render free, thư mục này nằm trong bộ nhớ tạm của container.
   - **Mỗi lần deploy lại, bot restart, hoặc dịch vụ ngủ rồi thức dậy, toàn bộ dữ liệu bị xoá
     sạch**: số dư, lịch sử giao dịch, pot, yêu cầu rút, quy tắc thưởng — tất cả quay về 0 và
     **không khôi phục được**. `npm run backup` cũng không cứu được vì file backup nằm cùng chỗ
     và cũng bị xoá.
-  - Vì vậy: **chỉ dùng Render free để chạy thử/demo**. Đừng nói với thành viên rằng điểm được
-    giữ lâu dài, và đừng dùng cấu hình này cho nhóm pilot thật muốn giữ số liệu ≥ 4 tuần (điều
-    kiện chuyển on-chain ở `docs/11`).
   - Bot **luôn in một khung cảnh báo lớn khi khởi động** ở chế độ webhook mà chưa có kho dữ liệu
     bền vững, để không ai vô tình quên điều này.
-  - **Bước kế tiếp đã định sẵn (chưa làm trong bản này):** thay lớp lưu trữ file JSON bằng một
-    **Postgres hoặc Redis miễn phí** (Neon/Supabase/Render Postgres, hoặc Upstash Redis),
-    implement đúng interface `Ledger` mô tả ở đầu `src/ledger.js` — theo đúng thiết kế của
-    `docs/11`: chỉ đổi một module lưu trữ, **không sửa lệnh bot, không sửa logic chống lạm dụng**.
-    Xem TODO đánh dấu rõ ở đầu `src/store.js`. Khi có `DATABASE_URL` hoặc `REDIS_URL`, bot sẽ
-    không in cảnh báo mất dữ liệu nữa.
+  - **Cách khắc phục (đã có sẵn trong mã nguồn):** tạo một database PostgreSQL miễn phí
+    (Neon, Supabase, hoặc Render Postgres) rồi vào tab **Environment** của dịch vụ trên Render,
+    thêm biến **`DATABASE_URL`** với chuỗi kết nối của database đó, bấm **Save** và
+    **Manual Deploy → Deploy latest commit**. Bot tự nhận ra, tự tạo bảng, và dữ liệu được giữ
+    y như trên Vercel — **không phải sửa một dòng mã nào**. Khi đó khung cảnh báo cũng biến mất.
+  - Nếu **không** làm bước trên: **chỉ dùng Render free để chạy thử/demo**. Đừng nói với thành
+    viên rằng điểm được giữ lâu dài, và đừng dùng cấu hình này cho nhóm pilot thật muốn giữ số
+    liệu ≥ 4 tuần (điều kiện chuyển on-chain ở `docs/11`).
 - Muốn giữ dữ liệu chắc chắn ngay từ bây giờ mà không cần code thêm: chạy bot trên **VPS hoặc
   Raspberry Pi** (có ổ đĩa thật) theo mục
   [Chạy 24/7 với chi phí thấp hoặc miễn phí](#chạy-247-với-chi-phí-thấp-hoặc-miễn-phí) và
@@ -216,10 +410,13 @@ webhook với địa chỉ mới, bạn không phải làm gì.
 
 ## Chạy 24/7 với chi phí thấp hoặc miễn phí
 
-Bot cần chạy liên tục (`npm start` không tự dừng) để nhận tin nhắn Telegram real-time. Vài lựa
-chọn cho giai đoạn pilot, từ rẻ tới miễn phí (cách nhanh nhất và không mất tiền là
-[Render](#chạy-247-miễn-phí-trên-render) ở mục trên — nhưng **dữ liệu bị xoá mỗi lần restart**;
-các cách dưới đây giữ được dữ liệu):
+Cách **nhanh nhất, miễn phí và giữ được dữ liệu** là
+[Chạy trên Vercel (khuyến nghị)](#chạy-trên-vercel-khuyến-nghị) ở mục trên — không cần đọc
+tiếp phần này trừ khi bạn muốn tự làm chủ máy chủ.
+
+Các cách dưới đây dành cho trường hợp muốn bot chạy trên **máy của chính mình** (`npm start`
+chạy liên tục, không tự dừng). Tất cả đều giữ được dữ liệu, và đều dùng được với cả kho JSON
+lẫn kho PostgreSQL (chỉ cần đặt `DATABASE_URL`):
 
 1. **Railway.app (free tier / hobby plan)** — dễ nhất để bắt đầu:
    - Tạo repo Git chứa thư mục `bot/` (hoặc trỏ Railway vào repo hiện tại, chọn thư mục `bot`
@@ -244,8 +441,13 @@ khai 24/7 ngoài máy cá nhân (Railway trả phí, VPS) mới cần thanh toá
 
 ## Backup dữ liệu
 
-Toàn bộ "sổ cái" điểm LIXI nằm trong `bot/data/groups/<chatId>.json` — **đây là dữ liệu duy
-nhất có giá trị**, mất là mất lịch sử điểm của cả nhóm.
+> **Chỉ áp dụng cho kho JSON.** Khi bot dùng PostgreSQL (có `DATABASE_URL`), dữ liệu nằm
+> trong database chứ không nằm trong `bot/data/`, nên `npm run backup` sẽ không có gì để sao
+> lưu. Với Neon, hãy dùng tính năng sao lưu/khôi phục theo thời điểm của chính Neon, hoặc
+> chạy `pg_dump` định kỳ với chuỗi kết nối lấy từ tab **Storage** trên Vercel.
+
+Khi dùng kho JSON, toàn bộ "sổ cái" điểm LIXI nằm trong `bot/data/groups/<chatId>.json` —
+**đây là dữ liệu duy nhất có giá trị**, mất là mất lịch sử điểm của cả nhóm.
 
 Chạy backup thủ công (đóng gói `bot/data/` thành file `.tar.gz` có timestamp, lưu vào
 `bot/backups/`, cả hai thư mục đều đã gitignore):
@@ -300,14 +502,27 @@ ngay cho thành viên mới, theo đúng `docs/09`.
 ## Cấu trúc mã nguồn
 
 ```
+(gốc repo)
+  vercel.json               # cấu hình deploy lên Vercel (cron, install, functions)
+  VERCEL.md                 # giải thích từng dòng của vercel.json (JSON không cho chú thích)
+  render.yaml               # cấu hình deploy lên Render (phương án dự phòng)
+  public/index.html         # trang tĩnh giới thiệu (Vercel cần một thư mục "kết quả build")
+  api/
+    telegram.js              # cửa ngõ webhook trên Vercel (kiểm tra header bí mật của Telegram)
+    cron.js                  # công việc hằng ngày: thưởng hoạt động + quét bao lì xì hết giờ
+    setup.js                 # trang cài đặt một lần (tạo bảng + đăng ký webhook)
 bot/
-  index.js                 # entry point, đọc TELEGRAM_BOT_TOKEN, khởi động bot
+  index.js                 # entry point khi chạy ở máy cá nhân / Render
   src/
     store.js                # đọc/viết file JSON theo nhóm (atomic write)
+    postgres-store.js        # kho PostgreSQL: schema, transaction, khoá hàng, CHECK số dư >= 0
+    storage.js               # CHỌN kho (Postgres hay JSON) + lớp bọc chung cho lệnh bot
     ledger.js                # sổ cái điểm + toàn bộ hàm nghiệp vụ thuần (pure)
     config.js                # đọc cấu hình từ biến môi trường
     webhook.js               # hàm thuần cho chế độ webhook (chọn chế độ, suy ra đường dẫn/secret)
-    bot.js                   # khởi tạo Telegraf, đăng ký lệnh, job thưởng, khởi động 2 chế độ
+    serverless.js            # phần dùng chung cho api/: kiểm tra quyền, suy ra địa chỉ deploy
+    redact.js                # xoá token/mật khẩu khỏi thông báo lỗi trước khi in ra
+    bot.js                   # khởi tạo Telegraf, đăng ký lệnh, job định kỳ, khởi động 2 chế độ
     commands/
       start.js                # /start
       wallet.js                # /sodu, /lichsu
@@ -317,14 +532,27 @@ bot/
       helpers.js                # hàm dùng chung (kiểm tra admin, định dạng tin nhắn)
   test/                      # test bằng node:test (không cần Telegram/network)
   scripts/backup.js          # npm run backup
-  data/groups/<chatId>.json # dữ liệu từng nhóm (gitignored)
+  data/groups/<chatId>.json # dữ liệu từng nhóm khi dùng kho JSON (gitignored)
 ```
 
-`Ledger` là một interface (xem comment đầu file `src/ledger.js`): `JsonLedger` hiện tại lưu
-điểm vào file JSON; khi đủ điều kiện chuyển sang on-chain (theo `docs/11`), chỉ cần viết một
-`OnChainLedger` implement cùng interface (`getBalance`, `credit`, `debit`, `transfer`,
-`recordTransaction`, `listRecentTransactions`) mà không phải sửa lệnh bot hay logic chống lạm
-dụng.
+`Ledger` là một interface (xem comment đầu file `src/ledger.js`) gồm `getBalance`, `credit`,
+`debit`, `transfer`, `recordTransaction`, `listRecentTransactions`. Hiện có **hai** bản
+implement — `JsonLedger` (file JSON) và `PostgresLedger` (`src/postgres-store.js`) — và
+`src/storage.js` chọn bản nào dựa trên biến môi trường. Khi đủ điều kiện chuyển sang on-chain
+(theo `docs/11`), chỉ cần viết thêm một `OnChainLedger` implement cùng interface mà **không
+phải sửa lệnh bot hay logic chống lạm dụng**.
+
+**Vì sao kho Postgres an toàn khi nhiều bản chạy cùng lúc** (quan trọng trên serverless, nơi
+hàng chục instance có thể xử lý cùng một nhóm cùng lúc):
+
+1. Mọi thao tác đổi điểm đều nằm trong một **transaction** bắt đầu bằng
+   `SELECT … FOR UPDATE` trên hàng của nhóm và các hàng thành viên → Postgres xếp các thao
+   tác trong cùng một nhóm **nối tiếp nhau**, dù chúng chạy trên hai máy khác nhau.
+2. Cột số dư có ràng buộc **`CHECK (balance >= 0)`** ở mức database — lưới an toàn cuối cùng:
+   kể cả khi một lỗi lập trình bỏ quên khoá, database vẫn từ chối ghi số dư âm và huỷ cả
+   transaction. **Không có đường nào tạo ra điểm từ hư không.**
+
+Cả hai điều trên đều có test tích hợp chạy trên Postgres thật (xem [Chạy test](#chạy-test)).
 
 ## Chạy test
 
@@ -332,6 +560,36 @@ dụng.
 cd bot
 npm test
 ```
+
+Lệnh trên chạy toàn bộ test **không cần mạng, không cần Telegram**. Nhóm test tích hợp cho
+kho PostgreSQL sẽ **tự bỏ qua (skip)** kèm thông báo rõ ràng nếu máy bạn không có Postgres —
+`npm test` vẫn xanh.
+
+Muốn chạy **cả** nhóm test Postgres (khuyến nghị trước khi sửa `src/postgres-store.js`), trỏ
+tới một Postgres bất kỳ:
+
+```bash
+# Cách nhanh nhất nếu máy có Docker:
+docker run --rm -d -p 5432:5432 -e POSTGRES_PASSWORD=matkhau -e POSTGRES_DB=lixi_test --name lixi-pg postgres:16
+
+TEST_DATABASE_URL=postgresql://postgres:matkhau@127.0.0.1:5432/lixi_test npm test
+```
+
+Mỗi lần chạy dùng một **schema riêng** (tên có mốc thời gian) và tự xoá sạch ở cuối, nên
+không đụng vào dữ liệu thật và chạy song song được. Nhóm test này kiểm chứng những thứ chỉ
+database thật mới chứng minh được:
+
+- tạo bảng hai lần vẫn an toàn (idempotent);
+- tip chuyển điểm nguyên tử, tổng điểm nhóm không đổi;
+- số dư không đủ thì bị từ chối và **không ai bị đổi số dư**;
+- ràng buộc `CHECK` chặn ghi số dư âm ngay cả khi ghi thẳng bằng SQL;
+- **10 lệnh tip chạy song song** của cùng một người không thể tiêu quá số dư;
+- số học nhận / hết giờ / hoàn tiền của bao lì xì;
+- thưởng hoạt động chỉ phát **một lần** cho mỗi (nhóm, ngày), kể cả khi gọi 5 lần cùng lúc;
+- các bước chuyển trạng thái của yêu cầu rút.
+
+CI (`.github/workflows/ci.yml`) luôn chạy **đầy đủ** nhóm test này bằng một service container
+Postgres 16.
 
 Dùng module có sẵn `node:test` + `node:assert` của Node — không cài thêm framework test nào.
 Test chỉ gọi các hàm thuần trong `src/ledger.js` (và một số hàm parse cú pháp lệnh) trực tiếp,

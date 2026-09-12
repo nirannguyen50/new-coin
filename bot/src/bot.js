@@ -6,8 +6,8 @@
 
 const http = require('http');
 const { Telegraf } = require('telegraf');
-const store = require('./store');
 const ledger = require('./ledger');
+const { safeErrorMessage } = require('./redact');
 const {
   buildWebhookUrl,
   deriveSecretToken,
@@ -25,16 +25,45 @@ function isTrackedGroup(ctx) {
   return !!ctx.chat && (ctx.chat.type === 'group' || ctx.chat.type === 'supergroup') && !!ctx.from;
 }
 
-function createBot(token, { superAdminIds = [] } = {}) {
+/**
+ * Tạo bot Telegraf và đăng ký toàn bộ lệnh.
+ *
+ * @param {string} token token bot từ @BotFather
+ * @param {{superAdminIds?: string[], storage: object}} options
+ *        `storage` là kho lưu trữ đã chọn (JSON hoặc Postgres — xem src/storage.js).
+ *        Mọi lệnh chỉ nói chuyện với `storage`, nên đổi kho KHÔNG phải sửa lệnh nào.
+ */
+function createBot(token, { superAdminIds = [], storage } = {}) {
+  if (!storage) {
+    throw new Error('createBot: thiếu tham số `storage` (kho lưu trữ).');
+  }
   const bot = new Telegraf(token);
 
   // 1) Đánh dấu "đã thấy" người gửi trong nhóm — dùng cho hạn tuổi tài khoản
-  //    (min account age). Chạy cho MỌI update có tin nhắn, kể cả lệnh.
+  //    (min account age) — VÀ "dọn lười" các bao lì xì đã hết giờ của nhóm này.
+  //
+  //    Dọn lười thay cho `setTimeout` của bản trước: trên serverless không có tiến
+  //    trình sống lâu để hẹn giờ, nên mỗi lần nhóm có hoạt động là một cơ hội để đóng
+  //    các bao lì xì quá hạn và hoàn điểm chưa ai nhận (xem `ledger.settleDueEnvelopes`).
   bot.use(async (ctx, next) => {
     if (isTrackedGroup(ctx)) {
-      store.withGroupState(ctx.chat.id, (state) => {
-        ledger.ensureMember(state, ctx.from.id);
-      });
+      const now = Date.now();
+      let settled = [];
+      try {
+        settled = await storage.withGroup(
+          ctx.chat.id,
+          (state) => {
+            ledger.ensureMember(state, ctx.from.id, now);
+            return ledger.settleDueEnvelopes(state, now);
+          },
+          { nowMs: now }
+        );
+      } catch (err) {
+        console.error('Lỗi khi dọn bao lì xì hết giờ:', safeErrorMessage(err));
+      }
+      if (settled && settled.length) {
+        await tipCmd.renderSettledEnvelopes(ctx.telegram, storage, ctx.chat.id, settled);
+      }
     }
     return next();
   });
@@ -46,18 +75,18 @@ function createBot(token, { superAdminIds = [] } = {}) {
     const msg = ctx.message;
     const isCommand = !!(msg.text && msg.text.startsWith('/'));
     if (isTrackedGroup(ctx) && msg.text && !isCommand) {
-      store.withGroupState(ctx.chat.id, (state) => {
+      await storage.withGroup(ctx.chat.id, (state) => {
         ledger.recordMessage(state, ctx.from.id);
       });
     }
     return next();
   });
 
-  startCmd.register(bot);
-  walletCmd.register(bot);
-  tipCmd.register(bot);
-  withdrawCmd.register(bot);
-  adminCmd.register(bot, { superAdminIds });
+  startCmd.register(bot, { storage });
+  walletCmd.register(bot, { storage });
+  tipCmd.register(bot, { storage });
+  withdrawCmd.register(bot, { storage });
+  adminCmd.register(bot, { superAdminIds, storage });
 
   bot.catch((err, ctx) => {
     // Không để một lỗi lệnh làm crash cả tiến trình bot.
@@ -68,28 +97,35 @@ function createBot(token, { superAdminIds = [] } = {}) {
 }
 
 /**
- * Chạy job "thưởng hoạt động" cho mọi nhóm đã có dữ liệu, mỗi lần gọi kiểm tra
- * idempotent theo ngày hiện tại (UTC) — an toàn khi gọi lại nhiều lần.
+ * Công việc định kỳ khi chạy ở MÁY CÁ NHÂN (long polling): phát thưởng hoạt động cho
+ * mọi nhóm + quét các bao lì xì đã hết giờ. Cả hai đều idempotent nên gọi lại bao
+ * nhiêu lần cũng an toàn.
  *
- * LƯU Ý: dùng setInterval trong tiến trình bot — CHỈ phù hợp quy mô beta (3 nhóm
- * pilot). Trước khi mở rộng, thay bằng một scheduler thật (cron ngoài tiến trình,
- * hoặc queue) để không phụ thuộc vào việc tiến trình bot có đang chạy liên tục.
+ * Trên Vercel KHÔNG dùng hàm này — serverless không có tiến trình chạy liên tục để
+ * `setInterval` sống được; ở đó việc này do `api/cron.js` (cron mỗi ngày một lần của
+ * Vercel) và phần "dọn lười" trong middleware đảm nhiệm.
  */
-function startDailyRewardJob(intervalMinutes) {
-  const runOnce = () => {
+function startDailyRewardJob(storage, intervalMinutes) {
+  const runOnce = async () => {
     const now = Date.now();
     const dateStr = ledger.dateKey(now);
-    for (const chatId of store.listGroupIds()) {
-      try {
-        store.withGroupState(chatId, (state) => ledger.runDailyReward(state, dateStr, now));
-      } catch (err) {
-        console.error(`[thuong-hoat-dong] Lỗi khi chạy cho nhóm ${chatId}:`, err.message);
-      }
+    try {
+      await storage.runDailyRewardAllGroups(dateStr, now);
+    } catch (err) {
+      console.error('[thuong-hoat-dong] Lỗi khi chạy:', safeErrorMessage(err));
+    }
+    try {
+      await storage.sweepDueEnvelopes(now);
+    } catch (err) {
+      console.error('[bao-li-xi] Lỗi khi quét bao hết giờ:', safeErrorMessage(err));
     }
   };
-  runOnce(); // chạy ngay lúc khởi động (idempotent, không sao nếu đã chạy hôm nay rồi)
+  // Chạy ngay lúc khởi động (idempotent, không sao nếu hôm nay đã phát thưởng rồi).
+  runOnce().catch((err) => console.error('[job] Lỗi lần chạy đầu:', safeErrorMessage(err)));
   const intervalMs = Math.max(1, intervalMinutes) * 60 * 1000;
-  return setInterval(runOnce, intervalMs);
+  return setInterval(() => {
+    runOnce().catch((err) => console.error('[job] Lỗi:', safeErrorMessage(err)));
+  }, intervalMs);
 }
 
 // ---------------------------------------------------------------------------
@@ -126,7 +162,7 @@ function createWebhookRequestHandler(bot, { webhookPath, secretToken }) {
         res.end('404');
       });
     } catch (err) {
-      console.error('Lỗi khi xử lý request webhook:', err.message);
+      console.error('Lỗi khi xử lý request webhook:', safeErrorMessage(err));
       if (!res.writableEnded) {
         res.writeHead(500, { 'content-type': 'text/plain; charset=utf-8' });
         res.end('500');
@@ -195,7 +231,7 @@ async function startWebhookMode(bot, { token, domain, port }) {
   } catch (err) {
     console.error(
       'LỖI: Không đăng ký được webhook với Telegram: ' +
-        err.message +
+        safeErrorMessage(err) +
         '\nKiểm tra lại: (1) TELEGRAM_BOT_TOKEN có đúng không, (2) địa chỉ công khai ' +
         '(WEBHOOK_DOMAIN / RENDER_EXTERNAL_URL) có truy cập được từ Internet qua HTTPS không, ' +
         '(3) máy chủ có ra được Internet để gọi api.telegram.org không.\n' +
@@ -225,7 +261,7 @@ function startPollingMode(bot) {
       console.log('Lì Xì Bot đã dừng.');
     })
     .catch((err) => {
-      console.error('Không khởi động được bot (chế độ long polling):', err.message);
+      console.error('Không khởi động được bot (chế độ long polling):', safeErrorMessage(err));
       process.exit(1);
     });
 }
@@ -234,7 +270,7 @@ function startPollingMode(bot) {
  * Đăng ký tắt máy êm cho SIGTERM/SIGINT (Render gửi SIGTERM mỗi lần redeploy/spin down):
  * dừng bot → dừng job định kỳ → ghi nốt dữ liệu JSON → đóng HTTP server → thoát.
  */
-function registerShutdownHandlers({ bot, server = null, timers = [] } = {}) {
+function registerShutdownHandlers({ bot, server = null, timers = [], storage = null } = {}) {
   let stopping = false;
 
   const shutdown = async (signal) => {
@@ -254,11 +290,11 @@ function registerShutdownHandlers({ bot, server = null, timers = [] } = {}) {
     }
 
     try {
-      // Mọi thao tác ghi sổ cái đều đồng bộ (fs.*Sync) nên không có gì "đang chờ";
-      // gọi cho tường minh để nếu sau này chuyển sang ghi bất đồng bộ thì có chỗ móc vào.
-      store.flushPendingWrites();
+      // Kho JSON: mọi thao tác ghi đều đồng bộ (fs.*Sync) nên không có gì "đang chờ".
+      // Kho Postgres: đóng pool kết nối để tiến trình thoát được sạch sẽ.
+      if (storage) await storage.close();
     } catch (err) {
-      console.error('Lỗi khi ghi nốt dữ liệu:', err.message);
+      console.error('Lỗi khi đóng kho dữ liệu:', safeErrorMessage(err));
     }
 
     if (server) {

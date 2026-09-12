@@ -6,9 +6,9 @@
  * giữ (trừ ngay) số điểm tương ứng, và admin xử lý thủ công bằng /rut_duyet, /rut_huy.
  */
 
-const store = require('../store');
 const ledger = require('../ledger');
 const { requireGroup } = require('./helpers');
+const { safeErrorMessage } = require('../redact');
 
 function parseRutArgs(text) {
   const rest = String(text || '').replace(/^\/rut(?:@\S+)?\s*/i, '').trim();
@@ -17,7 +17,7 @@ function parseRutArgs(text) {
   return { address: m[1], amount: parseInt(m[2], 10) };
 }
 
-function register(bot) {
+function register(bot, { storage }) {
   bot.command('rut', async (ctx) => {
     if (!(await requireGroup(ctx))) return;
     const parsed = parseRutArgs(ctx.message.text || '');
@@ -34,7 +34,7 @@ function register(bot) {
 
     let outcome;
     try {
-      outcome = store.withGroupState(chatId, (state) => {
+      outcome = await storage.withGroup(chatId, (state) => {
         ledger.ensureMember(state, userId, now);
 
         const cooldown = ledger.checkCooldown(state, userId, now);
@@ -58,7 +58,7 @@ function register(bot) {
         return { type: 'ok', record };
       });
     } catch (err) {
-      await ctx.reply(`Không tạo được yêu cầu rút: ${err.message}`);
+      await ctx.reply(`Không tạo được yêu cầu rút: ${safeErrorMessage(err)}`);
       return;
     }
 

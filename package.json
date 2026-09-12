@@ -1,0 +1,13 @@
+{
+  "name": "new-coin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kho ma nguon du an LIXI. package.json o goc chi de Vercel nhan dien day la du an Node; ma nguon bot nam trong bot/ va co package.json rieng (xem VERCEL.md).",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "npm test --prefix bot"
+  }
+}

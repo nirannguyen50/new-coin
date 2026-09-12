@@ -100,15 +100,21 @@ function parsePort(rawPort) {
 
 /**
  * Có nơi lưu dữ liệu bền vững (database ngoài) hay không.
- * Hiện tại bot CHƯA dùng database — hàm này chỉ để cảnh báo đúng lúc: nếu chạy
- * webhook trên hosting không có đĩa bền vững mà cũng không khai báo database nào,
- * dữ liệu JSON trong `bot/data/` sẽ bị xoá sạch mỗi lần restart/redeploy.
+ *
+ * Dùng để cảnh báo đúng lúc: nếu chạy webhook trên hosting không có đĩa bền vững
+ * (Render gói free) mà cũng không khai báo database nào, dữ liệu JSON trong
+ * `bot/data/` sẽ bị xoá sạch mỗi lần restart/redeploy.
+ *
+ * Khi CÓ chuỗi kết nối Postgres, bot dùng `src/postgres-store.js` (dữ liệu bền vững)
+ * nên không in cảnh báo nữa. Danh sách tên biến Postgres nằm ở `src/storage.js` —
+ * file này chỉ đọc lại để giữ mọi hàm ở đây là hàm thuần.
  */
 function hasPersistentStore(env = process.env) {
-  return Boolean(
-    (env.DATABASE_URL && String(env.DATABASE_URL).trim()) ||
-      (env.REDIS_URL && String(env.REDIS_URL).trim())
+  const { POSTGRES_ENV_VARS } = require('./storage');
+  const hasPostgres = POSTGRES_ENV_VARS.some(
+    (name) => env[name] && String(env[name]).trim()
   );
+  return Boolean(hasPostgres || (env.REDIS_URL && String(env.REDIS_URL).trim()));
 }
 
 /**

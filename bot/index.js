@@ -13,6 +13,8 @@
  */
 
 const { loadConfig } = require('./src/config');
+const { createStorage } = require('./src/storage');
+const { safeErrorMessage } = require('./src/redact');
 const {
   createBot,
   registerShutdownHandlers,
@@ -65,7 +67,7 @@ function warnEphemeralStorage() {
   );
 }
 
-function main() {
+async function main() {
   loadDotEnvIfPresent();
   const config = loadConfig();
 
@@ -80,9 +82,34 @@ function main() {
     return;
   }
 
-  const bot = createBot(config.telegramBotToken, { superAdminIds: config.superAdminIds });
+  // Chọn kho lưu trữ: Postgres nếu có chuỗi kết nối trong biến môi trường, nếu không
+  // thì file JSON như trước giờ. Chỉ in TÊN biến, không bao giờ in giá trị (có mật khẩu).
+  const { storage, backend } = createStorage();
+  if (backend.kind === 'postgres') {
+    console.log(`Kho dữ liệu: PostgreSQL (lấy chuỗi kết nối từ biến ${backend.source}).`);
+    try {
+      await storage.ensureSchema();
+      console.log('Đã kiểm tra/tạo xong các bảng trong database.');
+    } catch (err) {
+      console.error(
+        'LỖI: Không kết nối/tạo được bảng trong Postgres: ' +
+          safeErrorMessage(err) +
+          `\nKiểm tra lại giá trị biến ${backend.source} (chuỗi kết nối) và xem database ` +
+          'có cho phép kết nối từ máy này không. Bot sẽ dừng lại.'
+      );
+      process.exit(1);
+      return;
+    }
+  } else {
+    console.log('Kho dữ liệu: file JSON trong bot/data/ (chạy ở máy cá nhân).');
+  }
 
-  const rewardTimer = startDailyRewardJob(config.dailyRewardCheckIntervalMinutes);
+  const bot = createBot(config.telegramBotToken, {
+    superAdminIds: config.superAdminIds,
+    storage,
+  });
+
+  const rewardTimer = startDailyRewardJob(storage, config.dailyRewardCheckIntervalMinutes);
 
   if (config.mode === 'webhook') {
     console.log(
@@ -98,10 +125,10 @@ function main() {
     })
       .then((started) => {
         if (!started) return; // startWebhookMode đã in lỗi và thoát
-        registerShutdownHandlers({ bot, server: started.server, timers: [rewardTimer] });
+        registerShutdownHandlers({ bot, storage, server: started.server, timers: [rewardTimer] });
       })
       .catch((err) => {
-        console.error('Không khởi động được bot (chế độ webhook):', err.message);
+        console.error('Không khởi động được bot (chế độ webhook):', safeErrorMessage(err));
         process.exit(1);
       });
     return;
@@ -112,7 +139,10 @@ function main() {
       'phù hợp khi chạy ở máy cá nhân).'
   );
   startPollingMode(bot);
-  registerShutdownHandlers({ bot, server: null, timers: [rewardTimer] });
+  registerShutdownHandlers({ bot, storage, server: null, timers: [rewardTimer] });
 }
 
-main();
+main().catch((err) => {
+  console.error('Không khởi động được bot:', safeErrorMessage(err));
+  process.exit(1);
+});

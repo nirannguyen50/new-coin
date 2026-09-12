@@ -46,6 +46,27 @@ jobs:
     defaults:
       run:
         working-directory: bot
+
+    # Postgres thật cho nhóm test tích hợp của src/postgres-store.js.
+    # Không có service này thì nhóm test đó tự BỎ QUA (skip) — nhưng ở CI ta muốn nó
+    # CHẠY THẬT, vì đó là nơi kiểm chứng khoá hàng (row lock), ràng buộc CHECK số dư
+    # không âm, và việc nhiều lệnh chạy song song không tiêu quá số dư.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lixi_test
+        ports:
+          - 5432:5432
+        # Chờ tới khi Postgres thật sự sẵn sàng nhận kết nối rồi mới chạy các bước sau.
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -54,7 +75,16 @@ jobs:
           cache: npm
           cache-dependency-path: bot/package-lock.json
       - run: npm ci
-      - run: npm test
+      - name: Chạy test (kèm test tích hợp Postgres)
+        env:
+          # localhost:5432 được ánh xạ tới service container ở trên.
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lixi_test
+        run: npm test
+      - name: Kiểm tra cú pháp các hàm serverless (api/)
+        working-directory: .
+        run: |
+          for f in api/*.js; do node --check "$f"; done
+          node -e "JSON.parse(require('fs').readFileSync('vercel.json','utf8')); console.log('vercel.json hop le')"
 
   website:
     name: Landing page checks
