@@ -377,10 +377,14 @@ async function handleClaim(ctx, envelopeId, storage) {
         ? `Bạn cần tham gia nhóm ít nhất ${result.minDays} ngày mới nhận lì xì được.`
         : CLAIM_FAIL_MESSAGES[result.reason] || 'Không nhận được lì xì.';
     await ctx.answerCbQuery(message, { show_alert: true });
-    if (result.reason === 'expired') {
-      // Bao đã quá giờ mà chưa ai dọn — dọn ngay rồi cập nhật lại tin nhắn.
-      const settled = await storage.settleDueEnvelopes(chatId, now);
-      await renderSettledEnvelopes(ctx.telegram, storage, chatId, settled);
+    if (result.reason === 'expired' || result.reason === 'closed') {
+      // Bao đã quá giờ mà chưa ai dọn — dọn ngay. Rồi LUÔN vẽ lại đúng tin nhắn vừa
+      // bị bấm: cron hằng ngày đóng bao mà không sửa được tin nhắn (không có ctx), nên
+      // nút "Nhận lì xì" có thể còn treo trên một bao đã đóng từ lâu; lần bấm đầu tiên
+      // là cơ hội để tin nhắn khớp lại với trạng thái thật (không phải chờ tới lần bấm
+      // sai kế tiếp).
+      await storage.settleDueEnvelopes(chatId, now);
+      await renderEnvelopeMessage(ctx.telegram, storage, chatId, envelopeId);
     }
     return;
   }

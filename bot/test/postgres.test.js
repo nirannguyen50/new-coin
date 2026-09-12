@@ -489,6 +489,8 @@ test('PostgresLedger (cần Postgres thật)', async (t) => {
             `ALTER TABLE ${schema}.lixi_members
                DROP COLUMN display_name, DROP COLUMN username`
           );
+          // Bản cũ cũng chưa có cờ "đã giữ điểm" của giao dịch tip lớn chờ duyệt.
+          await client.query(`ALTER TABLE ${schema}.lixi_approvals DROP COLUMN held`);
         } finally {
           client.release();
         }
@@ -586,6 +588,16 @@ test('PostgresLedger (cần Postgres thật)', async (t) => {
         // cột ở lần khởi động nguội kế tiếp, và không được làm sai số dư trong lúc đó.
         await createLegacySchema(coldStartSchema);
         await seedLegacyBalance(coldStartSchema, 'g-nguoi', 'u2', 100);
+        // Một giao dịch tip lớn đang chờ duyệt do BẢN CŨ tạo: người gửi CHƯA bị trừ điểm.
+        await db.pool.query(
+          `INSERT INTO ${coldStartSchema}.lixi_approvals
+             (chat_id, id, type, from_user, to_user, amount, status, created_at)
+           VALUES ('g-nguoi', 1, 'tip', 'u2', 'u3', 40, 'pending', $1)`,
+          [Date.now()]
+        );
+        await db.pool.query(
+          `UPDATE ${coldStartSchema}.lixi_groups SET next_approval_id = 2 WHERE chat_id = 'g-nguoi'`
+        );
 
         const coldStart = new PostgresLedger(CONNECTION_STRING, { schema: coldStartSchema });
         await coldStart.withGroup('g-nguoi', (state) => {
@@ -600,6 +612,43 @@ test('PostgresLedger (cần Postgres thật)', async (t) => {
         }).readGroup('g-nguoi');
         assert.equal(coldState.members.u2.displayName, 'Tự Thêm');
         assert.equal(coldState.members.u2.balance, 105, 'số dư cũ + lần cộng mới');
+
+        // Cột `held` cũng được thêm ở cold start...
+        const { rows: approvalCols } = await db.pool.query(
+          `SELECT column_name FROM information_schema.columns
+            WHERE table_schema = $1 AND table_name = 'lixi_approvals'`,
+          [coldStartSchema]
+        );
+        assert.ok(approvalCols.map((r) => r.column_name).includes('held'), 'thiếu cột held');
+
+        // ...bản ghi CŨ đọc lên là "chưa giữ" và khi duyệt chỉ trừ người gửi ĐÚNG MỘT lần.
+        assert.equal(coldState.pendingApprovals.length, 1);
+        assert.equal(coldState.pendingApprovals[0].held, false);
+        await coldStart.withGroup(
+          'g-nguoi',
+          (state) => ledger.approveQueuedTransfer(state, 1, 'admin', Date.now()),
+          { approvalIds: [1] }
+        );
+        assert.equal(await coldStart.getBalance('g-nguoi', 'u2'), 65, '105 - 40, trừ một lần');
+        assert.equal(await coldStart.getBalance('g-nguoi', 'u3'), 40);
+
+        // Bản ghi MỚI giữ điểm ngay, cờ `held` sống sót qua một instance khác, từ chối hoàn đủ.
+        const queued = await coldStart.withGroup('g-nguoi', (state) =>
+          ledger.queueTipApproval(state, 'u2', 'u3', 20, Date.now())
+        );
+        assert.equal(await coldStart.getBalance('g-nguoi', 'u2'), 45, 'đã giữ 20');
+        const afterQueue = await new PostgresLedger(CONNECTION_STRING, {
+          schema: coldStartSchema,
+        }).readGroup('g-nguoi', { approvalIds: [queued.id] });
+        const persisted = afterQueue.pendingApprovals.find((a) => a.id === queued.id);
+        assert.equal(persisted.held, true, 'cờ held phải được ghi xuống database');
+        await coldStart.withGroup(
+          'g-nguoi',
+          (state) => ledger.rejectQueuedTransfer(state, queued.id, 'admin', Date.now()),
+          { approvalIds: [queued.id] }
+        );
+        assert.equal(await coldStart.getBalance('g-nguoi', 'u2'), 65, 'từ chối thì hoàn đủ 20');
+        assert.equal(await coldStart.getBalance('g-nguoi', 'u3'), 40);
       } finally {
         for (const schema of [legacySchema, coldStartSchema]) {
           try {

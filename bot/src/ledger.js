@@ -203,6 +203,8 @@ const TX_TYPES = Object.freeze([
   'envelope_refund',
   'withdrawal_hold',
   'withdrawal_refund',
+  'approval_hold',
+  'approval_refund',
 ]);
 
 function recordTransactionPure(state, tx, nowMs = Date.now()) {
@@ -339,16 +341,41 @@ function queueApproval(state, approval, nowMs = Date.now()) {
 
 // ----------------------------------------------------------------------------
 // Hàng đợi chờ admin duyệt cho giao dịch tip lớn (vượt adminApprovalThreshold).
-// Không thực hiện transfer ngay — chỉ ghi hàng đợi; admin approve/reject sau.
+//
+// GIỮ ĐIỂM NGAY KHI XẾP HÀNG (`held: true`). Lý do: nếu chỉ ghi hàng đợi mà không trừ
+// điểm, người gửi vẫn tiêu được số điểm đó ở nơi khác (tip nhỏ, mở bao, /rut) trong lúc
+// chờ; đến khi admin /duyet thì số dư không còn đủ và lệnh duyệt thất bại — hoặc tệ hơn,
+// cùng một khoản điểm được "hứa" cho hai nơi. Giữ ngay giống hệt cách yêu cầu rút và
+// bao lì xì đang làm, nên tổng điểm trong nhóm luôn bảo toàn: phần đang chờ duyệt nằm
+// trong bản ghi chờ duyệt, /duyet chuyển nó cho người nhận, /tuchoi hoàn lại người gửi.
+//
+// Bản ghi CŨ (tạo trước khi có `held`) không bị trừ trước: khi duyệt vẫn chuyển thẳng
+// như trước, khi từ chối không hoàn gì — không thể hoàn thứ chưa từng giữ.
 // ----------------------------------------------------------------------------
 
-/** Đưa một lượt tip vượt ngưỡng vào hàng đợi chờ duyệt (chưa trừ/cộng điểm ai cả). */
+/** Đưa một lượt tip vượt ngưỡng vào hàng đợi chờ duyệt và GIỮ (trừ ngay) điểm người gửi. */
 function queueTipApproval(state, fromUserId, toUserId, amount, nowMs = Date.now()) {
-  return queueApproval(
+  const approval = queueApproval(
     state,
-    { type: 'tip', fromUserId: String(fromUserId), toUserId: String(toUserId), amount },
+    { type: 'tip', fromUserId: String(fromUserId), toUserId: String(toUserId), amount, held: true },
     nowMs
   );
+  // Ném INSUFFICIENT_BALANCE nếu không đủ — lớp lệnh đã kiểm tra trước, nhưng đây là
+  // chốt chặn cuối; kho lưu trữ sẽ không ghi gì khi hàm này ném lỗi.
+  debitPure(
+    state,
+    fromUserId,
+    amount,
+    {
+      type: 'approval_hold',
+      approvalId: approval.id,
+      // Tên người nhận nằm trong ghi chú (KHÔNG đặt `to`): bản ghi này là trừ điểm của
+      // người gửi, người nhận chưa nhận gì nên không được xuất hiện trong /lichsu của họ.
+      note: `Giữ điểm chờ admin duyệt tip lớn cho ${memberLabel(state, toUserId)} (mã #${approval.id})`,
+    },
+    nowMs
+  );
+  return approval;
 }
 
 /** Admin duyệt một giao dịch đang chờ trong hàng đợi -> thực hiện transfer thật lúc này. */
@@ -361,14 +388,33 @@ function approveQueuedTransfer(state, approvalId, adminId, nowMs = Date.now()) {
     throw new LedgerError('APPROVAL_ALREADY_DECIDED', 'Giao dịch này đã được xử lý trước đó.');
   }
   if (approval.type === 'tip') {
-    transferPure(
-      state,
-      approval.fromUserId,
-      approval.toUserId,
-      approval.amount,
-      { type: 'tip', note: 'Tip khoản lớn đã được admin duyệt' },
-      nowMs
-    );
+    if (approval.held) {
+      // Người gửi đã bị trừ lúc xếp hàng — giờ chỉ còn cộng cho người nhận. KHÔNG đặt
+      // `from` ở đây: /lichsu lọc theo from/to, đặt `from` sẽ làm người gửi thấy thêm
+      // một dòng "-X" nữa dù số dư của họ chỉ giảm một lần (lúc giữ). Tên người gửi đi
+      // vào ghi chú để người nhận vẫn biết ai tip.
+      creditPure(
+        state,
+        approval.toUserId,
+        approval.amount,
+        {
+          type: 'tip',
+          approvalId: approval.id,
+          note: `Tip khoản lớn từ ${memberLabel(state, approval.fromUserId)} đã được admin duyệt`,
+        },
+        nowMs
+      );
+    } else {
+      // Bản ghi cũ chưa giữ điểm: chuyển thẳng như trước.
+      transferPure(
+        state,
+        approval.fromUserId,
+        approval.toUserId,
+        approval.amount,
+        { type: 'tip', note: 'Tip khoản lớn đã được admin duyệt' },
+        nowMs
+      );
+    }
     recordDailyTipUsage(state, approval.fromUserId, approval.amount, nowMs);
   } else {
     throw new LedgerError('UNKNOWN_APPROVAL_TYPE', `Không hỗ trợ loại giao dịch chờ duyệt: ${approval.type}`);
@@ -379,7 +425,7 @@ function approveQueuedTransfer(state, approvalId, adminId, nowMs = Date.now()) {
   return approval;
 }
 
-/** Admin từ chối một giao dịch đang chờ trong hàng đợi -> không có gì được thực hiện. */
+/** Admin từ chối một giao dịch đang chờ -> hoàn lại phần đã giữ cho người gửi. */
 function rejectQueuedTransfer(state, approvalId, adminId, nowMs = Date.now()) {
   const approval = (state.pendingApprovals || []).find((a) => a.id === Number(approvalId) || a.id === approvalId);
   if (!approval) {
@@ -387,6 +433,19 @@ function rejectQueuedTransfer(state, approvalId, adminId, nowMs = Date.now()) {
   }
   if (approval.status !== 'pending') {
     throw new LedgerError('APPROVAL_ALREADY_DECIDED', 'Giao dịch này đã được xử lý trước đó.');
+  }
+  if (approval.held) {
+    creditPure(
+      state,
+      approval.fromUserId,
+      approval.amount,
+      {
+        type: 'approval_refund',
+        approvalId: approval.id,
+        note: 'Hoàn điểm do tip lớn bị admin từ chối',
+      },
+      nowMs
+    );
   }
   approval.status = 'rejected';
   approval.decidedAt = nowMs;
@@ -554,6 +613,10 @@ function createEnvelope(state, { senderId, senderName, amount, recipientCount, w
 /** Một người bấm nút "Nhận lì xì" — trả {ok, amount, completed} hoặc {ok:false, reason}. */
 function claimEnvelope(envelope, userId, nowMs = Date.now()) {
   const key = String(userId);
+  if (envelope.status === 'expired') {
+    // Đã được dọn (hết giờ) — nói đúng lý do thay vì "đã đóng" chung chung.
+    return { ok: false, reason: 'expired' };
+  }
   if (envelope.status !== 'active') {
     return { ok: false, reason: 'closed' };
   }
@@ -682,6 +745,11 @@ function runDailyReward(state, dateStr, nowMs = Date.now()) {
 
   const rule = state.rewardRule;
   const grants = {};
+  // `shortfall`: tổng điểm thành viên đủ điều kiện ĐÁNG được nhận nhưng không nhận được
+  // (hoặc chỉ nhận một phần) vì pot/ngân sách ngày không đủ. `limited` = shortfall > 0,
+  // để nơi gọi (cron) báo cho admin biết cần /nap thêm.
+  let shortfall = 0;
+  let eligible = 0;
 
   if (rule && rule.pointsPerDay > 0 && rule.minMessages > 0) {
     state.pot = state.pot || { balance: 0 };
@@ -692,24 +760,24 @@ function runDailyReward(state, dateStr, nowMs = Date.now()) {
       const member = state.members[userId];
       const msgCount = member.messageCounts[dateStr] || 0;
       if (msgCount < rule.minMessages) continue;
-      if (budgetLeft <= 0) continue;
-      const amount = Math.min(rule.pointsPerDay, budgetLeft);
+      eligible += 1;
+      const amount = Math.max(0, Math.min(rule.pointsPerDay, budgetLeft));
+      shortfall += rule.pointsPerDay - amount;
       if (amount <= 0) continue;
+      const base = `Thưởng hoạt động ngày ${dateStr} (>= ${rule.minMessages} tin nhắn)`;
+      const note =
+        amount < rule.pointsPerDay
+          ? `${base} — chỉ còn đủ ${amount}/${rule.pointsPerDay} điểm (pot hoặc ngân sách ngày sắp hết)`
+          : base;
       state.pot.balance -= amount;
-      creditPure(
-        state,
-        userId,
-        amount,
-        { type: 'reward', note: `Thưởng hoạt động ngày ${dateStr} (>= ${rule.minMessages} tin nhắn)` },
-        nowMs
-      );
+      creditPure(state, userId, amount, { type: 'reward', note }, nowMs);
       grants[userId] = amount;
       budgetLeft -= amount;
     }
   }
 
   state.rewardGrants[dateStr] = grants;
-  return { alreadyRan: false, grants };
+  return { alreadyRan: false, grants, eligible, limited: shortfall > 0, shortfall };
 }
 
 // ----------------------------------------------------------------------------

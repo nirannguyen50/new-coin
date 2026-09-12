@@ -21,6 +21,8 @@ const TX_LABELS = {
   withdrawal_hold: 'Giữ điểm để rút',
   withdrawal_refund: 'Hoàn điểm (rút bị từ chối)',
   admin_credit: 'Admin cấp điểm',
+  approval_hold: 'Giữ điểm chờ duyệt tip lớn',
+  approval_refund: 'Hoàn điểm (tip lớn bị từ chối)',
 };
 
 /**

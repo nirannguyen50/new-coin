@@ -90,9 +90,11 @@ test('admin-approval-required threshold: giao dịch lớn được đưa vào h
 
   const approval = ledger.queueTipApproval(state, 'sender', 'receiver', bigAmount, now);
   assert.equal(approval.status, 'pending');
-  // Chưa chuyển tiền: người gửi vẫn giữ nguyên số dư, người nhận chưa có gì.
-  assert.equal(ledger.getBalance(state, 'sender'), bigAmount);
+  assert.equal(approval.held, true);
+  // Chưa chuyển cho người nhận, nhưng điểm người gửi đã bị GIỮ (không tiêu được nơi khác).
+  assert.equal(ledger.getBalance(state, 'sender'), 0);
   assert.equal(ledger.getBalance(state, 'receiver'), 0);
+  assert.equal(ledger.getTotalCirculatingBalance(state) + approval.amount, bigAmount, 'bảo toàn điểm');
 
   const approved = ledger.approveQueuedTransfer(state, approval.id, 'admin1', now + 1000);
   assert.equal(approved.status, 'approved');
@@ -108,11 +110,47 @@ test('admin-approval-required threshold: admin từ chối thì không có gì �
 
   ledger.creditPure(state, 'sender', bigAmount, {}, now);
   const approval = ledger.queueTipApproval(state, 'sender', 'receiver', bigAmount, now);
+  assert.equal(ledger.getBalance(state, 'sender'), 0, 'đã giữ điểm lúc xếp hàng');
   const rejected = ledger.rejectQueuedTransfer(state, approval.id, 'admin1', now + 1000);
 
   assert.equal(rejected.status, 'rejected');
-  assert.equal(ledger.getBalance(state, 'sender'), bigAmount);
+  assert.equal(ledger.getBalance(state, 'sender'), bigAmount, 'từ chối thì hoàn đủ');
   assert.equal(ledger.getBalance(state, 'receiver'), 0);
+});
+
+test('queueTipApproval: bản ghi CŨ (chưa giữ điểm) vẫn duyệt/từ chối đúng, không trừ hai lần', () => {
+  const state = store.defaultGroupState('g');
+  const now = Date.now();
+  ledger.creditPure(state, 'sender', 3000, {}, now);
+  // Bản ghi do bản bot trước tạo: không có `held`, người gửi chưa bị trừ.
+  const legacy = ledger.queueApproval(
+    state,
+    { type: 'tip', fromUserId: 'sender', toUserId: 'receiver', amount: 2500 },
+    now
+  );
+  assert.equal(ledger.getBalance(state, 'sender'), 3000);
+  ledger.approveQueuedTransfer(state, legacy.id, 'admin1', now + 1);
+  assert.equal(ledger.getBalance(state, 'sender'), 500, 'chỉ trừ đúng một lần lúc duyệt');
+  assert.equal(ledger.getBalance(state, 'receiver'), 2500);
+
+  const legacy2 = ledger.queueApproval(
+    state,
+    { type: 'tip', fromUserId: 'sender', toUserId: 'receiver', amount: 400 },
+    now
+  );
+  ledger.rejectQueuedTransfer(state, legacy2.id, 'admin1', now + 2);
+  assert.equal(ledger.getBalance(state, 'sender'), 500, 'không hoàn thứ chưa từng giữ');
+});
+
+test('queueTipApproval: không đủ số dư thì ném lỗi, không để lại bản ghi chờ duyệt nửa vời', () => {
+  const state = store.defaultGroupState('g');
+  const now = Date.now();
+  ledger.creditPure(state, 'sender', 10, {}, now);
+  assert.throws(
+    () => ledger.queueTipApproval(state, 'sender', 'receiver', 3000, now),
+    (err) => err.code === 'INSUFFICIENT_BALANCE'
+  );
+  assert.equal(ledger.getBalance(state, 'sender'), 10);
 });
 
 test('approveQueuedTransfer: không cho duyệt hai lần', () => {

@@ -238,6 +238,8 @@ const SCHEMA_STATEMENTS = [
      created_at BIGINT NOT NULL,
      decided_at BIGINT,
      decided_by TEXT,
+     -- true = điểm người gửi đã bị trừ (giữ) lúc xếp hàng; false = bản ghi cũ, chưa giữ.
+     held       BOOLEAN NOT NULL DEFAULT false,
      PRIMARY KEY (chat_id, id)
    )`,
   `CREATE INDEX IF NOT EXISTS lixi_approvals_pending_idx
@@ -320,6 +322,9 @@ const MIGRATION_STATEMENTS = [
   // Tên hiển thị của thành viên (2026-09) — để tin nhắn gọi tên thay vì số id Telegram.
   `ALTER TABLE $SCHEMA$.lixi_members ADD COLUMN IF NOT EXISTS display_name TEXT`,
   `ALTER TABLE $SCHEMA$.lixi_members ADD COLUMN IF NOT EXISTS username TEXT`,
+  // Tip lớn chờ duyệt giữ điểm người gửi ngay khi xếp hàng (2026-09) — xem
+  // `queueTipApproval` trong ledger.js. Dòng cũ mặc định false = chưa giữ.
+  `ALTER TABLE $SCHEMA$.lixi_approvals ADD COLUMN IF NOT EXISTS held BOOLEAN NOT NULL DEFAULT false`,
 ];
 
 /**
@@ -408,6 +413,8 @@ class PostgresLedger {
 
   /**
    * Chạy phần di trú cộng thêm MỘT LẦN cho mỗi tiến trình, trước thao tác ghi đầu tiên.
+   * Trả về true khi MỌI cột mới (tên thành viên, cờ `held` của giao dịch chờ duyệt)
+   * chắc chắn đã có.
    *
    * Vì sao cần: trên Vercel, `ensureSchema()` chỉ chạy khi ai đó mở `/api/setup`. Nếu
    * chỉ dựa vào đó thì một bản deploy đã có database cũ sẽ thiếu cột mới cho tới khi
@@ -487,13 +494,13 @@ class PostgresLedger {
     // Thêm cột mới cho database cũ — một lần cho mỗi tiến trình, NGOÀI transaction
     // (ALTER TABLE khoá bảng rất ngắn, không nên nằm trong transaction đang giữ khoá
     // hàng của nhóm). Không bao giờ ném lỗi: false = ghi theo lược đồ cũ.
-    const hasNameColumns = await this._ensureAdditiveMigrations();
+    const migrated = await this._ensureAdditiveMigrations();
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
       const { state, snapshot } = await this._loadState(client, key, opts);
       const result = mutator(state);
-      await this._persist(client, key, state, snapshot, { hasNameColumns });
+      await this._persist(client, key, state, snapshot, { migrated });
       await client.query('COMMIT');
       return result;
     } catch (err) {
@@ -698,6 +705,8 @@ class PostgresLedger {
       amount: toNumber(row.amount),
       status: row.status,
       createdAt: toNumber(row.created_at),
+      // Database cũ chưa có cột (undefined) hoặc dòng cũ (false): coi như chưa giữ điểm.
+      held: row.held === true,
       ...(row.decided_at === null ? {} : { decidedAt: toNumber(row.decided_at) }),
       ...(row.decided_by === null ? {} : { decidedBy: row.decided_by }),
     }));
@@ -733,7 +742,9 @@ class PostgresLedger {
   // Ghi lại phần đã thay đổi
   // -------------------------------------------------------------------------
 
-  async _persist(client, chatId, state, snapshot, { hasNameColumns = true } = {}) {
+  async _persist(client, chatId, state, snapshot, { migrated = true } = {}) {
+    // `migrated` = các cột thêm sau này (tên thành viên, cờ `held`) đã có trong bảng.
+    const hasNameColumns = migrated;
     const s = this.schema;
 
     // --- Nhóm (pot, các bộ đếm id, quy tắc thưởng, cấu hình) ---
@@ -913,10 +924,21 @@ class PostgresLedger {
     for (const a of state.pendingApprovals || []) {
       const before = snapshot.approvals[String(a.id)];
       if (before && before.status === a.status) continue;
+      if (!before && a.held && !migrated) {
+        // Không có cột `held` thì lần đọc sau sẽ coi bản ghi này là "chưa giữ điểm" và
+        // /duyet sẽ trừ người gửi LẦN HAI. Thà từ chối cả giao dịch (ROLLBACK, không
+        // trừ gì) còn hơn ghi một bản ghi sai.
+        throw new Error(
+          'Không ghi được giao dịch chờ duyệt: bảng lixi_approvals chưa có cột `held`. ' +
+            'Mở /api/setup để cập nhật lược đồ rồi thử lại.'
+        );
+      }
       await client.query(
         `INSERT INTO ${s}.lixi_approvals
-           (chat_id, id, type, from_user, to_user, amount, status, created_at, decided_at, decided_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           (chat_id, id, type, from_user, to_user, amount, status, created_at, decided_at, decided_by${
+             migrated ? ', held' : ''
+           })
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10${migrated ? ', $11' : ''})
          ON CONFLICT (chat_id, id) DO UPDATE SET
            status     = EXCLUDED.status,
            decided_at = EXCLUDED.decided_at,
@@ -932,6 +954,7 @@ class PostgresLedger {
           a.createdAt,
           a.decidedAt === undefined ? null : a.decidedAt,
           a.decidedBy === undefined ? null : a.decidedBy,
+          ...(migrated ? [a.held === true] : []),
         ]
       );
     }
