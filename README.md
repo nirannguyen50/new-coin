@@ -30,6 +30,9 @@ Lộ trình Binance (docs/01, 02, 06) được giữ lại làm tham khảo; **d
 | [docs/09-ke-hoach-rut-gon-dex-va-san-nho.md](docs/09-ke-hoach-rut-gon-dex-va-san-nho.md) | **Kế hoạch đang áp dụng.** Phạm vi Lì Xì Bot v1, lộ trình 6 tuần lên PancakeSwap (bot beta tuần 3–5), khóa LP, lên CoinGecko/CMC, tùy chọn CEX nhỏ, ngân sách rút gọn, checklist ngày ra mắt |
 | [docs/10-huong-dan-vi-va-bnb.md](docs/10-huong-dan-vi-va-bnb.md) | Hướng dẫn từng bước cho người mới: tạo ví deploy, lấy BNB testnet, mua BNB thật từ Việt Nam, tạo ví Safe multisig, thứ tự lệnh ngày ra mắt |
 | [docs/11-quyet-dinh-bot-off-chain-truoc.md](docs/11-quyet-dinh-bot-off-chain-truoc.md) | Quyết định: bot chạy bằng điểm off-chain trước, chưa cần ví/BNB; điều kiện để chuyển sang token thật |
+| [docs/12-chay-bot-o-dau.md](docs/12-chay-bot-o-dau.md) | So sánh nơi chạy bot, chốt Vercel + Neon, quy tắc an toàn token |
+| [docs/13-prompt-trien-khai-vercel.md](docs/13-prompt-trien-khai-vercel.md) | Prompt bàn giao việc bấm deploy cho trợ lý có trình duyệt |
+| [docs/14-ke-hoach-tang-truong-tu-dong.md](docs/14-ke-hoach-tang-truong-tu-dong.md) | **Kế hoạch tăng trưởng gần như không cần con người:** vòng lặp bot tự lan truyền, phân công agent, phần con người tối thiểu, chỉ số duy nhất cần nhìn, điều kiện dừng |
 
 ## Cấu trúc mã nguồn và công cụ
 
