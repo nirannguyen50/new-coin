@@ -56,7 +56,7 @@ Không thể bỏ, vì nền tảng bắt buộc hoặc vì cần một người
 | Việc | Mất bao lâu | Bao nhiêu lần |
 |---|---|---|
 | Tạo một kênh Telegram công khai cho bot, cho bot làm admin | 3 phút | 1 lần |
-| Đổi username bot từ `lixi_test_2026_bot` sang tên chính thức qua BotFather | 2 phút | 1 lần |
+| **Tạo bot mới với username tử tế** (Telegram KHÔNG cho đổi username bot đã tạo — chỉ đổi được tên hiển thị). Username hiện tại chứa chữ "test", nhìn là biết chưa nghiêm túc, admin nhóm sẽ ngại thêm. Tạo bot mới qua BotFather, đổi `TELEGRAM_BOT_TOKEN` trên Vercel, mở lại `/api/setup`. **Làm ngay bây giờ hoặc không bao giờ:** dữ liệu nằm trong database theo từng nhóm nên không mất gì, nhưng khi đã có nhóm thật thêm bot cũ thì đổi đồng nghĩa bỏ lại họ | 10 phút | 1 lần |
 | Gửi tin nhắn gieo hạt cho admin của 3 đến 5 nhóm **mình đang là thành viên** (mẫu có sẵn) | 10 phút | 1 lần |
 | Bấm nút "gửi" ở vài danh bạ bot yêu cầu người thật (hồ sơ soạn sẵn) | 10 phút | 1 lần |
 | Đọc `/thongke`, đăng 7 bài từ thư viện, trả lời admin nếu có | 15 phút | mỗi tuần |
