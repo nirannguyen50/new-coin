@@ -66,7 +66,19 @@ async function requireGroup(ctx) {
   return false;
 }
 
+
+/**
+ * So lon doc de hon voi dau phan cach nghin kieu Viet: 10000000 -> 10.000.000
+ * Dung cho moi noi hien so diem / khoang gia tri cho nguoi dung doc.
+ */
+function formatNumber(n) {
+  const num = Number(n);
+  if (!Number.isFinite(num)) return String(n);
+  return num.toLocaleString('vi-VN');
+}
+
 module.exports = {
+  formatNumber,
   isChatAdmin,
   escapeHtml,
   mentionHtml,

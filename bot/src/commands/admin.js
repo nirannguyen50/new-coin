@@ -20,7 +20,13 @@
  */
 
 const ledger = require('../ledger');
-const { requireGroup, isChatAdmin, formatVNDateTime, escapeHtml } = require('./helpers');
+const {
+  requireGroup,
+  isChatAdmin,
+  formatVNDateTime,
+  escapeHtml,
+  formatNumber,
+} = require('./helpers');
 const { safeErrorMessage } = require('../redact');
 
 function requireAdmin(superAdminIds) {
@@ -229,9 +235,9 @@ function register(bot, { superAdminIds = [], storage } = {}) {
       const state = await storage.readGroup(chatId);
       const lines = ledger.describeConfig(state).map(
         (item) =>
-          `• <code>${item.alias}</code>: <b>${item.value}</b> ${escapeHtml(item.unit)}\n` +
+          `• <code>${item.alias}</code>: <b>${formatNumber(item.value)}</b> ${escapeHtml(item.unit)}\n` +
           `   ${escapeHtml(item.description)}\n` +
-          `   <i>cho phép ${item.min}–${item.max}; tên đầy đủ <code>${item.key}</code></i>`
+          `   <i>cho phép ${formatNumber(item.min)}–${formatNumber(item.max)}; tên đầy đủ <code>${item.key}</code></i>`
       );
       await ctx.replyWithHTML(
         `⚙️ <b>Cấu hình chống lạm dụng của nhóm này</b>\n\n${lines.join('\n')}\n\n${syntaxLine}`
