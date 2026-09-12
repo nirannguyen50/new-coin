@@ -20,6 +20,7 @@ Bot giúp cả nhóm tip nhau, lì xì ngẫu nhiên và nhận thưởng hoạt
 • <code>/lichsu</code> — xem 10 giao dịch gần nhất của bạn
 • <code>/rut 0x1a2b3c... 100</code> — gửi yêu cầu rút (admin xử lý thủ công, chưa chuyển tiền thật)
 • <code>/pot</code> — (chỉ admin) xem tổng số dư pot của nhóm
+• <code>/caidat</code> — (chỉ admin) xem/đổi cấu hình chống lạm dụng của nhóm
 
 Hầu hết lệnh chỉ dùng được <b>trong nhóm</b>, không dùng trong chat riêng với bot. Chúc bạn nhận nhiều lì xì! 🧧`;
 

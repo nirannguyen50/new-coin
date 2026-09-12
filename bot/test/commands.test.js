@@ -25,6 +25,12 @@ const TOKEN = '123456789:ABCdefGhIJKlmNoPQRstuVwXyZ1234567890';
 const CHAT_ID = -1000000000 - (Date.now() % 100000);
 const USER_A = 111;
 const USER_B = 222;
+// Thành viên KHÔNG có @username (chỉ cấp điểm được bằng cách reply tin nhắn của họ).
+const USER_NO_NAME = 333;
+// Thành viên có @username công khai (tra được qua getChat).
+const USER_PUBLIC = 444;
+// Thành viên được nhắc bằng text_mention (Telegram gửi kèm cả object user).
+const USER_MENTIONED = 555;
 
 const storage = new JsonGroupStorage();
 
@@ -38,6 +44,11 @@ Telegram.prototype.callApi = async function fakeCallApi(method, payload) {
   calls.push({ method, payload });
   if (method === 'sendMessage') return { message_id: calls.length, text: payload.text };
   if (method === 'getChatAdministrators') return [{ user: { id: USER_A } }];
+  // Tra @username công khai -> trả về một "chat" kiểu user, như Telegram thật.
+  if (method === 'getChat') {
+    const username = String(payload.chat_id || '').replace(/^@/, '');
+    return { id: USER_PUBLIC, type: 'private', first_name: 'Public', username };
+  }
   return true;
 };
 
@@ -169,4 +180,194 @@ test('dọn lười: bao lì xì hết giờ được đóng ngay khi nhóm có 
   assert.equal(ledger.getBalance(after, USER_B), 80, 'phải hoàn đủ 30 điểm cho người gửi');
   const envelope = Object.values(after.envelopes)[0];
   assert.equal(envelope.status, 'expired');
+});
+
+// ---------------------------------------------------------------------------
+// /nap — ba dạng: nạp pot, @username, và REPLY vào tin nhắn của một người.
+// Dạng reply là cách duy nhất cấp điểm cho thành viên không đặt @username.
+// ---------------------------------------------------------------------------
+
+/** Update dạng "reply vào tin nhắn của `repliedFrom` rồi gõ `text`". */
+function replyUpdate(id, userId, text, repliedFrom) {
+  const base = textUpdate(id, userId, text);
+  return {
+    ...base,
+    message: {
+      ...base.message,
+      reply_to_message: {
+        message_id: id - 1,
+        date: base.message.date,
+        chat: base.message.chat,
+        from: repliedFrom,
+        text: 'xin chào cả nhóm',
+      },
+    },
+  };
+}
+
+test('/nap khi reply tin nhắn: cấp điểm cho người được reply (dù họ không có @username)', async () => {
+  const { bot } = makeBot();
+  const before = await storage.readGroup(CHAT_ID);
+  const potBefore = ledger.getPotBalance(before);
+
+  await bot.handleUpdate(
+    replyUpdate(20, USER_A, '/nap 150', { id: USER_NO_NAME, is_bot: false, first_name: 'Không tên' })
+  );
+  assert.match(lastText(), /Đã cấp/);
+  assert.match(lastText(), /150 điểm/);
+
+  const after = await storage.readGroup(CHAT_ID);
+  assert.equal(ledger.getBalance(after, USER_NO_NAME), 150);
+  assert.equal(ledger.getPotBalance(after), potBefore, 'KHÔNG được nạp vào pot khi đang reply ai');
+  const entry = after.adminCreditLog[after.adminCreditLog.length - 1];
+  assert.equal(entry.target, String(USER_NO_NAME));
+  assert.equal(entry.amount, 150);
+});
+
+test('/nap 1000 khi KHÔNG reply ai: vẫn nạp vào pot nhóm như trước', async () => {
+  const { bot } = makeBot();
+  const before = await storage.readGroup(CHAT_ID);
+  const potBefore = ledger.getPotBalance(before);
+
+  await bot.handleUpdate(textUpdate(21, USER_A, '/nap 1000'));
+  assert.match(lastText(), /Đã nạp/);
+
+  const after = await storage.readGroup(CHAT_ID);
+  assert.equal(ledger.getPotBalance(after), potBefore + 1000);
+  assert.equal(after.adminCreditLog[after.adminCreditLog.length - 1].target, 'pot');
+});
+
+test('/nap khi reply tin nhắn của bot: bị từ chối, không cấp cho ai, không nạp pot', async () => {
+  const { bot } = makeBot();
+  const before = await storage.readGroup(CHAT_ID);
+  const potBefore = ledger.getPotBalance(before);
+  const logBefore = before.adminCreditLog.length;
+
+  await bot.handleUpdate(
+    replyUpdate(22, USER_A, '/nap 500', { id: 7, is_bot: true, first_name: 'Lì Xì Bot' })
+  );
+  assert.match(lastText(), /Không cấp điểm cho bot/);
+
+  const after = await storage.readGroup(CHAT_ID);
+  assert.equal(ledger.getPotBalance(after), potBefore);
+  assert.equal(after.adminCreditLog.length, logBefore, 'không được ghi log khi bị từ chối');
+  assert.equal(ledger.getBalance(after, 7), 0);
+});
+
+test('/nap @user <số>: vẫn tra được @username công khai như trước', async () => {
+  const { bot } = makeBot();
+  await bot.handleUpdate(textUpdate(23, USER_A, '/nap @cong_khai 40'));
+  assert.match(lastText(), /Đã cấp/);
+
+  const after = await storage.readGroup(CHAT_ID);
+  assert.equal(ledger.getBalance(after, USER_PUBLIC), 40);
+});
+
+test('/nap @user <số>: nhận người nhận từ text_mention (người không có @username nhưng được nhắc)', async () => {
+  const { bot } = makeBot();
+  const base = textUpdate(24, USER_A, '/nap @ai_do 60');
+  await bot.handleUpdate({
+    ...base,
+    message: {
+      ...base.message,
+      entities: [
+        ...base.message.entities,
+        {
+          type: 'text_mention',
+          offset: 5,
+          length: 7,
+          user: { id: USER_MENTIONED, is_bot: false, first_name: 'Được nhắc' },
+        },
+      ],
+    },
+  });
+  assert.match(lastText(), /Đã cấp/);
+
+  const after = await storage.readGroup(CHAT_ID);
+  assert.equal(ledger.getBalance(after, USER_MENTIONED), 60);
+});
+
+test('/nap gõ sai cú pháp: in đủ ba dạng dùng được', async () => {
+  const { bot } = makeBot();
+  await bot.handleUpdate(textUpdate(25, USER_A, '/nap abc'));
+  const text = lastText();
+  assert.match(text, /\/nap 1000/);
+  assert.match(text, /\/nap @user 100/);
+  assert.match(text, /reply/i);
+});
+
+// ---------------------------------------------------------------------------
+// /caidat — xem và đổi cấu hình chống lạm dụng của nhóm.
+// ---------------------------------------------------------------------------
+
+test('/caidat không tham số: liệt kê mọi mục kèm giá trị, đơn vị và cú pháp đổi', async () => {
+  const { bot } = makeBot();
+  await bot.handleUpdate(textUpdate(30, USER_A, '/caidat'));
+  const text = lastText();
+  for (const item of ledger.describeConfig(await storage.readGroup(CHAT_ID))) {
+    assert.ok(text.includes(item.alias), `thiếu mục ${item.alias}`);
+    assert.ok(text.includes(item.key), `thiếu tên khoá đầy đủ ${item.key}`);
+    assert.ok(text.includes(item.unit), `thiếu đơn vị của ${item.alias}`);
+  }
+  assert.match(text, /\/caidat/);
+});
+
+test('/caidat chỉ dành cho admin: thành viên thường bị từ chối', async () => {
+  const { bot } = makeBot();
+  await bot.handleUpdate(textUpdate(31, USER_B, '/caidat cooldown 0'));
+  assert.match(lastText(), /chỉ dành cho admin/);
+  const state = await storage.readGroup(CHAT_ID);
+  assert.equal(state.config.cooldownSeconds, 3, 'người thường không được đổi cấu hình');
+});
+
+test('/caidat khoá lạ hoặc giá trị sai: từ chối và không đổi gì', async () => {
+  const { bot } = makeBot();
+  await bot.handleUpdate(textUpdate(32, USER_A, '/caidat khonghieu 5'));
+  assert.match(lastText(), /Không có mục cấu hình/);
+
+  await bot.handleUpdate(textUpdate(33, USER_A, '/caidat cooldown 999'));
+  assert.match(lastText(), /từ 0 đến 300 giây/);
+
+  await bot.handleUpdate(textUpdate(34, USER_A, '/caidat cooldown -5'));
+  assert.match(lastText(), /từ 0 đến 300 giây/);
+
+  await bot.handleUpdate(textUpdate(35, USER_A, '/caidat cooldown 1.5'));
+  assert.match(lastText(), /SỐ NGUYÊN/);
+
+  const state = await storage.readGroup(CHAT_ID);
+  assert.equal(state.config.cooldownSeconds, 3);
+});
+
+test('/caidat thâmniên 0: đổi cấu hình nhóm, cảnh báo tắt bảo vệ, và /pot hiện log đổi', async () => {
+  const { bot } = makeBot();
+
+  // Gõ có dấu tiếng Việt vẫn nhận ra mục cần đổi.
+  await bot.handleUpdate(textUpdate(36, USER_A, '/caidat thâmniên 0'));
+  const text = lastText();
+  assert.match(text, /minAccountAgeDays/);
+  assert.match(text, /3/);
+  assert.match(text, /0/);
+  assert.match(text, /Cảnh báo/);
+  assert.match(text, /thử nghiệm/);
+
+  const state = await storage.readGroup(CHAT_ID);
+  assert.equal(state.config.minAccountAgeDays, 0);
+  const entry = state.adminCreditLog[state.adminCreditLog.length - 1];
+  assert.equal(entry.target, 'config:minAccountAgeDays');
+  assert.equal(entry.adminId, String(USER_A));
+
+  // Log đổi cấu hình phải hiện ra ở /pot, đọc được là ai đổi gì.
+  await bot.handleUpdate(textUpdate(37, USER_A, '/pot'));
+  assert.match(lastText(), /đổi cấu hình minAccountAgeDays/);
+
+  // Và thành viên vừa vào nhóm đã tip được ngay (chính là lý do có lệnh này).
+  await storage.withGroup(CHAT_ID, (state2) => {
+    ledger.ensureMember(state2, USER_NO_NAME, Date.now());
+    state2.members[String(USER_NO_NAME)].lastCommandAt = 0;
+    state2.config.cooldownSeconds = 0;
+  });
+  await bot.handleUpdate(
+    replyUpdate(38, USER_NO_NAME, '/lixi 10', { id: USER_A, is_bot: false, first_name: 'A' })
+  );
+  assert.match(lastText(), /Đã tip/);
 });

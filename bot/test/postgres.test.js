@@ -411,6 +411,56 @@ test('PostgresLedger (cần Postgres thật)', async (t) => {
       const ids = await other.listGroupIds();
       assert.ok(ids.includes(chat));
     });
+    // -----------------------------------------------------------------------
+    await t.test('/caidat: cấu hình riêng theo nhóm, sống sót và đổi thật hành vi', async () => {
+      const chat = 'g-config';
+      const otherChat = 'g-config-khac';
+      const now = Date.now();
+
+      // Nhóm chưa chỉnh gì -> lấy đúng mặc định.
+      const before = await db.readGroup(chat);
+      assert.equal(before.config.minAccountAgeDays, 3);
+
+      const result = await db.withGroup(
+        chat,
+        (state) => ledger.applyConfigChange(state, 'thâm niên', '0', { adminId: 'admin1', nowMs: now }),
+        { nowMs: now }
+      );
+      assert.equal(result.ok, true);
+      assert.equal(result.oldValue, 3);
+      assert.equal(result.newValue, 0);
+
+      // Một đối tượng PostgresLedger hoàn toàn mới — như một instance serverless khác.
+      const fresh = new PostgresLedger(CONNECTION_STRING, { schema: SCHEMA });
+      const reloaded = await fresh.readGroup(chat);
+      assert.equal(reloaded.config.minAccountAgeDays, 0, 'cấu hình phải bền vững');
+      // 0 phải đổi THẬT hành vi: người vừa vào nhóm qua được kiểm tra thâm niên.
+      ledger.ensureMember(reloaded, 'newbie', now);
+      assert.equal(ledger.checkMinAccountAge(reloaded, 'newbie', now).ok, true);
+
+      // Chỉ nhóm đó đổi; nhóm khác vẫn giữ mặc định (cấu hình là RIÊNG từng nhóm).
+      const untouched = await fresh.readGroup(otherChat);
+      assert.equal(untouched.config.minAccountAgeDays, 3);
+
+      // Lần đổi được ghi vào đúng bảng log mà /nap dùng, và cũng bền vững.
+      const entry = reloaded.adminCreditLog[reloaded.adminCreditLog.length - 1];
+      assert.equal(entry.target, 'config:minAccountAgeDays');
+      assert.equal(entry.adminId, 'admin1');
+      assert.equal(entry.amount, 0);
+      assert.match(entry.note, /minAccountAgeDays/);
+
+      // cooldown = 0 cũng lưu được (0 không bị hiểu lẫn thành "chưa đặt").
+      await db.withGroup(
+        chat,
+        (state) => ledger.applyConfigChange(state, 'cooldown', '0', { adminId: 'admin1', nowMs: now }),
+        { nowMs: now }
+      );
+      const again = await new PostgresLedger(CONNECTION_STRING, { schema: SCHEMA }).readGroup(chat);
+      assert.equal(again.config.cooldownSeconds, 0);
+      ledger.recordCommandTime(again, 'a', now);
+      assert.equal(ledger.checkCooldown(again, 'a', now).ok, true);
+    });
+
   } finally {
     // Dọn sạch: xoá schema riêng của lần chạy này rồi đóng mọi kết nối.
     try {

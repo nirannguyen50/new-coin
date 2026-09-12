@@ -662,6 +662,231 @@ function adminCreditUser(state, adminId, userId, amount, note, nowMs = Date.now(
 }
 
 // ----------------------------------------------------------------------------
+// Cấu hình chống lạm dụng theo từng nhóm (lệnh /caidat).
+//
+// `defaultConfig()` trong store.js chỉ là mặc định; mỗi nhóm có thể chỉnh riêng.
+// Phần dưới đây là logic THUẦN: nhận state + chuỗi người dùng gõ, trả về kết quả,
+// không nói chuyện với Telegram và không biết mình đang ghi vào JSON hay Postgres
+// (cả hai kho đều lưu `state.config`, nên chỉ cần sửa state là xong).
+// ----------------------------------------------------------------------------
+
+/**
+ * Bỏ dấu tiếng Việt + hạ chữ thường + bỏ mọi ký tự không phải chữ/số.
+ * Nhờ vậy "thamnien", "ThamNien", "thâm niên", "thâm-niên" đều thành "thamnien".
+ */
+function normalizeConfigAlias(raw) {
+  return String(raw == null ? '' : raw)
+    .normalize('NFD') // tách chữ và dấu thành hai ký tự
+    .replace(/[\u0300-\u036f]/g, '') // xoá dấu (huyền, sắc, hỏi, ngã, nặng, mũ, móc...)
+    .toLowerCase()
+    .replace(/đ/g, 'd') // "đ" KHÔNG bị NFD tách ra nên phải thay riêng
+    .replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Mô tả từng khoá cấu hình: tên tiếng Việt ngắn (alias) để admin gõ nhanh, đơn vị,
+ * giải thích một dòng, và khoảng giá trị cho phép.
+ *
+ * Vì sao có chặn trên/chặn dưới: đây là các con số chống lạm dụng, gõ sai một chữ số
+ * (ví dụ cooldown 30000 giây) sẽ làm nhóm đứng im mà admin không hiểu vì sao.
+ * Chặn dưới luôn >= 0 nên KHÔNG bao giờ lưu được số âm.
+ */
+const CONFIG_SPECS = [
+  {
+    key: 'minAccountAgeDays',
+    aliases: ['thamnien', 'tuoinhom'],
+    unit: 'ngày',
+    description:
+      'Phải ở trong nhóm bao nhiêu ngày mới được dùng lệnh chuyển điểm (/lixi, /rut).',
+    min: 0,
+    max: 30,
+    zeroWarning:
+      'Đặt 0 nghĩa là người vừa vào nhóm đã tip được ngay — TẮT lớp chắn tài khoản ảo/nick mới lập ra để nhận lì xì. Chỉ dùng khi đang thử nghiệm, đừng để 0 ở nhóm công khai.',
+  },
+  {
+    key: 'cooldownSeconds',
+    aliases: ['cooldown', 'chodoi'],
+    unit: 'giây',
+    description: 'Một người phải chờ bao nhiêu giây giữa hai lệnh.',
+    min: 0,
+    max: 300,
+    zeroWarning:
+      'Đặt 0 nghĩa là một người có thể gõ lệnh liên tục không giới hạn — TẮT lớp chắn spam/bot. Chỉ dùng khi đang thử nghiệm, đừng để 0 ở nhóm công khai.',
+  },
+  {
+    key: 'dailyTipLimitPerUser',
+    aliases: ['hanmuctip'],
+    unit: 'điểm/ngày/người',
+    description: 'Mỗi người tip được tối đa bao nhiêu điểm trong một ngày.',
+    min: 0,
+    max: 10000000,
+  },
+  {
+    key: 'dailyRewardBudgetPerGroup',
+    aliases: ['ngansachthuong'],
+    unit: 'điểm/ngày/nhóm',
+    description: 'Cả nhóm phát thưởng hoạt động tối đa bao nhiêu điểm trong một ngày.',
+    min: 0,
+    max: 10000000,
+  },
+  {
+    key: 'maxEnvelopeRecipients',
+    aliases: ['songuoinhan'],
+    unit: 'người',
+    description: 'Một bao lì xì chia được cho tối đa bao nhiêu người.',
+    min: 1,
+    max: 100,
+  },
+  {
+    key: 'adminApprovalThreshold',
+    aliases: ['nguongduyet'],
+    unit: 'điểm',
+    description: 'Giao dịch lớn hơn mức này phải chờ admin duyệt (/duyet, /tuchoi).',
+    min: 0,
+    max: 10000000,
+  },
+  {
+    key: 'envelopeWindowMinutes',
+    aliases: ['thoigianbao'],
+    unit: 'phút',
+    description: 'Bao lì xì mở bao nhiêu phút trước khi hết giờ và hoàn điểm cho người gửi.',
+    min: 1,
+    max: 1440,
+  },
+];
+
+const CONFIG_SPEC_BY_KEY = new Map(CONFIG_SPECS.map((spec) => [spec.key, spec]));
+
+/** normalize(alias hoặc tên khoá thật) -> tên khoá thật. Dựng một lần lúc nạp module. */
+const CONFIG_ALIAS_INDEX = (() => {
+  const index = new Map();
+  for (const spec of CONFIG_SPECS) {
+    index.set(normalizeConfigAlias(spec.key), spec.key);
+    for (const alias of spec.aliases) {
+      index.set(normalizeConfigAlias(alias), spec.key);
+    }
+  }
+  return index;
+})();
+
+/** Tên khoá thật ứng với thứ admin vừa gõ, hoặc null nếu không nhận ra. */
+function resolveConfigKey(raw) {
+  return CONFIG_ALIAS_INDEX.get(normalizeConfigAlias(raw)) || null;
+}
+
+/** Danh sách alias ngắn để in ra khi admin gõ sai khoá. */
+function listConfigAliases() {
+  return CONFIG_SPECS.map((spec) => spec.aliases[0]);
+}
+
+/** Cấu hình hiện tại của nhóm kèm đơn vị + giải thích, để lệnh /caidat in ra. */
+function describeConfig(state) {
+  const config = { ...store.defaultConfig(), ...((state && state.config) || {}) };
+  return CONFIG_SPECS.map((spec) => ({
+    key: spec.key,
+    alias: spec.aliases[0],
+    value: config[spec.key],
+    unit: spec.unit,
+    description: spec.description,
+    min: spec.min,
+    max: spec.max,
+  }));
+}
+
+/**
+ * Đổi MỘT khoá cấu hình của nhóm (mutate `state.config`) + ghi vào log admin.
+ *
+ * Không throw: mọi lỗi đều trả về trong `error` để lớp lệnh dịch thẳng thành câu
+ * trả lời tiếng Việt.
+ *
+ * @param {object} state  state của nhóm (JSON hoặc Postgres đều cùng hình dạng)
+ * @param {string} key    alias hoặc tên khoá thật admin vừa gõ
+ * @param {string|number} rawValue giá trị thô admin vừa gõ
+ * @param {{adminId?: string|number, nowMs?: number}} [opts]
+ * @returns {{ok: boolean, key: string|null, oldValue: number|undefined,
+ *            newValue: number|undefined, unit?: string, warning?: string|null,
+ *            logEntry?: object, error: {code: string, message: string}|null}}
+ */
+function applyConfigChange(state, key, rawValue, opts = {}) {
+  const nowMs = opts.nowMs || Date.now();
+  const resolved = resolveConfigKey(key);
+  if (!resolved) {
+    return {
+      ok: false,
+      key: null,
+      oldValue: undefined,
+      newValue: undefined,
+      error: {
+        code: 'UNKNOWN_CONFIG_KEY',
+        message:
+          `Không có mục cấu hình "${String(key == null ? '' : key).trim()}". ` +
+          `Các mục dùng được: ${listConfigAliases().join(', ')}.`,
+      },
+    };
+  }
+  const spec = CONFIG_SPEC_BY_KEY.get(resolved);
+  const text = String(rawValue == null ? '' : rawValue).trim();
+  const range = `từ ${spec.min} đến ${spec.max} ${spec.unit}`;
+
+  if (!/^[+-]?\d+$/.test(text)) {
+    return {
+      ok: false,
+      key: resolved,
+      oldValue: undefined,
+      newValue: undefined,
+      error: {
+        code: 'NOT_AN_INTEGER',
+        message:
+          `Giá trị của "${spec.aliases[0]}" phải là SỐ NGUYÊN (không chữ, không dấu phẩy, ` +
+          `không số thập phân). Cho phép ${range}.`,
+      },
+    };
+  }
+
+  const value = Number.parseInt(text, 10);
+  if (!Number.isSafeInteger(value) || value < spec.min || value > spec.max) {
+    return {
+      ok: false,
+      key: resolved,
+      oldValue: undefined,
+      newValue: undefined,
+      error: {
+        code: 'OUT_OF_RANGE',
+        message: `Giá trị của "${spec.aliases[0]}" chỉ được ${range} (bạn vừa nhập ${text}).`,
+      },
+    };
+  }
+
+  state.config = { ...store.defaultConfig(), ...(state.config || {}) };
+  const oldValue = state.config[resolved];
+  state.config[resolved] = value;
+
+  // Ghi vào ĐÚNG log mà /nap dùng, để /pot hiện ai đổi gì lúc nào.
+  // Bảng log chỉ có các cột ts/adminId/target/amount/note (xem postgres-store.js),
+  // nên khoá + giá trị cũ + giá trị mới được đặt trong `target` và `note`.
+  const logEntry = {
+    ts: nowMs,
+    adminId: String(opts.adminId == null ? 'system' : opts.adminId),
+    target: `config:${resolved}`,
+    amount: value,
+    note: `đổi cấu hình ${resolved}: ${oldValue} → ${value} (${spec.unit})`,
+  };
+  state.adminCreditLog = state.adminCreditLog || [];
+  state.adminCreditLog.push(logEntry);
+
+  return {
+    ok: true,
+    key: resolved,
+    oldValue,
+    newValue: value,
+    unit: spec.unit,
+    warning: value === 0 && spec.zeroWarning ? spec.zeroWarning : null,
+    logEntry,
+    error: null,
+  };
+}
+
+// ----------------------------------------------------------------------------
 // JsonLedger — implementation của interface "Ledger" bằng file JSON (store.js).
 // Đây là phần "impure" duy nhất: đọc/viết state qua store.withGroupState.
 // ----------------------------------------------------------------------------
@@ -731,4 +956,10 @@ module.exports = {
   getTotalCirculatingBalance,
   adminCreditPot,
   adminCreditUser,
+  CONFIG_SPECS,
+  normalizeConfigAlias,
+  resolveConfigKey,
+  listConfigAliases,
+  describeConfig,
+  applyConfigChange,
 };

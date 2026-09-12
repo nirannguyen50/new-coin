@@ -42,7 +42,11 @@ const path = require('path');
 
 const DATA_DIR = path.join(__dirname, '..', 'data', 'groups');
 
-/** Cấu hình chống lạm dụng mặc định — có thể chỉnh riêng theo từng nhóm qua lệnh admin. */
+/**
+ * Cấu hình chống lạm dụng mặc định — mỗi nhóm chỉnh riêng được bằng lệnh admin
+ * `/caidat` (xem `CONFIG_SPECS` + `applyConfigChange` trong `src/ledger.js`; khoảng
+ * giá trị cho phép của từng mục nằm ở đó, không phải ở đây).
+ */
 function defaultConfig() {
   return {
     dailyTipLimitPerUser: 500, // hạn mức tip/ngày/người (điểm)

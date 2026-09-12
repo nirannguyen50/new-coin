@@ -495,9 +495,12 @@ Tất cả lệnh chạy trong nhóm (không dùng trong chat riêng với bot),
 | `/rut <địa_chỉ> <số>` | Thành viên đủ điều kiện* | Gửi yêu cầu rút (địa chỉ dạng `0x` + 40 ký tự hex); **v0 chưa chuyển tiền thật**, admin xử lý thủ công | `/rut 0x1234...7890 100` |
 | `/lichsu` | Mọi người | Xem 10 giao dịch gần nhất của bạn | `/lichsu` |
 | `/pot` | Chỉ admin | Xem số dư pot của nhóm + log admin cấp điểm gần đây | `/pot` |
-| `/nap <số>` | Chỉ admin | "Nạp pot" thủ công (off-chain) cho nhóm | `/nap 1000` |
-| `/nap @user <số>` | Chỉ admin | Cấp điểm trực tiếp cho một thành viên | `/nap @an 200` |
+| `/nap <số>` | Chỉ admin | "Nạp pot" thủ công (off-chain) cho nhóm — **khi KHÔNG reply tin nhắn của ai** | `/nap 1000` |
+| `/nap @user <số>` | Chỉ admin | Cấp điểm trực tiếp cho một thành viên **có `@username` công khai** | `/nap @an 200` |
+| (reply) `/nap <số>` | Chỉ admin | Reply vào tin nhắn của một người rồi gõ `/nap <số>` → cấp điểm cho chính người đó. Đây là cách cấp điểm cho thành viên **không đặt `@username`** (rất phổ biến). Reply vào tin của bot bị từ chối. Thứ tự tìm người nhận giống `/lixi`: reply trước, rồi `@username` | reply tin của An + `/nap 200` |
 | `/thuong <N> <M>` | Chỉ admin | Đặt/cập nhật quy tắc thưởng hoạt động: `N` điểm/ngày cho thành viên có `≥ M` tin nhắn hợp lệ/ngày | `/thuong 10 5` |
+| `/caidat` | Chỉ admin | Xem cấu hình chống lạm dụng của nhóm (thâm niên, cooldown, hạn mức tip, ngân sách thưởng, số người nhận, ngưỡng duyệt, thời gian bao) | `/caidat` |
+| `/caidat <mục> <giá trị>` | Chỉ admin | Đổi một mục cấu hình, **chỉ cho nhóm này**; nhận cả tên đầy đủ (`minAccountAgeDays`) và tên ngắn không cần dấu (`thamnien`, `cooldown`, `hanmuctip`, `ngansachthuong`, `songuoinhan`, `nguongduyet`, `thoigianbao`). Mọi lần đổi đều ghi vào log admin (xem `/pot`) | `/caidat thamnien 0` |
 | `/rut_duyet <mã>` | Chỉ admin | Duyệt một yêu cầu rút đang chờ (`pending` → `approved`) | `/rut_duyet 3` |
 | `/rut_huy <mã>` | Chỉ admin | Từ chối một yêu cầu rút đang chờ, hoàn điểm lại (`pending` → `rejected`) | `/rut_huy 3` |
 | `/duyet <mã>` | Chỉ admin | Duyệt một giao dịch tip lớn đang chờ (vượt ngưỡng cần xác nhận) | `/duyet 7` |
@@ -507,17 +510,26 @@ Tất cả lệnh chạy trong nhóm (không dùng trong chat riêng với bot),
 là một trong các quy tắc chống lạm dụng bên dưới. `/sodu`, `/lichsu`, `/start` vẫn dùng được
 ngay cho thành viên mới, theo đúng `docs/09`.
 
-### Chống lạm dụng đang áp dụng (mặc định, có thể chỉnh trong `src/store.js`)
+### Chống lạm dụng đang áp dụng (mặc định, admin chỉnh được cho từng nhóm bằng `/caidat`)
 
-| Quy tắc | Mặc định |
-|---|---|
-| Hạn mức tip/ngày/người | 500 điểm |
-| Hạn mức phát thưởng/ngày/nhóm (rút từ pot) | 1000 điểm |
-| Cooldown giữa hai lệnh của cùng một người | 3 giây |
-| Số người nhận tối đa mỗi bao lì xì | 50 người |
-| Tuổi tài khoản tối thiểu trong nhóm để tip/rút/mở bao lì xì | 3 ngày |
-| Ngưỡng giao dịch cần admin duyệt trước khi thực hiện | 2000 điểm |
-| Thời gian chờ nhận bao lì xì | 10 phút |
+Mặc định nằm ở `defaultConfig()` trong `src/store.js`; khoảng giá trị cho phép nằm ở
+`CONFIG_SPECS` trong `src/ledger.js`. Admin **không cần sửa mã** — gõ `/caidat` để xem,
+`/caidat <mục> <giá trị>` để đổi, và lần đổi nào cũng ghi vào log admin (`/pot`).
+
+| Quy tắc | Mục gõ trong `/caidat` | Mặc định | Cho phép |
+|---|---|---|---|
+| Hạn mức tip/ngày/người | `hanmuctip` | 500 điểm | 0 – 10.000.000 |
+| Hạn mức phát thưởng/ngày/nhóm (rút từ pot) | `ngansachthuong` | 1000 điểm | 0 – 10.000.000 |
+| Cooldown giữa hai lệnh của cùng một người | `cooldown` | 3 giây | 0 – 300 |
+| Số người nhận tối đa mỗi bao lì xì | `songuoinhan` | 50 người | 1 – 100 |
+| Tuổi tài khoản tối thiểu trong nhóm để tip/rút/mở bao lì xì | `thamnien` | 3 ngày | 0 – 30 |
+| Ngưỡng giao dịch cần admin duyệt trước khi thực hiện | `nguongduyet` | 2000 điểm | 0 – 10.000.000 |
+| Thời gian chờ nhận bao lì xì | `thoigianbao` | 10 phút | 1 – 1440 |
+
+⚠️ Đặt `thamnien 0` hoặc `cooldown 0` là **tắt** một lớp chống lạm dụng (tài khoản ảo,
+spam). Hai giá trị đó chỉ nên dùng khi đang thử nghiệm trong nhóm riêng — bot cũng in
+cảnh báo ngay trong câu trả lời. Nhóm mới lập muốn thử `/lixi` ngay thì đặt `thamnien 0`,
+xong việc nhớ đặt lại `3`.
 
 ## Cấu trúc mã nguồn
 
@@ -548,7 +560,7 @@ bot/
       wallet.js                # /sodu, /lichsu
       tip.js                   # /lixi (tip + bao lì xì) + nút "Nhận lì xì"
       withdraw.js              # /rut
-      admin.js                 # /pot, /nap, /thuong, /rut_duyet, /rut_huy, /duyet, /tuchoi
+      admin.js                 # /pot, /nap, /thuong, /caidat, /rut_duyet, /rut_huy, /duyet, /tuchoi
       helpers.js                # hàm dùng chung (kiểm tra admin, định dạng tin nhắn)
   test/                      # test bằng node:test (không cần Telegram/network)
   scripts/backup.js          # npm run backup
