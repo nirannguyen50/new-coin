@@ -242,6 +242,26 @@ trường của dự án — **bạn không phải gõ tay gì cả**, và cũng
 Sau này mỗi khi mã nguồn trên nhánh đó được cập nhật, Vercel **tự deploy lại**. Bạn **không
 phải mở lại** `/api/setup`, trừ khi đổi tên miền của dự án.
 
+### Nếu bạn đã tự thêm Build Command trên Vercel (không còn cần nữa)
+
+Bản deploy đầu tiên của dự án này từng crash với lỗi `Cannot find module 'telegraf'`, và cách
+chữa cháy lúc đó là vào **Settings → Build and Deployment → Build Command** đặt
+`cd bot && npm ci --omit=dev`.
+
+Lỗi đó **đã sửa trong repo**: `pg` và `telegraf` giờ được khai báo trong `package.json` ở
+thư mục gốc, nên lần `npm install` mặc định của Vercel tự cài chúng. Không cần Build Command
+thủ công nữa.
+
+Thứ tự an toàn để dọn lại (đừng làm ngược):
+
+1. **Redeploy** một lần với Build Command vẫn còn đó, xác nhận bot còn trả lời.
+2. Vào **Settings → Build and Deployment**, xóa Build Command (để trống), **Save**.
+3. **Redeploy** lần nữa, rồi thử `/start`.
+4. Nếu bot hỏng, đặt lại Build Command cũ và báo cho người viết code.
+
+Để nguyên Build Command cũng **không gây hỏng** — nó chỉ cài dependency thêm một lần nữa.
+Nếu không thích mạo hiểm, cứ để nguyên.
+
 ### Nếu bot không trả lời
 
 - Mở `https://<địa-chỉ-dự-án>/api/telegram` bằng trình duyệt: phải thấy

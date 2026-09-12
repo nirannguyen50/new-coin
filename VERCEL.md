@@ -10,7 +10,6 @@ Hướng dẫn bấm từng bước để deploy nằm ở **`bot/README.md`**, 
 ```json
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm ci --prefix bot",
   "outputDirectory": "public",
   "functions": {
     "api/telegram.js": { "maxDuration": 30 },
@@ -26,7 +25,7 @@ Hướng dẫn bấm từng bước để deploy nằm ở **`bot/README.md`**, 
 | Dòng | Ý nghĩa |
 |---|---|
 | `$schema` | Cho trình soạn thảo (VS Code…) tự gợi ý và báo lỗi chính tả trong file này. Không ảnh hưởng lúc deploy. |
-| `installCommand` | Mã nguồn bot nằm trong thư mục `bot/` và có `package.json` riêng, nên phải cài dependency ở đó. `npm ci` cài **đúng** theo `bot/package-lock.json` (lặp lại được, không bị nâng cấp ngoài ý muốn). |
+| *(không dùng `installCommand`)* | **Bài học đã trả giá.** Trước đây file này đặt `installCommand: "npm ci --prefix bot"`. Vercel **bỏ qua** install command khi dự án không có Build Command, nên nó chỉ chạy `npm install` ở thư mục gốc; `telegraf` và `pg` không bao giờ được cài và hàm crash khi chạy với lỗi `Cannot find module 'telegraf'` (build vẫn xanh, nên rất dễ tưởng là ổn). Cách sửa: khai báo `pg` và `telegraf` ngay trong `package.json` **ở gốc**, để lần `npm install` mặc định của Vercel cài chúng. Node tự tìm ngược lên `node_modules` ở gốc khi `bot/src/*.js` gọi `require("telegraf")`, nên cả Vercel và máy cá nhân đều chạy. |
 | `outputDirectory` | Dự án này không build gì cả (bot là JavaScript thuần). Vercel vẫn cần một thư mục “kết quả build” để phục vụ trang tĩnh — đó là `public/`, chứa đúng một trang giới thiệu. |
 | `functions` → `maxDuration` | Thời gian tối đa mỗi hàm được chạy. Đặt 30 giây cho cả ba hàm, là mức gói Hobby chắc chắn chấp nhận. 30 giây quá dư cho một lệnh bot, và cũng đủ cho `api/cron.js` duyệt vài nhóm thử nghiệm. Nếu sau này có rất nhiều nhóm, tách cron thành nhiều lần chạy thay vì tăng số này. |
 | `crons` → `path` | Địa chỉ Vercel sẽ tự gọi theo lịch: `/api/cron` (phát thưởng hoạt động + đóng các bao lì xì đã hết giờ). |

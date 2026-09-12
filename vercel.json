@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm ci --prefix bot",
   "outputDirectory": "public",
   "functions": {
     "api/telegram.js": {

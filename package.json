@@ -2,12 +2,16 @@
   "name": "new-coin",
   "version": "0.1.0",
   "private": true,
-  "description": "Kho ma nguon du an LIXI. package.json o goc chi de Vercel nhan dien day la du an Node; ma nguon bot nam trong bot/ va co package.json rieng (xem VERCEL.md).",
+  "description": "Kho ma nguon du an LIXI. Cac ham serverless trong api/ dung chung ma nguon bot trong bot/, nen telegraf va pg phai khai bao O DAY de Vercel cai chung khi build (xem VERCEL.md).",
   "license": "UNLICENSED",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "test": "npm test --prefix bot"
+  },
+  "dependencies": {
+    "pg": "8.16.3",
+    "telegraf": "4.16.3"
   }
 }
