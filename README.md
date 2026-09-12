@@ -63,16 +63,29 @@ Lộ trình Binance (docs/01, 02, 06) được giữ lại làm tham khảo; **d
 
 ## Trạng thái hiện tại
 
+Cập nhật 12/9/2026. Kế hoạch đang áp dụng: `docs/09` (6 tuần lên DEX), đã sắp xếp lại theo `docs/11` (bot off-chain trước, token on-chain chỉ khi đủ điều kiện).
+
+### Phần kỹ thuật (tôi làm được)
+
 | Hạng mục | Trạng thái |
 |---|---|
 | Tên token, ticker, lý do tồn tại, phạm vi sản phẩm v1 | **Đã chốt** — LiXi / LIXI, Lì Xì Bot (`docs/00`) |
-| Kế hoạch, checklist, mẫu tài liệu | Hoàn thành; whitepaper đã điền use case/sản phẩm/roadmap/rủi ro, còn trống đội ngũ, đối tác, audit, địa chỉ |
-| Smart contract + test | Hoàn thành, chưa audit, chưa deploy |
-| Công cụ tokenomics | Hoàn thành, cấu hình ví dụ pass 7/7 red flag |
-| Landing page, growth kit | Hoàn thành; growth kit đã theo LiXi (pilot, bot beta, Tết 2027); landing page xem `website/` |
-| Lì Xì Bot (sản phẩm v1) | Chưa bắt đầu; phạm vi trong `docs/09` mục 1 |
-| Script tạo thanh khoản PancakeSwap | Hoàn thành, test bằng mock router; chưa chạy trên mạng thật |
-| Lì Xì Bot (off-chain) | Hoàn thành, 120 test pass (131 khi có Postgres); lưu dữ liệu bền vững bằng PostgreSQL, deploy được lên Vercel gói miễn phí (`docs/12`); chưa tạo bot thật qua BotFather, chưa chạy trong nhóm thật |
-| Danh tính đội ngũ, ví Safe, số BNB thanh khoản, ngày ra mắt, 3 pilot | **Chưa chốt** (`docs/00` mục 7) |
-| Pháp lý | Chưa có luật sư — rủi ro đã chấp nhận (`docs/00` mục 6); giữ nguyên câu miễn trừ trách nhiệm ở mọi nơi |
-| Audit, cộng đồng thật | Chưa bắt đầu; cần người thật thực hiện |
+| Kế hoạch, checklist, whitepaper, tài liệu pháp lý, growth kit | Hoàn thành; whitepaper còn trống đội ngũ, đối tác, audit, địa chỉ |
+| Smart contract BEP-20 + vesting + script thanh khoản | Hoàn thành, 61 test; **chưa deploy** vì chưa có ví/BNB |
+| Công cụ tokenomics | Hoàn thành, cấu hình mẫu pass 7/7 red flag |
+| Landing page | Hoàn thành, còn placeholder địa chỉ contract, đội ngũ, audit |
+| **Lì Xì Bot (off-chain)** | **Đang chạy thật** trên Vercel + Neon Postgres, bot `@lixi_test_2026_bot`; đã kiểm chứng trong nhóm thật: `/start`, `/pot`, `/nap`, `/sodu`, mở bao lì xì, hết giờ hoàn điểm, `/lichsu`, `/caidat`; các luồng còn lại (nhận lì xì, tip, duyệt tip lớn, rút, thưởng ngày, cold start) kiểm chứng bằng giả lập nhiều người dùng trên Postgres thật; 201 test |
+| Chuyển bot sang token on-chain | Chưa làm, **cố ý** — chỉ làm khi đủ 3 điều kiện trong `docs/11` |
+
+### Phần vận hành (cần người thật hoặc tiền)
+
+| Hạng mục | Trạng thái |
+|---|---|
+| 3 cộng đồng pilot đồng ý dùng thử | **0/3** — nút thắt lớn nhất, mọi bước sau đều chờ cái này |
+| Số liệu sử dụng thật (lì xì/tuần, ví nhận) | 0 tuần dữ liệu; mới có nhóm thử 2 thành viên của chủ dự án |
+| Kênh cộng đồng công khai (Telegram, X), domain | Chưa có |
+| Danh tính đội ngũ | Chưa chốt |
+| Ví Safe, BNB thanh khoản, mức thanh khoản ban đầu | Chưa có; cần trước khi deploy token (`docs/10`) |
+| Audit, KYC đội ngũ | Chưa bắt đầu |
+| Pháp lý | Không có luật sư — rủi ro đã chấp nhận (`docs/00` mục 6) |
+| Dọn Build Command thủ công trên Vercel | Chưa dọn; để nguyên không hỏng (`bot/README.md`) |
