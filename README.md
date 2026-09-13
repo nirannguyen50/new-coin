@@ -1,18 +1,30 @@
-# LiXi (LIXI) — Token lì xì cho cộng đồng trực tuyến Việt Nam
+# Lì Xì Bot — bot tip điểm và lì xì cho nhóm Telegram
 
-**LiXi** là token thưởng và tip (lì xì) dùng chung cho các cộng đồng trực tuyến Việt Nam — nhóm Telegram,
-Discord, group Facebook, kênh streamer. Thay vì admin chuyển khoản tay hoặc phát gift code không truy vết được,
-cộng đồng nạp LIXI vào một "pot", **Lì Xì Bot** (Telegram, v1) phát thưởng cho thành viên hoạt động, ai cũng tip
-được bằng `/lixi @user 100`, mở bao lì xì chia ngẫu nhiên bằng `/lixi 1000 chia 10` dịp Tết, sinh nhật, cột mốc.
-BEP-20 trên BNB Chain, cung cố định 1.000.000.000, không mint.
+**Lì Xì Bot** là một bot Telegram **miễn phí, mã nguồn mở**, dành cho các nhóm chat người Việt.
+Thành viên tip điểm cho nhau bằng `/lixi @user 100`, mở bao lì xì chia ngẫu nhiên bằng
+`/lixi 1000 chia 10` dịp Tết hay sinh nhật, và admin đặt được quy tắc tự thưởng cho người hoạt động tích cực.
 
-Repo này chứa quyết định, kế hoạch, mã nguồn và công cụ để đưa LiXi từ ý tưởng đến chỗ **người dùng mua bán được
-và bot chạy thật**.
+- Bot đang chạy thật: **@lixi_vn_bot** — [thêm vào nhóm của bạn](https://t.me/lixi_vn_bot?startgroup=true)
+- Thử trước khi thêm: [nhóm demo công khai](https://t.me/lixibot_demo)
+- Hướng dẫn: https://new-coin-orcin.vercel.app · Kênh cập nhật: https://t.me/lixibot_kenh
+- Kỹ thuật: Node.js + Telegraf, PostgreSQL (Neon), chạy serverless trên Vercel, 217 test tự động
 
-**Mục tiêu hiện tại:** Q4/2026 lên PancakeSwap + bot beta với 3 cộng đồng pilot; sàn tập trung nhỏ sau khi DEX có
-giao dịch thật. Bắt đầu từ [docs/00-quyet-dinh-token.md](docs/00-quyet-dinh-token.md) rồi
-[docs/09-ke-hoach-rut-gon-dex-va-san-nho.md](docs/09-ke-hoach-rut-gon-dex-va-san-nho.md).
-Lộ trình Binance (docs/01, 02, 06) được giữ lại làm tham khảo; **dự án không nhắm Binance.**
+## Về phần token: chưa phát hành, và bot không cần nó
+
+Nói thẳng để không ai hiểu nhầm, vì repo này có cả tài liệu về token:
+
+> **Điểm LIXI trong bot hiện nay KHÔNG phải tiền.** Nó là một con số trong database của bot, không mua bán được,
+> không quy đổi được, không có sàn nào giao dịch, và admin nhóm có thể đặt lại về 0 bất cứ lúc nào.
+> **Chưa có token nào được phát hành.** Không có hợp đồng trên blockchain, không có pool thanh khoản,
+> không bán cho ai, không gọi vốn.
+
+Dự án **có** tài liệu kế hoạch cho một token BEP-20 trong tương lai (`docs/00`–`docs/10`, và mã nguồn hợp đồng
+chưa deploy trong `contracts/`). Đó là kế hoạch, không phải thứ đang tồn tại. Điều kiện để thực sự làm token
+được ghi trong [docs/11](docs/11-quyet-dinh-bot-off-chain-truoc.md): phải có cộng đồng dùng bot đều đặn trước đã.
+Nếu điều đó không xảy ra, token sẽ không bao giờ được phát hành — và bot vẫn chạy bình thường, vì **bot không phụ
+thuộc vào token**.
+
+Nếu bạn chỉ quan tâm tới bot, đọc [bot/README.md](bot/README.md) và bỏ qua toàn bộ `docs/00`–`docs/10`.
 
 ## Cấu trúc tài liệu
 
@@ -35,6 +47,7 @@ Lộ trình Binance (docs/01, 02, 06) được giữ lại làm tham khảo; **d
 | [docs/14-ke-hoach-tang-truong-tu-dong.md](docs/14-ke-hoach-tang-truong-tu-dong.md) | **Kế hoạch tăng trưởng gần như không cần con người:** vòng lặp bot tự lan truyền, phân công agent, phần con người tối thiểu, chỉ số duy nhất cần nhìn, điều kiện dừng |
 | [docs/15-prompt-cowork-viec-con-lai.md](docs/15-prompt-cowork-viec-con-lai.md) | Prompt bàn giao cho trợ lý điều khiển máy tính: tạo bot mới có username tử tế, cập nhật Vercel, tạo kênh, đăng bài, gửi tin gieo hạt (có duyệt từng tin), đăng ký danh bạ |
 | [docs/16-ke-hoach-xay-cong-dong-tu-so.md](docs/16-ke-hoach-xay-cong-dong-tu-so.md) | **Kế hoạch cộng đồng đang áp dụng.** Xây từ số 0 không dùng quan hệ cá nhân: nhóm demo công khai, tìm admin ở nơi công khai, lùi ngược từ Tết 6/2/2027, điều kiện dừng |
+| [docs/17-brief-cowork.md](docs/17-brief-cowork.md) | **Hộp thư chung với trợ lý điều khiển máy.** Trạng thái hiện tại, việc tiếp theo, việc cấm. Trợ lý đọc file này mỗi lượt và báo cáo lại bằng GitHub Issue |
 
 ## Cấu trúc mã nguồn và công cụ
 
