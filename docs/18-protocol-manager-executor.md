@@ -80,6 +80,25 @@ Gửi `NEED_OWNER` và **dừng lại**, không tự quyết:
 
 Mọi việc khác: cứ làm, báo lại sau.
 
+## 6b. Chủ dự án duyệt việc bằng cách nào
+
+Khi Thực thi chạy theo lịch tự động, chủ dự án có thể không có mặt. Vì vậy:
+
+**Việc gắn nhãn `CẦN DUYỆT` chỉ được làm sau khi chủ dự án gửi tin duyệt vào khung chat.**
+
+Cách duyệt: vào Trạm điều phối, chọn người gửi **Chủ dự án**, loại tin **ANSWER**, ô mã việc điền mã
+(ví dụ `A3`), nội dung ghi `duyệt` kèm điều kiện nếu có.
+
+```
+from: chu-du-an   type: ANSWER   task: A3
+body: duyệt. Đăng Viblo trước, chờ 1 ngày rồi mới đăng Dev.to.
+```
+
+Thực thi phải tìm đúng tin có `from: chu-du-an` và `task` khớp mã việc. **Không có tin đó thì không làm**,
+dù việc có vẻ rõ ràng tới đâu. Không suy diễn từ tin nhắn khác, không coi im lặng là đồng ý.
+
+Muốn từ chối hoặc hoãn: cùng cách trên, nội dung ghi `chưa duyệt` kèm lý do.
+
 ## 7. Cấm tuyệt đối
 
 Hai bên như nhau, không có ngoại lệ:
