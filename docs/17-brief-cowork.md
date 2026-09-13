@@ -1,11 +1,11 @@
-# Hộp thư chung với Cowork
+# Brief cho Cowork — đọc mỗi lượt
 
 > **Cowork: đọc file này mỗi khi bắt đầu một lượt làm việc.** Đây luôn là bản chỉ dẫn mới nhất.
 > Đừng làm theo trí nhớ từ lượt trước — kế hoạch có thể đã đổi.
 >
-> **Cách báo cáo:** mở một **GitHub Issue** tại
-> https://github.com/nirannguyen50/new-coin/issues/new với tiêu đề bắt đầu bằng `[cowork]`.
-> Không sửa code, không tạo Pull Request. Issue là kênh duy nhất để báo cáo.
+> **Cách báo cáo:** gửi tin vào **khung chat trên Trạm điều phối** (mục 0 ngay dưới).
+> Chỉ khi trạm không mở được thì mới lùi về GitHub Issue `[cowork]`.
+> Không sửa code, không tạo Pull Request.
 
 Cập nhật lần cuối: 13/9/2026.
 
