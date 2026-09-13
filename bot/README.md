@@ -176,10 +176,10 @@ Toàn bộ quá trình khoảng **15 phút**, chỉ bấm chuột. Hãy đọc m
    - Không thấy repo? Bấm **Adjust GitHub App Permissions** (hoặc **Configure GitHub App**)
      ở cuối danh sách, chọn repo `new-coin` rồi **Save**, quay lại và thử lại.
 3. Ở màn hình cấu hình, tìm phần **Git Branch** (có thể nằm trong mục **Build and Output
-   Settings** hoặc ngay dưới tên repo) và đổi nhánh thành **`claude/binance-coin-plan-rthkem`**.
+   Settings** hoặc ngay dưới tên repo) và đổi nhánh thành **`main`**.
    **Chọn sai nhánh thì sẽ không có mã nguồn của bot.**
    - Nếu màn hình import không cho đổi nhánh, cứ import với nhánh mặc định, rồi sau đó vào
-     **Settings → Git → Production Branch**, đổi thành `claude/binance-coin-plan-rthkem`,
+     **Settings → Git → Production Branch**, đổi thành `main`,
      bấm **Save**, và deploy lại ở Bước 5.
 4. **Framework Preset** để nguyên **Other**. **Không cần sửa** Build Command / Output Directory
    — file `vercel.json` ở gốc repo đã cấu hình sẵn (giải thích từng dòng ở `VERCEL.md`).
@@ -371,7 +371,7 @@ khởi động (kể cả khi địa chỉ đổi sau mỗi lần deploy lại).
    cho nhanh) rồi bấm **Install / Save**.
 4. Ở trang chính (Dashboard), bấm nút **New +** ở góc trên bên phải → chọn **Blueprint**.
 5. Trong danh sách repo, tìm **`new-coin`** → bấm **Connect**.
-6. Ở ô **Branch**, chọn nhánh **`claude/binance-coin-plan-rthkem`**
+6. Ở ô **Branch**, chọn nhánh **`main`**
    (nếu đang hiện `main` thì bấm vào ô đó và đổi lại — chọn sai nhánh sẽ không thấy cấu hình).
    Render sẽ tự đọc file `render.yaml` ở gốc repo và hiện sẵn một dịch vụ tên
    **`lixi-bot-telegram`**. Bạn **không cần sửa gì** trong phần này.

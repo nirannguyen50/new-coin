@@ -80,7 +80,7 @@ Vào `https://vercel.com`, mở dự án **new-coin**, vào **Settings → Envir
 
 ### Việc 6 — Đăng bài đầu tiên
 
-Mở `https://github.com/nirannguyen50/new-coin/blob/claude/binance-coin-plan-rthkem/growth/05-thu-vien-noi-dung-30-ngay.md`
+Mở `https://github.com/nirannguyen50/new-coin/blob/main/growth/05-thu-vien-noi-dung-30-ngay.md`
 Lấy **bài ghim (pinned)** và **7 bài đầu tiên**. Trong mỗi bài, thay `[[LINK_BOT]]` bằng
 `https://t.me/[[username bot mới]]?startgroup=true`. Đăng bài ghim lên kênh và **ghim** nó.
 Đăng tiếp 7 bài, mỗi bài cách nhau vài phút. **Không** đổi nội dung, **không** thêm lời hứa về giá
@@ -88,7 +88,7 @@ hay lợi nhuận.
 
 ### Việc 7 — Gửi tin nhắn gieo hạt (BẮT BUỘC HỎI TÔI TRƯỚC MỖI LẦN GỬI)
 
-Mở `https://github.com/nirannguyen50/new-coin/blob/claude/binance-coin-plan-rthkem/growth/07-bo-tin-nhan-gieo-hat.md`
+Mở `https://github.com/nirannguyen50/new-coin/blob/main/growth/07-bo-tin-nhan-gieo-hat.md`
 
 1. Mở Telegram, liệt kê cho tôi các **nhóm tôi đang là thành viên** có khoảng 30 người trở lên.
 2. Tôi sẽ chọn 3–5 nhóm và nói cho bạn biết ai là admin tôi quen.
@@ -99,7 +99,7 @@ Mở `https://github.com/nirannguyen50/new-coin/blob/claude/binance-coin-plan-rt
 
 ### Việc 8 — Đăng ký danh bạ bot
 
-Mở `https://github.com/nirannguyen50/new-coin/blob/claude/binance-coin-plan-rthkem/growth/06-danh-sach-noi-dang-ky-bot.md`
+Mở `https://github.com/nirannguyen50/new-coin/blob/main/growth/06-danh-sach-noi-dang-ky-bot.md`
 Làm những mục đánh dấu là miễn phí và không cần trả tiền. Với mỗi nơi, dùng đúng phần mô tả đã soạn sẵn
 trong file, thay `[[LINK_BOT]]`. Chỗ nào file ghi "tìm bằng từ khóa" thì tìm, nếu không thấy trang còn
 hoạt động thì bỏ qua và ghi lại cho tôi. **Không** tạo tài khoản trả phí, **không** nhập thẻ.

@@ -21,7 +21,7 @@ và chỉ hỏi tôi khi thực sự bắt buộc.
 ### Bối cảnh
 
 - Mã nguồn đã viết xong và đã đẩy lên GitHub: `https://github.com/nirannguyen50/new-coin`
-- Repo chỉ có **một** nhánh tên `claude/binance-coin-plan-rthkem`, và đó cũng là nhánh mặc định.
+- Repo dùng nhánh mặc định `main`, và đó cũng là nhánh mặc định.
   Không tạo nhánh mới, không tạo bản sao (fork/clone) của repo.
 - Dự án đã có sẵn `vercel.json`, thư mục `api/` và `website/`. **Không cần sửa code.**
 - Tôi đã đăng nhập Vercel bằng tài khoản GitHub trong trình duyệt.

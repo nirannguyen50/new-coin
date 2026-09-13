@@ -52,6 +52,14 @@ Sửa lại cả ba bản nháp theo hướng này rồi gửi chủ dự án du
 
 ## 4. Thứ tự việc tiếp theo
 
+0. **Dọn tên nhánh (làm trước, 2 phút).** Repo giờ có nhánh `main` sạch tên. Nhánh cũ tên
+   `claude/binance-coin-plan-rthkem` nhìn rất giống dự án coin và nó đang là nhánh mặc định,
+   tức tên đó hiện ngay trên URL khi ai đó mở repo.
+   - Vào https://github.com/nirannguyen50/new-coin/settings/branches → mục **Default branch**
+     → bấm nút đổi → chọn **`main`** → xác nhận.
+   - Vào Vercel, dự án `new-coin` → **Settings → Git → Production Branch** → đổi sang **`main`** → Save.
+     (Hai nhánh luôn trỏ cùng một commit nên đổi không làm gián đoạn bot.)
+   - **Không xoá** nhánh cũ.
 1. Sửa 3 bản nháp theo mục 3, gửi duyệt.
 2. Đăng lần lượt, **giãn cách tối thiểu 1 ngày giữa các nơi**, không đăng ồ ạt.
 3. Theo dõi bình luận ở mỗi nơi, trả lời thật lòng, nhất là câu hỏi kỹ thuật.
