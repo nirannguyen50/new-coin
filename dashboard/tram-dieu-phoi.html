@@ -217,7 +217,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
     <section class="panel" id="chat-panel">
       <header>
         <h2>Kênh liên lạc</h2>
-        <span class="hint"><span class="live" id="live">đang nối…</span></span>
+        <span class="hint"><span class="mono" id="hb"></span> <span class="live" id="live">đang nối…</span></span>
       </header>
       <div class="log" id="log"><div class="empty">Đang tải…</div></div>
       <form class="compose" id="compose">
@@ -336,6 +336,14 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
       db.collection("tasks").orderBy("code").onSnapshot(function(snap){
         var rows=rowsOf(snap);
         renderTasks(rows);
+      },function(){});
+      db.doc("status/heartbeat").onSnapshot(function(doc){
+        var v=doc.data?doc.data():null; if(!v)return;
+        function ago(ms){if(!ms)return "chưa thấy";var m=Math.round((Date.now()-ms)/6e4);
+          return m<2?"vừa xong":m<60?m+" phút trước":m<2880?Math.round(m/60)+" giờ trước":Math.round(m/1440)+" ngày trước"}
+        var stale=v.quanLy&&Date.now()-v.quanLy>3*36e5;
+        $("hb").textContent="Quản lý "+ago(v.quanLy)+" · Thực thi "+ago(v.thucThi);
+        $("hb").style.color=stale?"var(--son)":"";
       },function(){});
       db.doc("status/current").onSnapshot(function(doc){
         var v=doc.data?doc.data():null; if(!v)return;

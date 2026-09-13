@@ -29,8 +29,10 @@ Ba luật quan trọng nhất, nhắc lại ở đây:
 3. **Không tự hạ tiêu chí nghiệm thu** để việc trông như đã xong. Không đạt thì gửi tin `BLOCKED` kèm lý do cụ thể.
 
 **Nhịp:** kiểm tra bảng điều khiển ở đầu mỗi lượt làm việc. Phiên chạy theo lịch thì mỗi giờ một lần —
-đó là nhịp dày nhất lịch tự đánh thức cho phép. Quản lý cũng tự kiểm tra mỗi giờ, lệch 3 phút so với
-Thực thi để hai bên không ghi đè nhau.
+đó là nhịp dày nhất lịch tự đánh thức cho phép. Quản lý cũng tự kiểm tra mỗi giờ, ở phút 10, sau lượt
+Thực thi 17 phút để không đọc dở.
+
+**Không bao giờ chọn người gửi "Chủ dự án".** Tin duyệt chỉ có giá trị khi chủ dự án tự gửi.
 
 **Khi bị chặn và cần Quản lý xử lý gấp:** ngoài việc gửi tin `BLOCKED` vào khung chat, hãy **bình luận
 trên chính trang Trạm điều phối và gửi bình luận đó cho Claude**. Gửi tin trong khung chat KHÔNG đánh thức

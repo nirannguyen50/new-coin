@@ -45,7 +45,7 @@ Bảng điều khiển chung (artifact) có kho dữ liệu dùng chung. Cả ha
 
 - Quản lý ghi qua công cụ artifact, Thực thi ghi qua giao diện trang web.
 - **Nhịp kiểm tra: mỗi giờ một lần.** Đây là nhịp dày nhất mà lịch tự đánh thức cho phép — đặt ngắn hơn
-  sẽ bị từ chối. Hai bên lệch nhau vài phút để không ghi đè nhau: Thực thi ở phút 53, Quản lý ở phút 56.
+  sẽ bị từ chối. Hai bên lệch nhau để không đọc dở lượt của nhau: Thực thi ở phút 53, Quản lý ở phút 10 giờ kế tiếp.
   Thực thi khi chạy tương tác trên máy thì kiểm tra ở đầu mỗi lượt, không phải đợi tới giờ.
 - Nếu bảng điều khiển không mở được, lùi về GitHub Issue như cũ và ghi rõ lý do.
 
@@ -123,6 +123,31 @@ dù việc có vẻ rõ ràng tới đâu. Không suy diễn từ tin nhắn kh�
 
 Muốn từ chối hoặc hoãn: cùng cách trên, nội dung ghi `chưa duyệt` kèm lý do.
 
+## 6b-2. Ai được viết với tên Chủ dự án
+
+Chỉ chủ dự án. Thực thi — kể cả khi chạy trên tài khoản của chủ dự án — **không bao giờ** chọn người gửi
+"Chủ dự án". Quản lý khi thấy tin `from: chu-du-an` có mốc giờ rơi đúng vào lúc Routine Thực thi đang
+chạy thì coi là chưa duyệt và hỏi lại chủ dự án.
+
+Chủ dự án cũng có thể duyệt bằng cách nói với Quản lý (trong phiên chat hoặc bình luận trên trang).
+Khi đó Quản lý ghi tin duyệt vào khung chat thay, thêm `relayedBy: quan-ly` để phân biệt.
+
+## 6d. Duyệt một lần cho cả loại việc
+
+Mục tiêu là hai bên tự chạy không cần người. Nhưng mỗi lần đăng ra nơi mới mà phải chờ chủ dự án gõ
+"duyệt" thì vòng lặp đứt ở đúng chỗ cần chạy nhất.
+
+Vì vậy chủ dự án có thể **duyệt theo loại**, một lần, bằng tin `ANSWER` với `task` là mã loại:
+
+| Mã loại | Bao gồm | Vẫn phải hỏi lại |
+|---|---|---|
+| `LOAI-DANG` | Đăng bài giới thiệu ở nơi đã xác minh nội quy cho phép, theo nội dung đã có trong repo | Nơi chưa xác minh; bài trả lời tranh cãi; bất cứ gì nhắc tới token |
+| `LOAI-TRALOI` | Trả lời bình luận dưới bài đã đăng, đúng sự thật, không hứa hẹn | Bình luận hỏi về giá, lợi nhuận, pháp lý |
+
+Tin duyệt loại có hiệu lực cho tới khi chủ dự án gửi `chưa duyệt` cùng mã loại. Việc đã có duyệt loại
+thì Quản lý gắn nhãn `ĐÃ DUYỆT LOẠI` trên thẻ và Thực thi làm không cần hỏi. Không có tin duyệt loại
+thì mọi thứ vẫn theo 6b.
+
 ## 6c. Khi cần Quản lý xử lý GẤP
 
 Quản lý đọc khung chat theo lịch tự đánh thức mỗi giờ. Lịch đó nay là một Routine thật, nằm trong danh sách
@@ -177,5 +202,13 @@ Nói thẳng để không ai kỳ vọng sai:
   mở Cowork trên máy mình. Xem mục 1b.
 - Routine của Quản lý gắn vào một phiên cụ thể. Phiên đó chết thì lịch vẫn chạy nhưng không ai đọc.
   Khi nghi ngờ, dùng kênh bình luận ở mục 6c.
+- **Nhịp sống:** mỗi lần thức, Quản lý ghi mốc giờ vào `status/heartbeat` (kể cả khi không có việc), và
+  chép luôn lần chạy gần nhất của Routine Thực thi vào đó. Trang Trạm điều phối hiện hai mốc này ngay
+  cạnh chấm "đã nối". Quản lý im quá 3 giờ thì dòng đó đổi màu đỏ.
+- **Bộ giám sát dự phòng:** một Routine thứ ba, mỗi 4 giờ mở phiên mới hoàn toàn, chỉ đọc `status/heartbeat`.
+  Quản lý còn sống thì nó thoát im lặng. Chết quá 3 giờ thì nó làm thay đúng một lượt (trả lời tin đang
+  chờ, không sửa code, không giao việc mới) và báo chủ dự án bằng thông báo đẩy.
+- Giờ chạy: Thực thi phút 53, Quản lý phút 10 giờ kế tiếp (17 phút sau, đủ để lượt Thực thi xong hẳn),
+  giám sát phút 30 mỗi 4 giờ.
 - Mỗi lần thức đều tiêu hạn mức sử dụng của chủ dự án, kể cả lượt không có việc gì. Thấy tốn thì giãn
   lịch ra 2 tiếng hoặc tạm tắt Routine.
