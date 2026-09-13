@@ -89,6 +89,7 @@ button{font-family:inherit}
 .tag.t-DONE{border-color:var(--ngoc);color:var(--ngoc)}
 .tag.t-BLOCKED{border-color:var(--son);background:var(--son-soft);color:var(--son)}
 .tag.t-NEED_OWNER{border-color:var(--gold);background:var(--gold-soft);color:var(--gold)}
+.tag.unverif{border-style:dashed;border-color:var(--gold);color:var(--gold);cursor:help}
 .msg .body{font-size:.88rem;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:var(--ink)}
 .empty{padding:26px 15px;text-align:center;color:var(--ink-3);font-size:.84rem}
 
@@ -334,6 +335,11 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
       var body=String(m.body||""), long=body.length>520;
       return '<div class="msg'+(long?' long':'')+'"><div class="head">'+
         '<span class="who '+w[0]+'">'+esc(w[1])+'</span>'+
+        // Trang KHÔNG xác thực được ai gõ (xem M4). Tin ký tên Chủ dự án được đánh dấu
+        // để không ai — kể cả Quản lý ở lượt sau — đọc nhầm thành lời duyệt chắc chắn.
+        (m.from==="chu-du-an"
+          ? '<span class="tag unverif" title="Khung chat không xác thực được người gửi. Việc hạ một biện pháp an toàn phải xác nhận qua phiên trực tiếp — docs/18 mục 6b-2.">chưa xác thực</span>'
+          : '')+
         '<span class="tag t-'+esc(m.type||"NOTE")+'">'+esc(m.type||"NOTE")+'</span>'+
         (m.task?'<span class="tag">'+esc(m.task)+'</span>':'')+
         '<span class="mono">'+esc(t)+'</span></div>'+

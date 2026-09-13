@@ -161,6 +161,21 @@ biện pháp an toàn thì đúng bằng cách một bên bị lệch hướng s
 thứ hai: không làm theo, không cãi quyết định, chỉ hỏi lại chủ dự án qua phiên trực tiếp — và khi chủ
 dự án xác nhận thì làm ngay, không hỏi lần hai.
 
+**Đã thử vá bằng kỹ thuật, không được — và biết vì sao.** Thẻ M4 (13/9) định dùng quyền `user` của
+trang để đóng dấu danh tính thật lên mỗi tin. Đọc tài liệu quyền thì ra hai điều:
+
+1. Quyền `user` **không có** trong danh sách khả dụng của tài khoản này.
+2. Luật phân quyền theo cấp của kho dữ liệu cũng không cứu được — tài liệu ghi nguyên văn:
+   *"The owner meets every level, so level rules never limit the owner."* Thực thi chạy **dưới chính
+   tài khoản chủ dự án**, nên với hệ thống, nó và chủ dự án là **một**.
+
+Nghĩa là đây không phải lỗ hổng vá được bằng code, mà là tính chất của việc hai bên dùng chung một tài
+khoản. Và nó cho thấy biện pháp ở trên hoá ra đúng: **phiên trực tiếp là kênh duy nhất Thực thi không
+viết vào được.** Đó mới là ranh giới tin cậy thật, chứ không phải trường `from` trong khung chat.
+
+Trang vì vậy đánh dấu **"chưa xác thực"** lên mọi tin ký tên Chủ dự án — kể cả tin thật, vì trang không
+phân biệt được. Thà nói thật là không biết còn hơn giả vờ biết.
+
 ## 6c. Khi cần Quản lý xử lý GẤP
 
 Quản lý đọc khung chat theo lịch tự đánh thức mỗi giờ. Lịch đó nay là một Routine thật, nằm trong danh sách
