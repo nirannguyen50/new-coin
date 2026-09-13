@@ -34,6 +34,7 @@ Lộ trình Binance (docs/01, 02, 06) được giữ lại làm tham khảo; **d
 | [docs/13-prompt-trien-khai-vercel.md](docs/13-prompt-trien-khai-vercel.md) | Prompt bàn giao việc bấm deploy cho trợ lý có trình duyệt |
 | [docs/14-ke-hoach-tang-truong-tu-dong.md](docs/14-ke-hoach-tang-truong-tu-dong.md) | **Kế hoạch tăng trưởng gần như không cần con người:** vòng lặp bot tự lan truyền, phân công agent, phần con người tối thiểu, chỉ số duy nhất cần nhìn, điều kiện dừng |
 | [docs/15-prompt-cowork-viec-con-lai.md](docs/15-prompt-cowork-viec-con-lai.md) | Prompt bàn giao cho trợ lý điều khiển máy tính: tạo bot mới có username tử tế, cập nhật Vercel, tạo kênh, đăng bài, gửi tin gieo hạt (có duyệt từng tin), đăng ký danh bạ |
+| [docs/16-ke-hoach-xay-cong-dong-tu-so.md](docs/16-ke-hoach-xay-cong-dong-tu-so.md) | **Kế hoạch cộng đồng đang áp dụng.** Xây từ số 0 không dùng quan hệ cá nhân: nhóm demo công khai, tìm admin ở nơi công khai, lùi ngược từ Tết 6/2/2027, điều kiện dừng |
 
 ## Cấu trúc mã nguồn và công cụ
 
