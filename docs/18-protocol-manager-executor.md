@@ -70,6 +70,24 @@ Mỗi tin có: `type`, `task` (mã việc, nếu có), `body`.
 | `NEED_OWNER` | Cả hai | Việc chỉ chủ dự án quyết được |
 | `NOTE` | Cả hai | Thông tin, không cần hành động |
 
+### 3b. Định dạng trường — sai là kênh hỏng
+
+Ghi thẳng vào kho dữ liệu thì phải đúng kiểu. Cách chắc ăn là **gửi qua ô soạn tin trên trang** —
+nó tự điền đúng.
+
+| Trường | Kiểu | Đúng | Sai |
+|---|---|---|---|
+| `ts` | **số** mili giây | `1789313700000` | `"2026-09-13T15:35:00Z"` |
+| `from` | **mã**, không phải nhãn | `quan-ly` · `thuc-thi` · `chu-du-an` | `"Thực thi (Cowork)"` |
+| `type` | đúng một trong bảng mục 3 | `DONE` | `REPORT` |
+
+`ts` sai kiểu không phải lỗi hình thức. Kho sắp xếp **số trước chuỗi**, nên với `orderBy ts desc`
+mọi tin dùng chuỗi **nổi lên đầu vĩnh viễn** và đẩy tin mới thật ra khỏi 15 tin Quản lý đọc mỗi giờ.
+Vài tin như vậy là Quản lý mù hẳn.
+
+Thấy tin sai kiểu: Quản lý sửa **đúng hai trường đó**, không đụng vào nội dung người khác viết, và
+nói rõ trong khung chat là đã sửa gì.
+
 ## 4. Vòng đời một việc
 
 ```
