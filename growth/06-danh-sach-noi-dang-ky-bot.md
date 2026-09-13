@@ -230,6 +230,22 @@ Bài dùng bản EN ở mục 2.3 rút xuống ~120 từ; tiêu đề bắt đ�
 6. Ghi tất cả vào bảng mục 4.
 7. Product Hunt, BetaList, awesome-list: **để dành** tới khi `/thongke` (lệnh của chủ bot, xem `bot/README.md`) cho thấy ≥ 5 nhóm hoạt động trong 7 ngày.
 
+## 3b. Kết quả xác minh nội quy — 13/9/2026
+
+Do Thực thi (phiên đám mây) đọc trực tiếp và trích nguyên văn; Quản lý nghiệm thu nhưng **chưa đối chiếu độc lập**
+(sandbox của Quản lý bị chặn ra các trang này). Nguồn: tin `DONE` A4 trên Trạm điều phối.
+
+| Nơi | Kết luận | Bằng chứng |
+|---|---|---|
+| **Spiderum** | **Loại hẳn.** Điều khoản cấm quảng bá sản phẩm dưới mọi hình thức; ngoài ra tình trạng vận hành từ 7/2026 không rõ | aboutus.spiderum.com/dieu-khoan/ mục III: *"Nghiêm cấm quảng bá bất kỳ sản phẩm dưới bất kỳ hình thức nào, bao gồm nhưng không giới hạn việc gửi, truyền bất kỳ thông điệp nào mang tính quảng cáo, mời gọi, thư dây truyền, cơ hội đầu tư trên Mạng xã hội Spiderum."* |
+| **Tinh tế** | **Chưa xác minh được.** Trang nội quy trả 403 cho truy cập tự động (3 lần) | Cần phiên trên máy mở bằng trình duyệt thật rồi chép nguyên văn |
+| **Indie Hackers** | **Được.** Tự giới thiệu là cốt lõi của trang; Terms chỉ cấm spam kiểu auto-responder. Không thấy yêu cầu tuổi tài khoản | indiehackers.com/terms: *"Runs Maillist, Listserv, any form of auto-responder or spam on the Services"* (điều cấm duy nhất liên quan) |
+| **Hacker News — Show HN** (mới) | **Được, có điều kiện.** Đăng dự án của mình được, nhưng không dùng HN làm kênh quảng bá chính | news.ycombinator.com/newsguidelines.html: *"Please don't use HN primarily for promotion. It's ok to post your own stuff part of the time, but the primary use of the site should be for curiosity."* |
+| **AlternativeTo** (mới) | **Để dành.** Cấm quảng cáo qua profile; kênh chính thức là "Suggest new application", duyệt vài ngày tới một tuần. **Yêu cầu ứng dụng hỗ trợ tiếng Anh** — bot hiện chỉ tiếng Việt | alternativeto.net/faq: *"Using user profiles to advertize products or software is not allowed."* · *"All applications added to the database must also support the English language"* |
+
+**Thứ tự đăng rút ra:** đợt 1 = Viblo, Dev.to, Reddit (bài đã duyệt ở `growth/09`). Đợt 2 = Indie Hackers,
+Show HN — chỉ sau khi đợt 1 có kết quả và bot có ít nhất một nhóm thật. AlternativeTo chờ bản tiếng Anh.
+
 ## 4. Bảng theo dõi (điền tay)
 
 | Ngày | Nơi (#) | Link bài / hồ sơ | Trạng thái (đã nộp / được duyệt / từ chối / bỏ) | Có nhóm nào đến từ đây không? (hỏi admin khi họ thêm bot) |
