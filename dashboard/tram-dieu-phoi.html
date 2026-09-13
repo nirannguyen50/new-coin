@@ -124,6 +124,29 @@ button{font-family:inherit}
 .st.doing{background:var(--gold-soft);color:var(--gold)}
 .st.done{background:var(--ngoc-soft);color:var(--ngoc)}
 .st.blocked{background:var(--son-soft);color:var(--son)}
+.st.machine{background:var(--gold-soft);color:var(--gold)}
+.task .bd{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap}
+.task .meta{font-size:.72rem;color:var(--ink-3)}
+.done-box{border-top:1px solid var(--line)}
+.done-box>summary{cursor:pointer;padding:10px 15px;font-size:.78rem;color:var(--ink-3);
+  text-transform:uppercase;letter-spacing:.06em;font-weight:600;background:var(--surface-2)}
+.done-box .task .ttl{font-weight:500;color:var(--ink-2)}
+.done-box .task .d{font-size:.76rem}
+
+/* việc chỉ chủ dự án làm được */
+.owner-box{border:1px solid var(--gold);background:var(--gold-soft);border-radius:11px;
+  padding:13px 16px;margin:0 0 22px;display:flex;flex-direction:column;gap:8px}
+.owner-box .ob-h{font-weight:600;color:var(--gold);font-size:.9rem}
+.owner-box .ob-list{font-size:.86rem;line-height:1.7}
+.owner-box .ob-f{font-size:.76rem;color:var(--ink-2);line-height:1.5}
+.owner-box a{color:var(--son)}
+
+/* tin dài gập lại */
+.msg.long .body{max-height:9.6em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
+.msg.long.open .body{max-height:none;-webkit-mask-image:none;mask-image:none}
+.more{align-self:flex-start;background:none;border:1px solid var(--line-strong);color:var(--ink-2);
+  border-radius:99px;padding:3px 10px;font-size:.72rem;cursor:pointer}
+.more:hover{border-color:var(--son);color:var(--son)}
 
 /* roadmap */
 .mile{display:grid;grid-template-columns:76px 1fr;gap:12px;padding:11px 15px;border-bottom:1px solid var(--line)}
@@ -175,9 +198,17 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
       <span class="v mono" id="m-active">0</span>
       <span class="n">Chỉ số duy nhất quyết định dự án sống hay chết. Mục tiêu ≥ 3 vào tuần 13.</span>
     </div>
-    <div class="metric"><span class="k">Tổng nhóm</span><span class="v mono" id="m-groups">0</span><span class="n">gồm nhóm demo và nhóm thử</span></div>
-    <div class="metric"><span class="k">Bài đã đăng</span><span class="v mono" id="m-posts">8</span><span class="n">trên kênh, còn 25 trong hàng đợi</span></div>
-    <div class="metric"><span class="k">Nơi đã đăng</span><span class="v mono" id="m-venues">0</span><span class="n">Reddit, Viblo, Dev.to — chờ duyệt</span></div>
+    <div class="metric"><span class="k">Tổng nhóm</span><span class="v mono" id="m-groups">—</span><span class="n" id="m-groups-n">gồm nhóm demo và nhóm thử</span></div>
+    <div class="metric"><span class="k">Bài bot đã đăng</span><span class="v mono" id="m-posts">—</span><span class="n" id="m-posts-n">bot chưa báo cáo</span></div>
+    <div class="metric"><span class="k">Nơi đã đăng bài</span><span class="v mono" id="m-venues">—</span><span class="n" id="m-venues-n">chưa có</span></div>
+  </div>
+
+  <div class="owner-box" id="owner-box" hidden>
+    <div class="ob-h">Chỉ chủ dự án làm được — <span id="ob-n"></span> việc đang chờ</div>
+    <div class="ob-list" id="ob-list"></div>
+    <div class="ob-f">Mở Cowork trên máy (bật "Require this computer") và nói "làm A1", hoặc tự làm theo
+      <a href="https://github.com/nirannguyen50/new-coin/blob/main/docs/17-brief-cowork.md" target="_blank" rel="noopener">docs/17 mục 7</a>.
+      Mọi thứ khác đã tự chạy.</div>
   </div>
 
   <div class="grid">
@@ -228,10 +259,9 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
             <option value="chu-du-an">Chủ dự án</option>
           </select>
           <select id="type" aria-label="Loại tin">
-            <option>REPORT</option><option>CLAIM</option><option>DONE</option>
-            <option>BLOCKED</option><option>QUESTION</option><option>ANSWER</option>
+            <option>DONE</option><option>BLOCKED</option><option>QUESTION</option>
             <option>PROPOSE</option><option>NEED_OWNER</option><option>NOTE</option>
-            <option>TASK</option>
+            <option>CLAIM</option><option>ANSWER</option><option>TASK</option>
           </select>
           <input id="task" placeholder="Mã việc, ví dụ A1" aria-label="Mã việc">
         </div>
@@ -253,12 +283,25 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
 
 <script>
 (function(){
-  var DOCS=[["00","Quyết định token"],["09","Kế hoạch DEX"],["11","Off-chain trước"],["14","Tăng trưởng tự động"],["16","Cộng đồng từ số 0"],["17","Brief Cowork"],["18","Giao thức"]];
+  var GH="https://github.com/nirannguyen50/new-coin/blob/main/";
+  var DOCS=[
+    ["18","Giao thức","docs/18-protocol-manager-executor.md"],
+    ["20","Sổ quyết định","docs/20-quyet-dinh-chu-du-an.md"],
+    ["17","Brief Cowork","docs/17-brief-cowork.md"],
+    ["16","Cộng đồng từ số 0","docs/16-ke-hoach-xay-cong-dong-tu-so.md"],
+    ["g09","Bài đăng đã duyệt","growth/09-bai-dang-da-duyet.md"],
+    ["g06","Nơi đăng đã xác minh","growth/06-danh-sach-noi-dang-ky-bot.md"],
+    ["g10","Bot tương tự","growth/10-khao-sat-bot-tuong-tu.md"],
+    ["14","Tăng trưởng tự động","docs/14-ke-hoach-tang-truong-tu-dong.md"],
+    ["11","Off-chain trước","docs/11-quyet-dinh-bot-off-chain-truoc.md"],
+    ["00","Quyết định token","docs/00-quyet-dinh-token.md"]
+  ];
   var MILES=[
-    ["Đã xong","Bot chạy thật, 258 test, tự đăng bài và tự báo cáo",1],
-    ["Tuần này","Thêm 3 biến môi trường để automation chạy",0],
-    ["Tuần 2–5","Đăng ở Viblo, Dev.to, Reddit, danh bạ bot",0],
-    ["Tuần 6–13","Lặp và đo. Mốc: ≥3 nhóm hoạt động",0],
+    ["Đã xong","Bot chạy thật. Tự đăng bài, tự điền số liệu, tự báo cáo — code xong, chờ 3 biến môi trường",1],
+    ["Đã xong","Ba bài đăng đầu đã soạn và duyệt (growth/09); nội quy 12 nơi đăng đã xác minh",1],
+    ["Chờ chủ dự án","A1 (3 biến Vercel), A2 (/thongke), A3 (đăng 3 bài) — cần máy có Telegram và trình duyệt đã đăng nhập",0],
+    ["Tuần 2–5","Đăng đợt 1: Viblo, Dev.to, Reddit. Đợt 2 khi có nhóm thật: Indie Hackers, Show HN, Hashnode",0],
+    ["Tuần 6–13","Lặp và đo. Mốc: ≥3 nhóm hoạt động. Viết docs/19 doanh thu khi có nhóm thật",0],
     ["Tuần 14–21","Chiến dịch Tết",0],
     ["6/2/2027","Tết Đinh Mùi — đỉnh mùa vụ",0]
   ];
@@ -272,8 +315,8 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
   $("stamp").textContent=new Date().toLocaleString("vi-VN");
 
   $("docs").innerHTML=DOCS.map(function(x){
-    return '<a href="https://github.com/nirannguyen50/new-coin/blob/main/docs/" target="_blank" rel="noopener">'+
-      '<span class="mono">'+x[0]+'</span> '+esc(x[1])+'</a>'}).join("");
+    return '<a href="'+GH+esc(x[2])+'" target="_blank" rel="noopener">'+
+      '<span class="mono">'+esc(x[0])+'</span> '+esc(x[1])+'</a>'}).join("");
   $("miles").innerHTML=MILES.map(function(m){
     return '<div class="mile" data-done="'+m[2]+'"><div class="when">'+esc(m[0])+'</div>'+
       '<div class="what"><b>'+esc(m[1])+'</b></div></div>'}).join("");
@@ -285,25 +328,59 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
     el.innerHTML=rows.map(function(m){
       var w=WHO[m.from]||["th",m.from||"?"];
       var t=m.ts?new Date(m.ts).toLocaleString("vi-VN",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
-      return '<div class="msg"><div class="head">'+
+      var body=String(m.body||""), long=body.length>520;
+      return '<div class="msg'+(long?' long':'')+'"><div class="head">'+
         '<span class="who '+w[0]+'">'+esc(w[1])+'</span>'+
         '<span class="tag t-'+esc(m.type||"NOTE")+'">'+esc(m.type||"NOTE")+'</span>'+
         (m.task?'<span class="tag">'+esc(m.task)+'</span>':'')+
         '<span class="mono">'+esc(t)+'</span></div>'+
-        '<div class="body">'+esc(m.body)+'</div></div>'}).join("");
+        '<div class="body">'+esc(body)+'</div>'+
+        (long?'<button type="button" class="more" data-more>Xem hết</button>':'')+
+        '</div>'}).join("");
+  }
+  // Tin dài thì gập lại, bấm mới mở — khung chat không thành một cuộn giấy.
+  $("log").addEventListener("click",function(e){
+    var b=e.target.closest&&e.target.closest("[data-more]"); if(!b)return;
+    var msg=b.closest(".msg"); var open=msg.classList.toggle("open");
+    b.textContent=open?"Thu gọn":"Xem hết";
+  });
+
+  var OWNER={"thuc-thi":"Thực thi","quan-ly":"Quản lý"};
+  var ST={todo:"chờ làm",doing:"đang làm",done:"xong",blocked:"tắc"};
+  function taskCard(t,brief){
+    var s=t.status||"todo";
+    var badges='<span class="st '+esc(s)+'">'+esc(ST[s]||s)+'</span>';
+    if(t.needsMachine&&s!=="done")badges+='<span class="st machine">cần máy</span>';
+    return '<div class="task" data-s="'+esc(s)+'"><div class="stripe"></div><div class="in">'+
+      '<div class="t"><span class="id mono">'+esc(t.code||t.id||"")+'</span>'+
+      '<span class="ttl">'+esc(t.title)+'</span>'+
+      '<span class="bd">'+badges+'</span></div>'+
+      '<div class="meta">'+esc(OWNER[t.owner]||t.owner||"")+(t.approvedBy?' · đã duyệt':'')+'</div>'+
+      (brief
+        ? (t.verifyNote||t.evidence?'<div class="d">'+esc(t.verifyNote||t.evidence)+'</div>':'')
+        : (t.detail?'<div class="d">'+esc(t.detail)+'</div>':'')+
+          (t.acceptance?'<div class="ac"><b>Nghiệm thu:</b> '+esc(t.acceptance)+'</div>':''))+
+      '</div></div>';
   }
   function renderTasks(rows){
     var el=$("tasks");
     if(!rows.length){el.innerHTML='<div class="empty">Chưa có việc nào đang giao.</div>';return}
-    el.innerHTML=rows.map(function(t){
-      var s=t.status||"todo";
-      return '<div class="task" data-s="'+esc(s)+'"><div class="stripe"></div><div class="in">'+
-        '<div class="t"><span class="id mono">'+esc(t.code||t.id||"")+'</span>'+
-        '<span class="ttl">'+esc(t.title)+'</span>'+
-        '<span class="st '+esc(s)+'" style="margin-left:auto">'+esc(s)+'</span></div>'+
-        (t.detail?'<div class="d">'+esc(t.detail)+'</div>':'')+
-        (t.acceptance?'<div class="ac"><b>Nghiệm thu:</b> '+esc(t.acceptance)+'</div>':'')+
-        '</div></div>'}).join("");
+    var open=rows.filter(function(t){return t.status!=="done"});
+    var done=rows.filter(function(t){return t.status==="done"});
+    var machine=open.filter(function(t){return t.needsMachine});
+    var html=open.map(function(t){return taskCard(t,false)}).join("");
+    if(!open.length)html='<div class="empty">Không còn việc nào đang mở.</div>';
+    if(done.length){
+      html+='<details class="done-box"><summary>Đã xong · '+done.length+'</summary>'+
+        done.map(function(t){return taskCard(t,true)}).join("")+'</details>';
+    }
+    el.innerHTML=html;
+    $("owner-box").hidden=!machine.length;
+    if(machine.length){
+      $("ob-n").textContent=machine.length;
+      $("ob-list").innerHTML=machine.map(function(t){
+        return '<span class="mono">'+esc(t.code)+'</span> '+esc(String(t.title).replace(/\s*—\s*CẦN MÁY\s*$/,''))}).join('<br>');
+    }
   }
 
   // snapshot.docs la mang; khong co forEach. Va data() bi dong bang nen phai sao chep.
@@ -342,15 +419,20 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
         function ago(ms){if(!ms)return "chưa thấy";var m=Math.round((Date.now()-ms)/6e4);
           return m<2?"vừa xong":m<60?m+" phút trước":m<2880?Math.round(m/60)+" giờ trước":Math.round(m/1440)+" ngày trước"}
         var stale=v.quanLy&&Date.now()-v.quanLy>3*36e5;
-        $("hb").textContent="Quản lý "+ago(v.quanLy)+" · Thực thi "+ago(v.thucThi);
+        $("hb").textContent="Quản lý "+ago(v.quanLy)+(v.quanLyLich?" ("+v.quanLyLich+")":"")+
+          " · Thực thi "+ago(v.thucThi)+(v.thucThiLich?" ("+v.thucThiLich+")":"");
         $("hb").style.color=stale?"var(--son)":"";
       },function(){});
       db.doc("status/current").onSnapshot(function(doc){
         var v=doc.data?doc.data():null; if(!v)return;
-        if(v.groupsActive7d!=null)$("m-active").textContent=v.groupsActive7d;
-        if(v.groupsTotal!=null)$("m-groups").textContent=v.groupsTotal;
-        if(v.postsPublished!=null)$("m-posts").textContent=v.postsPublished;
-        if(v.venues!=null)$("m-venues").textContent=v.venues;
+        var put=function(id,val){$(id).textContent=(val==null?"—":val)};
+        put("m-active",v.groupsActive7d);
+        put("m-groups",v.groupsTotal);
+        put("m-posts",v.postsPublished);
+        put("m-venues",v.venues);
+        if(v.groupsNote)$("m-groups-n").textContent=v.groupsNote;
+        if(v.postsNote)$("m-posts-n").textContent=v.postsNote;
+        if(v.venuesNote)$("m-venues-n").textContent=v.venuesNote;
       },function(){});
     },function(){offline("không nối được")});
 
