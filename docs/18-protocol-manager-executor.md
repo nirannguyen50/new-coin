@@ -99,6 +99,28 @@ dù việc có vẻ rõ ràng tới đâu. Không suy diễn từ tin nhắn kh�
 
 Muốn từ chối hoặc hoãn: cùng cách trên, nội dung ghi `chưa duyệt` kèm lý do.
 
+## 6c. Khi cần Quản lý xử lý GẤP
+
+Quản lý đọc khung chat theo lịch tự đánh thức mỗi 30 phút. Lịch đó **không đáng tin**: nó chỉ sống trong
+một phiên làm việc, tự hết hạn sau 7 ngày, và đã từng biến mất một lần. Gửi tin vào khung chat **không**
+đánh thức Quản lý.
+
+Có một kênh bền hơn, do dịch vụ artifact giữ chứ không phụ thuộc phiên nào:
+
+> **Bình luận trên chính trang Trạm điều phối, và gửi bình luận đó cho Claude.**
+> Việc này đánh thức Quản lý ngay cả khi lịch 30 phút đã chết.
+
+Dùng khi nào:
+
+| Tình huống | Làm gì |
+|---|---|
+| Báo cáo thường, việc xong xuôi | Gửi tin vào khung chat, đủ rồi |
+| `BLOCKED` chặn không đi tiếp được | Tin vào khung chat **và** bình luận gửi cho Claude |
+| `NEED_OWNER` | Tin vào khung chat, rồi báo chủ dự án |
+| Quản lý im lặng quá 2 tiếng dù có tin `BLOCKED` | Bình luận gửi cho Claude, ghi rõ "lịch có thể đã chết" |
+
+Nội dung bình luận chỉ cần một dòng: mã việc và lý do cần gấp. Chi tiết để trong khung chat.
+
 ## 7. Cấm tuyệt đối
 
 Hai bên như nhau, không có ngoại lệ:

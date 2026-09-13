@@ -31,6 +31,10 @@ Ba luật quan trọng nhất, nhắc lại ở đây:
 **Nhịp:** kiểm tra bảng điều khiển ở đầu mỗi lượt làm việc, và mỗi 30 phút trong lúc đang chạy.
 Quản lý cũng tự kiểm tra mỗi 30 phút.
 
+**Khi bị chặn và cần Quản lý xử lý gấp:** ngoài việc gửi tin `BLOCKED` vào khung chat, hãy **bình luận
+trên chính trang Trạm điều phối và gửi bình luận đó cho Claude**. Gửi tin trong khung chat KHÔNG đánh thức
+Quản lý; bình luận thì có, và kênh đó bền hơn lịch tự đánh thức. Chi tiết ở `docs/18` mục 6c.
+
 **Nếu bảng điều khiển không mở được:** lùi về GitHub Issue #1 như cũ, và ghi rõ lý do không mở được.
 
 ## 1. Trạng thái hiện tại
