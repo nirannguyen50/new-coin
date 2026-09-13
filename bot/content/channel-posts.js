@@ -107,20 +107,20 @@ Dùng khi nào: ai đó trả lời giúp bạn, chia sẻ tài liệu hay, ho�
   {
     id: 'ngay-06',
     title: 'Ngày 6 — Tuần này thay đổi gì (tuần 1)',
-    // Cần số liệu thật của tuần đó (6 chỗ còn để trống) → không đăng tự động.
+    // Số liệu bot tự điền lúc đăng; phần chữ lấy từ content/weekly-notes.js — chưa có thì bỏ qua.
     needsManualData: true,
-    text: `📋 Tuần này thay đổi gì (tuần [[SỐ TUẦN]])
+    text: `📋 Tuần này thay đổi gì (tuần [[tuan]])
 
 Đã làm:
-• [[thay đổi 1 — ví dụ: sửa lỗi bot không đọc được tên người được reply]]
-• [[thay đổi 2]]
+• [[thayDoi1]]
+• [[thayDoi2]]
 
 Đang làm:
-• [[việc đang làm]]
+• [[dangLam]]
 
 Số liệu thật, chưa làm tròn:
-• Nhóm có giao dịch trong 7 ngày: [[SỐ]]
-• Bao lì xì đã mở trong tuần: [[SỐ]]
+• Nhóm có giao dịch trong 7 ngày: [[nhomHoatDong]]
+• Bao lì xì đã mở trong 7 ngày: [[baoLiXi]]
 
 Chưa có gì để khoe thì chúng tôi ghi "chưa có". Kênh này không đăng số ước lượng.`,
   },
@@ -218,20 +218,20 @@ Cả hai đều ghi vào nhật ký; gõ /pot để xem ai nạp gì, lúc nào.
   {
     id: 'ngay-14',
     title: 'Ngày 14 — Tuần này thay đổi gì (tuần 2)',
-    // Cần số liệu thật của tuần đó (7 chỗ còn để trống) → không đăng tự động.
+    // Số liệu bot tự điền lúc đăng; phần chữ lấy từ content/weekly-notes.js — chưa có thì bỏ qua.
     needsManualData: true,
-    text: `📋 Tuần này thay đổi gì (tuần [[SỐ TUẦN]])
+    text: `📋 Tuần này thay đổi gì (tuần [[tuan]])
 
 Đã làm:
-• [[thay đổi 1]]
-• [[thay đổi 2]]
+• [[thayDoi1]]
+• [[thayDoi2]]
 
 Lỗi đã biết, chưa sửa xong:
-• [[lỗi và tình trạng]]
+• [[loiDaBiet]]
 
 Số liệu thật:
-• Nhóm có giao dịch trong 7 ngày: [[SỐ]] (tuần trước: [[SỐ]])
-• Tip + bao lì xì trong tuần: [[SỐ]]
+• Nhóm có giao dịch trong 7 ngày: [[nhomHoatDong]]
+• Điểm đã tip trong 7 ngày: [[diemTip]]
 
 Bạn gặp lỗi gì, kể ở đây: https://t.me/lixibot_kenh. Lỗi được nêu công khai thì được sửa nhanh hơn.`,
   },
@@ -309,31 +309,30 @@ Mọi thứ đổi điểm đều để lại dấu. Không có giao dịch ng�
   {
     id: 'ngay-21',
     title: 'Ngày 21 — Tuần này thay đổi gì (tuần 3)',
-    // Cần số liệu thật của tuần đó (7 chỗ còn để trống) → không đăng tự động.
+    // Số liệu bot tự điền lúc đăng; phần chữ lấy từ content/weekly-notes.js — chưa có thì bỏ qua.
     needsManualData: true,
-    text: `📋 Tuần này thay đổi gì (tuần [[SỐ TUẦN]])
+    text: `📋 Tuần này thay đổi gì (tuần [[tuan]])
 
 Đã làm:
-• [[thay đổi 1]]
-• [[thay đổi 2]]
+• [[thayDoi1]]
+• [[thayDoi2]]
 
 Đã từ chối làm:
-• [[ví dụ: một đề nghị "mua thành viên cho kênh" — không, cảm ơn]]
+• [[daTuChoi]]
 
 Số liệu thật:
-• Nhóm có giao dịch trong 7 ngày: [[SỐ]] (tuần trước: [[SỐ]])
-• Người nhận điểm lần đầu trong tuần: [[SỐ]]
+• Nhóm có giao dịch trong 7 ngày: [[nhomHoatDong]]
+• Bao lì xì đã mở trong 7 ngày: [[baoLiXi]]
 
 Nếu số này không tăng, chúng tôi sẽ nói vậy và sửa sản phẩm, không sửa số.`,
   },
   {
     id: 'ngay-22',
     title: 'Ngày 22 — Ý tưởng dùng: Tết 2027',
-    // Cần số liệu thật của tuần đó (1 chỗ còn để trống) → không đăng tự động.
-    needsManualData: true,
+    // Tết Đinh Mùi: mùng 1 là thứ Bảy 6/2/2027 (cùng mốc với docs/16), giao thừa là tối hôm trước.
     text: `Ý tưởng dùng: Tết 2027 — chuẩn bị từ bây giờ 🧧
 
-Tết là dịp cái tên "lì xì" tự nói. Giao thừa năm nay rơi vào [[ngày — kiểm tra lịch âm trước khi đăng]].
+Tết là dịp cái tên "lì xì" tự nói. Giao thừa năm nay rơi vào tối thứ Sáu 5/2/2027; mùng 1 Tết Đinh Mùi là thứ Bảy 6/2/2027.
 
 Gợi ý cho admin:
 • Nạp pot Tết trước: /nap 5000
@@ -409,17 +408,17 @@ Chặn, báo cáo, và nhắn vào nhóm để người khác biết. Kênh báo
   {
     id: 'ngay-28',
     title: 'Ngày 28 — Tuần này thay đổi gì (tuần 4) + hỏi ý kiến',
-    // Cần số liệu thật của tuần đó (6 chỗ còn để trống) → không đăng tự động.
+    // Số liệu bot tự điền lúc đăng; phần chữ lấy từ content/weekly-notes.js — chưa có thì bỏ qua.
     needsManualData: true,
-    text: `📋 Tuần này thay đổi gì (tuần [[SỐ TUẦN]]) — và một câu hỏi
+    text: `📋 Tuần này thay đổi gì (tuần [[tuan]]) — và một câu hỏi
 
 Đã làm:
-• [[thay đổi 1]]
-• [[thay đổi 2]]
+• [[thayDoi1]]
+• [[thayDoi2]]
 
 Số liệu thật:
-• Nhóm có giao dịch trong 7 ngày: [[SỐ]] (4 tuần trước: [[SỐ]])
-• Bao lì xì đã mở trong tháng: [[SỐ]]
+• Nhóm có giao dịch trong 7 ngày: [[nhomHoatDong]]
+• Bao lì xì đã mở trong 7 ngày: [[baoLiXi]]
 
 Câu hỏi cho admin đang dùng: tính năng nào bạn dùng nhiều nhất, và cái gì làm bạn bực nhất? Trả lời ở https://t.me/lixibot_kenh. Tháng tới chúng tôi làm theo câu trả lời đó, không theo ý mình.`,
   },
@@ -435,15 +434,15 @@ Chúng tôi giữ lệnh này để thử luồng "xin rút → admin duyệt" c
   {
     id: 'ngay-30',
     title: 'Ngày 30 — Tổng kết tháng + mời',
-    // Cần số liệu thật của tuần đó (3 chỗ còn để trống) → không đăng tự động.
+    // Số liệu bot tự điền lúc đăng; phần chữ lấy từ content/weekly-notes.js — chưa có thì bỏ qua.
     needsManualData: true,
     text: `Ngày 30: một tháng của kênh này 🧧
 
 30 bài: 11 mẹo lệnh, 6 ý tưởng dùng, 4 bản "tuần này thay đổi gì", 4 nhắc an toàn, 4 lời mời, và bài này.
 
-Những gì có thật sau tháng đầu: [[SỐ]] nhóm có giao dịch trong 7 ngày gần nhất, [[SỐ]] bao lì xì đã mở. Số nhỏ thì chúng tôi vẫn ghi số nhỏ.
+Những gì có thật sau tháng đầu: [[nhomHoatDong]] nhóm có giao dịch trong 7 ngày gần nhất, [[baoLiXi]] bao lì xì đã mở trong 7 ngày đó. Số nhỏ thì chúng tôi vẫn ghi số nhỏ.
 
-Tháng tới: [[việc lớn nhất sẽ làm]].
+Tháng tới: [[thangToi]].
 
 Nếu bạn đọc đến đây mà chưa thêm bot vào nhóm: https://t.me/lixi_vn_bot?startgroup=true. Không hợp thì gỡ, chúng tôi không giận.`,
   },

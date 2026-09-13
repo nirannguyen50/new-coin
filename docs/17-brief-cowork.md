@@ -162,9 +162,10 @@ Development) → **Save**. Đặt xong cả ba rồi mới bấm **Redeploy** m�
 Từ lần cron chạy kế tiếp, mỗi ngày bot đăng **đúng một bài**, theo thứ tự trong
 `bot/content/channel-posts.js` (chuyển nguyên văn từ `growth/05-thu-vien-noi-dung-30-ngay.md`).
 
-**Sáu bài vẫn phải đăng tay** — các bài "tuần này thay đổi gì" và bài tổng kết tháng
-(ngày 6, 14, 21, 22, 28, 30) còn chỗ trống `[[SỐ]]` cần số liệu thật của tuần đó. Bot
-**cố ý bỏ qua** chúng: đăng một bài minh bạch mà để trống số liệu còn tệ hơn không đăng.
+**Năm bài "tuần này thay đổi gì" (ngày 6, 14, 21, 28, 30) bot tự điền số liệu** lúc đăng — cùng
+nguồn với `/thongke`. Phần chữ (tuần này đã làm gì, đang làm gì) thì Quản lý viết trước vào
+`bot/content/weekly-notes.js`; chưa có ghi chú thì bot **bỏ qua bài đó**, hàng đợi đi tiếp. Báo cáo
+hằng ngày trên Issue #1 ghi rõ bài nào đang chờ ghi chú. Không ai phải đăng tay bài nào nữa.
 
 **Công tắc tắt:** đặt `CHANNEL_AUTOPOST=off` là dừng hẳn việc đăng bài, không cần sửa
 code. Các bài đã đăng vẫn được ghi nhớ; bật lại là đăng tiếp đúng chỗ cũ.

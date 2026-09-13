@@ -123,6 +123,15 @@ function buildReportMarkdown({
   if (postedCount != null) {
     lines.push(`- Tổng số bài đã đăng lên kênh từ trước tới nay: ${n(postedCount)}.`);
   }
+  // Nhắc người quản lý: bài "tuần này thay đổi gì" nào còn thiếu ghi chú tuần
+  // (`bot/content/weekly-notes.js`). Số liệu bot tự điền; chữ thì phải có người viết.
+  if (channel && Array.isArray(channel.choGhiChu) && channel.choGhiChu.length > 0) {
+    lines.push(
+      `- Bài đang chờ ghi chú tuần (viết vào \`bot/content/weekly-notes.js\`): ` +
+        channel.choGhiChu.map((id) => `\`${id}\``).join(', ') +
+        '.'
+    );
+  }
   lines.push('');
 
   lines.push(

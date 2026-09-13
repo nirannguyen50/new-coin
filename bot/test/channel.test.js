@@ -339,6 +339,150 @@ test('file trạng thái chung KHÔNG bị nhầm là một nhóm', () => {
 });
 
 // ===========================================================================
+// 3b) Bài có chỗ trống: bot tự điền SỐ, người quản lý viết CHỮ (ghi chú tuần)
+// ===========================================================================
+
+const NOTES_DAY6 = {
+  tuan: 1,
+  thayDoi1: 'sửa lỗi đọc tên người được reply',
+  thayDoi2: 'thêm cảnh báo khi tắt thâm niên để thử',
+  dangLam: 'viết bài kênh cho tháng thứ hai',
+};
+const STATS = {
+  groupsTotal: 3,
+  groupsActive: 2,
+  groupsReferred: 0,
+  membersSeen: 9,
+  envelopesOpened: 4,
+  pointsTipped: 350,
+};
+
+test('renderChannelPost: số từ thống kê, chữ từ ghi chú; số 0 là giá trị thật, chuỗi rỗng là thiếu', () => {
+  const day6 = CHANNEL_POSTS.find((p) => p.id === 'ngay-06');
+  const out = channel.renderChannelPost(day6, { stats: STATS, notes: NOTES_DAY6 });
+  assert.equal(out.ok, true);
+  assert.ok(!out.text.includes('[['), 'không còn chỗ trống nào');
+  assert.match(out.text, /\(tuần 1\)/);
+  assert.match(out.text, /Nhóm có giao dịch trong 7 ngày: 2\n/);
+  assert.match(out.text, /Bao lì xì đã mở trong 7 ngày: 4\n/);
+  assert.match(out.text, /• sửa lỗi đọc tên người được reply\n/);
+
+  const zero = channel.renderChannelPost(day6, {
+    stats: { ...STATS, groupsActive: 0, envelopesOpened: 0 },
+    notes: NOTES_DAY6,
+  });
+  assert.equal(zero.ok, true, 'kho trống thì số thật là 0, vẫn đăng được');
+  assert.match(zero.text, /7 ngày: 0\n/);
+
+  const noNotes = channel.renderChannelPost(day6, { stats: STATS, notes: null });
+  assert.equal(noNotes.ok, false);
+  assert.deepEqual(noNotes.missing, ['tuan', 'thayDoi1', 'thayDoi2', 'dangLam']);
+
+  const noStats = channel.renderChannelPost(day6, { stats: null, notes: NOTES_DAY6 });
+  assert.equal(noStats.ok, false);
+  assert.deepEqual(noStats.missing, ['nhomHoatDong', 'baoLiXi']);
+
+  const blank = channel.renderChannelPost(day6, {
+    stats: STATS,
+    notes: { ...NOTES_DAY6, dangLam: '   ' },
+  });
+  assert.equal(blank.ok, false, 'chuỗi toàn khoảng trắng là thiếu, không được đăng');
+  assert.deepEqual(blank.missing, ['dangLam']);
+});
+
+test('mọi chỗ trống trong thư viện đều có nguồn điền: số từ thống kê, chữ từ ghi chú tuần', () => {
+  const NUMBER_KEYS = new Set(['nhomHoatDong', 'baoLiXi', 'diemTip']);
+  const NOTE_KEYS = new Set([
+    'tuan',
+    'thayDoi1',
+    'thayDoi2',
+    'dangLam',
+    'loiDaBiet',
+    'daTuChoi',
+    'thangToi',
+  ]);
+  const manual = CHANNEL_POSTS.filter((p) => p.needsManualData);
+  assert.ok(manual.length >= 5);
+  for (const post of manual) {
+    const keys = channel.placeholdersOf(post);
+    assert.ok(keys.length > 0, `bài ${post.id} đánh dấu có chỗ trống mà không có`);
+    for (const k of keys) {
+      assert.ok(
+        NUMBER_KEYS.has(k) || NOTE_KEYS.has(k),
+        `bài ${post.id}: chỗ trống [[${k}]] không ai điền được`
+      );
+    }
+    assert.ok(
+      keys.some((k) => NUMBER_KEYS.has(k)),
+      `bài ${post.id} phải có ít nhất một con số thật, đó là lý do bài tồn tại`
+    );
+  }
+});
+
+test('có ghi chú tuần thì bài "tuần này thay đổi gì" đăng đúng thứ tự, số lấy từ kho thật', async () => {
+  const storage = freshStorage('notes');
+  const telegram = fakeTelegram();
+  let day = Date.UTC(2026, 8, 13, 1, 30, 0);
+  const notes = { 'ngay-06': NOTES_DAY6 };
+
+  const ids = [];
+  for (let i = 0; i < 7; i += 1) {
+    const r = await channel.runChannelAutopost({
+      telegram,
+      storage,
+      env: BASE_ENV,
+      nowMs: day,
+      notes,
+    });
+    ids.push(r.maBai);
+    day += ledger.DAY_MS;
+  }
+  assert.deepEqual(ids, ['ghim', 'ngay-01', 'ngay-02', 'ngay-03', 'ngay-04', 'ngay-05', 'ngay-06']);
+
+  const sent = telegram.sent[6];
+  assert.ok(!sent.text.includes('[['), 'lên kênh là bài đã điền hết');
+  assert.match(sent.text, /Nhóm có giao dịch trong 7 ngày: 0\n/, 'kho trống → 0, không phải chỗ trống');
+  assert.match(sent.text, /• viết bài kênh cho tháng thứ hai/);
+
+  // Các bài có chỗ trống còn lại vẫn đang chờ ghi chú — báo cáo phải biết để nhắc.
+  const last = await channel.runChannelAutopost({ telegram, storage, env: BASE_ENV, nowMs: day, notes });
+  assert.equal(last.maBai, 'ngay-07');
+  assert.deepEqual(last.choGhiChu.slice(0, 2), ['ngay-14', 'ngay-21']);
+  assert.ok(!last.choGhiChu.includes('ngay-06'), 'bài đã đăng thì không còn chờ');
+});
+
+test('ghi chú thiếu một trường: bài bị bỏ qua, hàng đợi đi tiếp, và vẫn tính là đang chờ ghi chú', () => {
+  const notes = { 'ngay-06': { tuan: 1, thayDoi1: 'x' } };
+  const done = ['ghim', 'ngay-01', 'ngay-02', 'ngay-03', 'ngay-04', 'ngay-05'];
+  assert.equal(channel.nextChannelPost(done, CHANNEL_POSTS, { stats: STATS, notes }).id, 'ngay-07');
+  assert.ok(channel.postsWaitingForNotes(done, CHANNEL_POSTS, notes).includes('ngay-06'));
+  assert.ok(!channel.postsWaitingForNotes(done, CHANNEL_POSTS, { 'ngay-06': NOTES_DAY6 }).includes('ngay-06'));
+  // Không có ghi chú nào → không bài có chỗ trống nào được chọn, y như trước khi có tính năng này.
+  assert.equal(channel.nextChannelPost(done, CHANNEL_POSTS, { stats: STATS, notes: {} }).id, 'ngay-07');
+});
+
+test('không lấy được thống kê: bài có chỗ trống bị bỏ qua lần này, bài thường vẫn đăng', async () => {
+  const storage = freshStorage('nostats');
+  storage.growthStats = async () => {
+    throw new Error('database down');
+  };
+  const telegram = fakeTelegram();
+  for (const id of ['ghim', 'ngay-01', 'ngay-02', 'ngay-03', 'ngay-04', 'ngay-05']) {
+    await storage.claimChannelPost(id, Date.UTC(2026, 8, 1), '@lixibot_kenh');
+  }
+  const r = await channel.runChannelAutopost({
+    telegram,
+    storage,
+    env: BASE_ENV,
+    nowMs: Date.UTC(2026, 8, 20, 1, 0, 0),
+    notes: { 'ngay-06': NOTES_DAY6 },
+  });
+  assert.equal(r.daDang, true);
+  assert.equal(r.maBai, 'ngay-07', 'nhảy qua bài cần số liệu, không chặn hàng đợi');
+  assert.ok(!telegram.sent[0].text.includes('[['));
+});
+
+// ===========================================================================
 // 4) Kho Postgres: dấu mốc sống qua KHỞI ĐỘNG NGUỘI (đường chạy thật trên Vercel)
 // ===========================================================================
 

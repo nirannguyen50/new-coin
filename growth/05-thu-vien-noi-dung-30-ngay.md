@@ -14,6 +14,9 @@
   - `https://new-coin-orcin.vercel.app` — trang `website/them-bot.html` sau khi đưa lên web.
   - `https://t.me/lixibot_kenh` — nơi nhận báo lỗi/báo lừa đảo (nhóm hỗ trợ admin hoặc chính kênh này nếu bật bình luận).
   - `[[SỐ]]`, `[[SỐ TUẦN]]`, `[[thay đổi …]]` — số liệu và việc thật của tuần đó. **Không có thì ghi "chưa có"**, không ước lượng.
+    Từ 13/9/2026 bản máy đọc (`bot/content/channel-posts.js`) là nguồn chuẩn cho năm bài này: chỗ trống mang tên
+    `[[nhomHoatDong]]`, `[[baoLiXi]]`, `[[diemTip]]` (bot tự điền lúc đăng) và `[[tuan]]`, `[[thayDoi1]]`… (Quản lý
+    viết vào `bot/content/weekly-notes.js`). Bản ở đây chỉ để đọc cho dễ.
 - **Định dạng:** văn bản thuần, xuống dòng, vài emoji; không cần bật Markdown trong Telegram. Nếu muốn in đậm, dùng
   chế độ định dạng của ứng dụng Telegram khi dán, đừng thêm dấu `*` vào bài.
 - **Bốn loại bài, xoay vòng trong tuần:** mẹo lệnh (mỗi bài đúng một lệnh), ý tưởng dùng theo dịp, "tuần này thay đổi gì"

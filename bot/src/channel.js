@@ -14,8 +14,10 @@
  *   2. KHÔNG BAO GIỜ đăng trùng: mã bài được "xí phần" (claim) trong database TRƯỚC khi
  *      gọi Telegram. Cron chạy hai lần trong ngày, hay hai instance chạy song song, thì
  *      chỉ một lần xí được — lần kia thấy bài đã có chủ và bỏ qua.
- *   3. KHÔNG BAO GIỜ đăng bài còn chỗ trống: bài "tuần này thay đổi gì" cần số liệu thật
- *      của tuần đó (`needsManualData`) nên bộ đăng tự động bỏ qua, để người thật điền.
+ *   3. KHÔNG BAO GIỜ đăng bài còn chỗ trống. Bài "tuần này thay đổi gì" (`needsManualData`)
+ *      có hai loại chỗ trống: SỐ thì bot tự lấy từ database lúc đăng (cùng nguồn với
+ *      /thongke), CHỮ thì người quản lý viết trước vào `content/weekly-notes.js`. Thiếu
+ *      bất kỳ chỗ nào là bỏ qua bài đó, hàng đợi đi tiếp — xem `renderChannelPost`.
  *
  * CÔNG TẮC TẮT: đặt biến môi trường `CHANNEL_AUTOPOST=off` là dừng hẳn việc đăng
  * (không cần redeploy code, không cần sửa gì khác).
@@ -25,6 +27,8 @@
  */
 
 const { CHANNEL_POSTS } = require('../content/channel-posts');
+const { WEEKLY_NOTES } = require('../content/weekly-notes');
+const growth = require('./growth');
 const ledger = require('./ledger');
 const { safeErrorMessage } = require('./redact');
 
@@ -64,31 +68,100 @@ function normalizeChannelChatId(raw) {
 }
 
 /**
+ * Điền chỗ trống `[[...]]` của một bài. HÀM THUẦN.
+ *
+ * Hai nguồn, cố ý tách bạch:
+ *   - SỐ LIỆU (`nhomHoatDong`, `baoLiXi`, `diemTip`) lấy từ `stats` — chính là kết quả
+ *     `storage.growthStats(...)` mà `/thongke` và báo cáo hằng ngày dùng, nên ba nơi không
+ *     bao giờ lệch nhau.
+ *   - CHỮ (`tuan`, `thayDoi1`, ...) lấy từ `notes` — ghi chú tuần do người quản lý viết
+ *     trong `content/weekly-notes.js`. Không có database nào biết tuần này đã làm gì.
+ *
+ * Còn sót một chỗ trống nào là `ok: false` — bài KHÔNG được đăng. Đây là lưới cuối cùng:
+ * không có đường nào để một bài còn `[[` đi tới kênh công khai.
+ *
+ * @param {{text: string}} post
+ * @param {{stats?: object|null, notes?: object|null}} [ctx]
+ * @returns {{ok: true, text: string}|{ok: false, missing: string[]}}
+ */
+function renderChannelPost(post, { stats = null, notes = null } = {}) {
+  const numbers = stats
+    ? {
+        nhomHoatDong: stats.groupsActive,
+        baoLiXi: stats.envelopesOpened,
+        diemTip: stats.pointsTipped,
+      }
+    : {};
+  const values = { ...numbers, ...(notes || {}) };
+  const missing = [];
+  const text = String(post.text).replace(/\[\[([^\]]+)\]\]/g, (whole, key) => {
+    const v = values[key];
+    // Số 0 là một giá trị thật ("chưa có nhóm nào") — chỉ null/undefined/chuỗi rỗng mới là thiếu.
+    if (v === null || v === undefined || String(v).trim() === '') {
+      missing.push(key);
+      return whole;
+    }
+    return typeof v === 'number' ? String(v) : String(v).trim();
+  });
+  return missing.length ? { ok: false, missing } : { ok: true, text };
+}
+
+/** Tên các chỗ trống trong một bài, theo thứ tự xuất hiện. HÀM THUẦN. */
+function placeholdersOf(post) {
+  const keys = [];
+  String(post && post.text ? post.text : '').replace(/\[\[([^\]]+)\]\]/g, (_, k) => {
+    keys.push(k);
+    return '';
+  });
+  return keys;
+}
+
+/**
+ * Bài này đăng tự động được không, với ghi chú và số liệu hiện có. HÀM THUẦN.
+ * Bài không có chỗ trống: luôn được. Bài có chỗ trống: chỉ khi điền được HẾT.
+ */
+function isPostReady(post, ctx) {
+  if (!post || !post.id) return false;
+  if (!post.needsManualData) return true;
+  return renderChannelPost(post, ctx).ok;
+}
+
+/**
  * Bài kế tiếp chưa đăng. HÀM THUẦN — không đụng database, không đụng mạng.
  *
- * Thứ tự đăng CHÍNH LÀ thứ tự mảng trong `content/channel-posts.js`. Bài đã đăng và bài
- * cần số liệu thật (`needsManualData`) đều bị bỏ qua; bỏ qua chứ không dừng lại, nên một
- * bài phải điền tay không chặn 25 bài phía sau.
+ * Thứ tự đăng CHÍNH LÀ thứ tự mảng trong `content/channel-posts.js`. Bài đã đăng bị bỏ
+ * qua. Bài có chỗ trống (`needsManualData`) chỉ được chọn khi điền được hết bằng ghi chú
+ * tuần + số liệu (`ctx`); thiếu thì bỏ qua chứ không dừng lại, nên một bài chưa có ghi chú
+ * không chặn 25 bài phía sau.
  *
  * @param {Iterable<string>} postedIds mã các bài đã đăng
  * @param {object[]} [posts] hàng đợi (mặc định toàn bộ thư viện)
+ * @param {{stats?: object|null, notes?: object|null}} [ctx] ghi chú tuần là map theo mã bài
  * @returns {object|null} bài kế tiếp, hoặc null khi hết bài đăng tự động được
  */
-function nextChannelPost(postedIds, posts = CHANNEL_POSTS) {
+function nextChannelPost(postedIds, posts = CHANNEL_POSTS, ctx = {}) {
   const done = new Set([...(postedIds || [])].map(String));
   for (const post of posts) {
     if (!post || !post.id) continue;
-    if (post.needsManualData) continue;
     if (done.has(String(post.id))) continue;
+    if (!isPostReady(post, ctxFor(post, ctx))) continue;
     return post;
   }
   return null;
 }
 
+/** Ghi chú của đúng bài này (map `notes` khoá theo mã bài) + số liệu chung. */
+function ctxFor(post, ctx = {}) {
+  const all = ctx && ctx.notes ? ctx.notes : {};
+  return { stats: ctx ? ctx.stats : null, notes: all[post.id] || null };
+}
+
 /** Còn bao nhiêu bài đăng tự động được (để log và báo cáo). HÀM THUẦN. */
-function countRemainingPosts(postedIds, posts = CHANNEL_POSTS) {
+function countRemainingPosts(postedIds, posts = CHANNEL_POSTS, ctx = {}) {
   const done = new Set([...(postedIds || [])].map(String));
-  return posts.filter((p) => p && p.id && !p.needsManualData && !done.has(String(p.id))).length;
+  return posts.filter(
+    (p) => p && p.id && !done.has(String(p.id)) && isPostReady(p, ctxFor(p, ctx))
+  ).length;
 }
 
 /** Lý do bỏ qua → câu log tiếng Việt (không có bí mật nào ở đây). */
@@ -123,7 +196,13 @@ function alreadyPostedToday(lastPostedAt, nowMs = Date.now()) {
  * @returns {{ok: true, chatId: string, post: object, remaining: number}
  *          |{ok: false, reason: string, message: string}}
  */
-function planChannelPost({ env = process.env, postedIds = [], posts = CHANNEL_POSTS } = {}) {
+function planChannelPost({
+  env = process.env,
+  postedIds = [],
+  posts = CHANNEL_POSTS,
+  stats = null,
+  notes = WEEKLY_NOTES,
+} = {}) {
   if (!isAutopostEnabled(env)) {
     return { ok: false, reason: 'tat_cong_tac', message: SKIP_REASONS.tat_cong_tac };
   }
@@ -135,9 +214,40 @@ function planChannelPost({ env = process.env, postedIds = [], posts = CHANNEL_PO
   if (!chatId) {
     return { ok: false, reason: 'kenh_khong_hop_le', message: SKIP_REASONS.kenh_khong_hop_le };
   }
-  const post = nextChannelPost(postedIds, posts);
+  const ctx = { stats, notes };
+  const post = nextChannelPost(postedIds, posts, ctx);
   if (!post) return { ok: false, reason: 'het_bai', message: SKIP_REASONS.het_bai };
-  return { ok: true, chatId, post, remaining: countRemainingPosts(postedIds, posts) };
+  const rendered = renderChannelPost(post, ctxFor(post, ctx));
+  // nextChannelPost chỉ trả về bài điền được hết, nên nhánh này không xảy ra; giữ để
+  // không bao giờ có đường nào đưa một bài còn chỗ trống ra ngoài.
+  if (!rendered.ok) return { ok: false, reason: 'het_bai', message: SKIP_REASONS.het_bai };
+  return {
+    ok: true,
+    chatId,
+    post,
+    text: rendered.text,
+    remaining: countRemainingPosts(postedIds, posts, ctx),
+  };
+}
+
+/**
+ * Có bài nào đang chờ ghi chú tuần mà CHƯA có ghi chú không (để báo cáo nhắc người quản
+ * lý). HÀM THUẦN. Trả về mã các bài đó theo thứ tự hàng đợi.
+ */
+function postsWaitingForNotes(postedIds, posts = CHANNEL_POSTS, notes = WEEKLY_NOTES) {
+  const done = new Set([...(postedIds || [])].map(String));
+  // Giả định số liệu đầy đủ, để câu hỏi chỉ còn là "phần chữ đã đủ chưa".
+  const anyStats = { groupsActive: 0, envelopesOpened: 0, pointsTipped: 0 };
+  return posts
+    .filter(
+      (p) =>
+        p &&
+        p.id &&
+        p.needsManualData &&
+        !done.has(String(p.id)) &&
+        !renderChannelPost(p, { stats: anyStats, notes: (notes || {})[p.id] || null }).ok
+    )
+    .map((p) => p.id);
 }
 
 /**
@@ -161,6 +271,7 @@ async function runChannelAutopost({
   env = process.env,
   nowMs = Date.now(),
   posts = CHANNEL_POSTS,
+  notes = WEEKLY_NOTES,
 } = {}) {
   const idle = (reason, message, extra = {}) => ({
     daDang: false,
@@ -189,10 +300,31 @@ async function runChannelAutopost({
     return idle('loi_doc', message);
   }
 
-  const plan = planChannelPost({ env, postedIds, posts });
+  const waiting = postsWaitingForNotes(postedIds, posts, notes);
+
+  // Số liệu chỉ cần khi có bài có chỗ trống ĐÃ CÓ ghi chú đang chờ đăng. Không thì khỏi
+  // bắt database đếm; và đếm hỏng thì chỉ các bài có chỗ trống bị bỏ qua lần này, bài
+  // thường vẫn đăng.
+  let stats = null;
+  const done = new Set(postedIds.map(String));
+  const needStats = posts.some(
+    (p) => p && p.id && p.needsManualData && !done.has(String(p.id)) && notes[p.id]
+  );
+  if (needStats && typeof storage.growthStats === 'function') {
+    try {
+      stats = await storage.growthStats(growth.statsWindowStart(nowMs));
+    } catch (err) {
+      console.error(
+        '[kenh] Không lấy được số liệu, bỏ qua các bài có chỗ trống lần này:',
+        safeErrorMessage(err, env)
+      );
+    }
+  }
+
+  const plan = planChannelPost({ env, postedIds, posts, stats, notes });
   if (!plan.ok) {
     console.log(`[kenh] Bỏ qua: ${plan.message}`);
-    return idle(plan.reason, plan.message);
+    return idle(plan.reason, plan.message, { choGhiChu: waiting });
   }
 
   let claimed = false;
@@ -209,7 +341,7 @@ async function runChannelAutopost({
   }
 
   try {
-    await telegram.sendMessage(plan.chatId, plan.post.text, {
+    await telegram.sendMessage(plan.chatId, plan.text, {
       // Bài là VĂN BẢN THUẦN (xem growth/05): không bật parse_mode để một dấu `_` hay `*`
       // trong bài không làm Telegram từ chối cả tin nhắn.
       disable_web_page_preview: true,
@@ -232,6 +364,7 @@ async function runChannelAutopost({
     tieuDe: plan.post.title,
     lyDo: '',
     conLai: Math.max(0, plan.remaining - 1),
+    choGhiChu: waiting,
   };
 }
 
@@ -239,7 +372,12 @@ module.exports = {
   AUTOPOST_OFF_VALUES,
   CHANNEL_POSTS,
   SKIP_REASONS,
+  WEEKLY_NOTES,
   alreadyPostedToday,
+  isPostReady,
+  placeholdersOf,
+  postsWaitingForNotes,
+  renderChannelPost,
   countRemainingPosts,
   isAutopostEnabled,
   nextChannelPost,
