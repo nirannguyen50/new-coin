@@ -64,7 +64,8 @@ const BASE_ENV = { CHANNEL_CHAT_ID: '@lixibot_kenh' };
 // ===========================================================================
 
 test('thư viện bài đăng: mã duy nhất, có nội dung, và cờ needsManualData khớp với chỗ trống thật', () => {
-  assert.ok(CHANNEL_POSTS.length >= 30, 'phải có ít nhất bài ghim + 30 bài mỗi ngày');
+  assert.ok(CHANNEL_POSTS.length >= 60, 'phải có ít nhất bài ghim + 30 bài tháng đầu + 30 bài tháng hai');
+  assert.equal(CHANNEL_POSTS.filter((p) => p.id.startsWith('t2-')).length, 30, 'tháng hai đủ 30 bài');
   assert.equal(new Set(CHANNEL_POST_IDS).size, CHANNEL_POSTS.length, 'mã bài phải duy nhất');
   assert.equal(CHANNEL_POSTS[0].id, 'ghim', 'bài ghim phải đăng đầu tiên');
 

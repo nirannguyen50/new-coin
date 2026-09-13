@@ -468,6 +468,10 @@ Admin: ghim tin đó, hoặc reply /huongdan vào tin của người mới. Bớ
   },
 ];
 
+// Tháng thứ hai nối vào sau tháng đầu — cùng luật, cùng bộ đăng. Xem file đó.
+const { THANG_2 } = require('./channel-posts-thang-2');
+CHANNEL_POSTS.push(...THANG_2);
+
 /** Mã của mọi bài, đúng thứ tự đăng (tiện cho test và cho log). */
 const CHANNEL_POST_IDS = CHANNEL_POSTS.map((p) => p.id);
 
