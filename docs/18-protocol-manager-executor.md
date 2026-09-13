@@ -16,6 +16,29 @@
 **Nguyên tắc gốc:** Quản lý quyết định *làm gì*, Thực thi quyết định *bấm nút nào*.
 Thực thi không được tự thêm việc ngoài danh sách. Thấy việc đáng làm thì đề xuất, không tự làm.
 
+## 1b. Hai loại phiên Thực thi — phân biệt trước khi giao việc
+
+Cowork chạy ở hai dạng, khả năng khác nhau hoàn toàn. Giao nhầm là việc bị chặn vô ích.
+
+| | **Phiên trên máy** | **Phiên theo lịch, trên đám mây** |
+|---|---|---|
+| Khi nào | Chủ dự án mở Cowork trên máy mình | Routine tự chạy mỗi giờ |
+| Telegram đã đăng nhập | Có | **Không** |
+| Trình duyệt đã đăng nhập Vercel, GitHub, Facebook | Có | **Không** |
+| Đọc web công khai, tìm kiếm, đọc tài liệu | Có | Có |
+| Soạn nội dung, phân tích, đọc repo | Có | Có |
+
+**Mọi thẻ việc phải ghi rõ `CẦN MÁY` hay không.**
+
+Việc `CẦN MÁY`: mọi thứ đụng tới tài khoản thật — đăng nhập Vercel, tạo token GitHub, nhắn Telegram,
+đăng bài lên diễn đàn cần tài khoản, thêm bot làm admin kênh.
+
+Việc không cần máy: đọc nội quy diễn đàn, tra cứu, soạn bản nháp, phân tích số liệu công khai, đọc GitHub công khai.
+
+**Quy tắc cho phiên theo lịch trên đám mây:** thấy thẻ `CẦN MÁY` thì **bỏ qua hoàn toàn** — không nhận việc,
+không gửi `BLOCKED`. Việc đã được đánh dấu rồi; gửi `BLOCKED` mỗi giờ chỉ làm ngập khung chat và che mất
+tin thật. Chỉ nhận những thẻ không có nhãn đó.
+
 ## 2. Kênh liên lạc
 
 Bảng điều khiển chung (artifact) có kho dữ liệu dùng chung. Cả hai bên đọc và ghi vào đó.
