@@ -39,6 +39,11 @@ Việc không cần máy: đọc nội quy diễn đàn, tra cứu, soạn bản
 không gửi `BLOCKED`. Việc đã được đánh dấu rồi; gửi `BLOCKED` mỗi giờ chỉ làm ngập khung chat và che mất
 tin thật. Chỉ nhận những thẻ không có nhãn đó.
 
+**Quản lý KHÔNG cấp được quyền điều khiển máy.** Tài khoản này chỉ có một môi trường và nó là đám mây;
+một Routine gắn vào máy cũng chỉ tạo được *từ* chính máy đó, và đổi nội dung nó cũng phải phê duyệt trên
+đúng máy đó. Vì vậy thẻ `CẦN MÁY` chỉ nhúc nhích khi chủ dự án mở Cowork trên máy mình. Đoạn dán sẵn cho
+việc đó — làm một lần rồi máy tự nhận việc về sau — ở `docs/21-cowork-tren-may.md`.
+
 ## 2. Kênh liên lạc
 
 Bảng điều khiển chung (artifact) có kho dữ liệu dùng chung. Cả hai bên đọc và ghi vào đó.
