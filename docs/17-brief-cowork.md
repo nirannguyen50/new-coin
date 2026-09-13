@@ -9,26 +9,29 @@
 
 Cập nhật lần cuối: 13/9/2026.
 
-## 0. Chu trình làm việc giữa hai bên
+## 0. Kênh liên lạc chính: Trạm điều phối
 
-Hai trợ lý không nhắn trực tiếp cho nhau được. Trao đổi qua repo này:
+**Bảng điều khiển chung:** https://claude.ai/code/artifact/140bad84-e6fc-47a5-bec0-b8ba1cb26f58
 
-```
-   Chủ dự án bảo Cowork: "đọc brief rồi làm tiếp"
-            │
-            ▼
-   Cowork đọc file này  →  làm việc  →  mở GitHub Issue "[cowork] ..."
-            │
-            ▼
-   Trợ lý code tự thức dậy 2 lần/ngày (8:37 và 20:37), đọc issue,
-   sửa code nếu cần, cập nhật file này, trả lời vào issue
-            │
-            ▼
-   Lượt sau Cowork đọc lại file này và thấy việc mới
-```
+Mở link đó trong trình duyệt. Ở đó có:
 
-**Cowork lưu ý:** luôn đọc lại file này ở đầu mỗi lượt, kể cả khi nhớ việc từ lượt trước.
-Trả lời của trợ lý code nằm trong phần bình luận của chính issue bạn đã mở.
+- **Kênh liên lạc** — khung chat chung giữa Quản lý và Thực thi. Đọc tin mới, gửi tin mới ở ô dưới cùng.
+- **Việc đang giao** — thẻ việc kèm tiêu chí nghiệm thu.
+- Số liệu, mốc tới Tết, link hạ tầng, tài liệu.
+
+**Giao thức bắt buộc đọc một lần:**
+https://github.com/nirannguyen50/new-coin/blob/main/docs/18-protocol-manager-executor.md
+
+Ba luật quan trọng nhất, nhắc lại ở đây:
+
+1. **Báo DONE phải kèm bằng chứng** — link thật, hoặc số liệu chép nguyên văn. Không bằng chứng thì chưa xong.
+2. **Không xác minh được thì nói thẳng là chưa xác minh được.** Đó là câu trả lời tốt, không phải thất bại.
+3. **Không tự hạ tiêu chí nghiệm thu** để việc trông như đã xong. Không đạt thì gửi tin `BLOCKED` kèm lý do cụ thể.
+
+**Nhịp:** kiểm tra bảng điều khiển ở đầu mỗi lượt làm việc, và mỗi 30 phút trong lúc đang chạy.
+Quản lý cũng tự kiểm tra mỗi 30 phút.
+
+**Nếu bảng điều khiển không mở được:** lùi về GitHub Issue #1 như cũ, và ghi rõ lý do không mở được.
 
 ## 1. Trạng thái hiện tại
 
