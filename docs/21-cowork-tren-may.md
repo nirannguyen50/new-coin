@@ -130,6 +130,27 @@ Kiểm tra Trạm điều phối và làm việc CẦN MÁY. Im lặng nếu kh�
 
 ---
 
+---
+
+## Đã chạy lần đầu 13/9 — kết quả và một chỗ phải sửa
+
+| Việc | Kết quả |
+|---|---|
+| A1.1 bot làm admin kênh | Xong (hoá ra đã bật từ trước) |
+| A1.2 + A1.3 token | **Thực thi từ chối** — luật an toàn của nó cấm nhập API key/token vào bất kỳ ô nào, kể cả khi được cho phép rõ ràng. **Đó là luật đúng, không tìm cách lách.** |
+| A2 `/thongke` | Xong, chép nguyên văn |
+| A3 bài Viblo | Xong bài 1/3, có link thật |
+
+**Chỗ tôi viết sai trong đoạn dán đầu tiên:** gộp ba biến vào một việc. Chỉ `GITHUB_TOKEN` là bí mật.
+Hai biến kia không phải token và Thực thi dán được bình thường. Vì vậy A1 nay tách đôi:
+
+- **A9** — `CHANNEL_CHAT_ID=@lixibot_kenh` và `GITHUB_REPORT_ISSUE=1`: Thực thi làm được, và **chỉ cần
+  biến thứ nhất là bot bắt đầu tự đăng bài lên kênh mỗi ngày.** Thiếu token thì riêng phần báo cáo
+  GitHub tự bỏ qua và ghi lý do vào log, không làm hỏng gì khác.
+- **A1** — `GITHUB_TOKEN`: **chỉ chủ dự án**, không ai làm thay được. Mục A1.2 và A1.3 ở trên.
+
+Nếu chỉ có 5 phút, làm A1.2 + A1.3. Phần còn lại Thực thi lo.
+
 ## Sau khi xong, cái gì tự chạy
 
 | Việc | Trước | Sau |
