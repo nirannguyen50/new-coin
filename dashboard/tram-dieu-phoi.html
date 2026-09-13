@@ -1,0 +1,365 @@
+<title>Trạm điều phối LiXi</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#EEEEE8; --surface:#FFFFFF; --surface-2:#E4E4DC; --sunken:#F7F7F3;
+  --ink:#1C1B18; --ink-2:#5C5A52; --ink-3:#8C8A80;
+  --line:#D5D5CB; --line-strong:#B9B9AD;
+  --son:#B22B22; --son-ink:#FFFFFF; --son-soft:#F2DEDB;
+  --gold:#8A6D14; --gold-soft:#EFE6C9;
+  --ngoc:#2C6B50; --ngoc-soft:#D9E8E0;
+  --shadow:0 1px 2px rgba(28,27,24,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141310; --surface:#1D1B17; --surface-2:#272420; --sunken:#100F0D;
+  --ink:#EDE8DE; --ink-2:#A9A49A; --ink-3:#7A766D;
+  --line:#322E29; --line-strong:#474239;
+  --son:#E2685A; --son-ink:#1A0F0D; --son-soft:#34211E;
+  --gold:#D4A94E; --gold-soft:#2E2716;
+  --ngoc:#6FB38C; --ngoc-soft:#17291F;
+  --shadow:none;
+}}
+:root[data-theme="dark"]{
+  --bg:#141310; --surface:#1D1B17; --surface-2:#272420; --sunken:#100F0D;
+  --ink:#EDE8DE; --ink-2:#A9A49A; --ink-3:#7A766D;
+  --line:#322E29; --line-strong:#474239;
+  --son:#E2685A; --son-ink:#1A0F0D; --son-soft:#34211E;
+  --gold:#D4A94E; --gold-soft:#2E2716;
+  --ngoc:#6FB38C; --ngoc-soft:#17291F;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;padding-inline:18px}
+.wrap{max-width:1180px;margin:0 auto;padding-block:26px 64px}
+h1,h2,h3{margin:0;text-wrap:balance;font-weight:600}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--son);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* top bar */
+.top{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:flex-end;justify-content:space-between;
+  border-bottom:2px solid var(--ink);padding-bottom:14px}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand .mark{width:24px;height:24px;border-radius:5px;background:var(--son);flex:none;
+  display:grid;place-items:center;color:var(--son-ink);font-size:12px;font-weight:700;transform:translateY(3px)}
+.brand h1{font-size:1.22rem;letter-spacing:-.01em}
+.brand .sub{color:var(--ink-3);font-size:.8rem}
+.clock{text-align:right;font-size:.8rem;color:var(--ink-2);line-height:1.5}
+.clock b{color:var(--son);font-size:1.05rem;font-weight:600}
+
+/* metric strip */
+.metrics{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:18px 0 22px}
+.metric{background:var(--surface);padding:13px 15px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.metric.lead{background:var(--son-soft)}
+.metric .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:600}
+.metric.lead .k{color:var(--son)}
+.metric .v{font-size:1.5rem;font-weight:700;line-height:1.15}
+.metric.lead .v{font-size:2.1rem;color:var(--son)}
+.metric .n{font-size:.74rem;color:var(--ink-3);line-height:1.4}
+@media(max-width:760px){.metrics{grid-template-columns:1fr 1fr}.metric.lead{grid-column:1/-1}}
+
+/* layout */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:11px;overflow:hidden;box-shadow:var(--shadow)}
+.panel > header{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:11px 15px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.panel > header h2{font-size:.85rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2)}
+.panel > header .hint{font-size:.72rem;color:var(--ink-3)}
+.stack{display:flex;flex-direction:column}
+
+/* chat */
+.log{display:flex;flex-direction:column;gap:0;max-height:min(58vh,520px);overflow-y:auto;background:var(--sunken)}
+.msg{padding:11px 15px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:5px}
+.msg:last-child{border-bottom:none}
+.msg .head{display:flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:.72rem;color:var(--ink-3)}
+.who{font-weight:700;font-size:.7rem;letter-spacing:.04em;text-transform:uppercase;
+  padding:2px 7px;border-radius:4px}
+.who.ql{background:var(--son-soft);color:var(--son)}
+.who.th{background:var(--gold-soft);color:var(--gold)}
+.who.ow{background:var(--ngoc-soft);color:var(--ngoc)}
+.tag{font-family:"IBM Plex Mono",monospace;font-size:.66rem;font-weight:500;padding:2px 6px;border-radius:4px;
+  border:1px solid var(--line-strong);color:var(--ink-2)}
+.tag.t-TASK{border-color:var(--son);color:var(--son)}
+.tag.t-DONE{border-color:var(--ngoc);color:var(--ngoc)}
+.tag.t-BLOCKED{border-color:var(--son);background:var(--son-soft);color:var(--son)}
+.tag.t-NEED_OWNER{border-color:var(--gold);background:var(--gold-soft);color:var(--gold)}
+.msg .body{font-size:.88rem;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.empty{padding:26px 15px;text-align:center;color:var(--ink-3);font-size:.84rem}
+
+.compose{border-top:1px solid var(--line);padding:12px 15px;display:flex;flex-direction:column;gap:9px;background:var(--surface)}
+.compose .row{display:flex;flex-wrap:wrap;gap:8px}
+.compose select,.compose input,.compose textarea{
+  font-family:inherit;font-size:.85rem;color:var(--ink);background:var(--sunken);
+  border:1px solid var(--line-strong);border-radius:7px;padding:7px 9px}
+.compose textarea{width:100%;min-height:74px;resize:vertical;line-height:1.55}
+.compose input{flex:1;min-width:110px}
+.send{background:var(--son);color:var(--son-ink);border:none;border-radius:7px;
+  padding:8px 16px;font-weight:600;font-size:.85rem;cursor:pointer}
+.send:disabled{opacity:.45;cursor:not-allowed}
+.note{font-size:.74rem;color:var(--ink-3);line-height:1.5}
+
+/* tasks */
+.task{display:grid;grid-template-columns:4px 1fr;gap:0;border-bottom:1px solid var(--line)}
+.task:last-child{border-bottom:none}
+.task .stripe{background:var(--line-strong)}
+.task[data-s="doing"] .stripe{background:var(--gold)}
+.task[data-s="done"] .stripe{background:var(--ngoc)}
+.task[data-s="blocked"] .stripe{background:var(--son)}
+.task .in{padding:11px 15px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.task .t{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.task .id{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--ink-3)}
+.task .ttl{font-weight:600;font-size:.9rem;line-height:1.4}
+.task .d{font-size:.82rem;color:var(--ink-2);line-height:1.55}
+.task .ac{font-size:.78rem;color:var(--ink-2);line-height:1.5;background:var(--sunken);
+  border-left:2px solid var(--line-strong);padding:7px 10px;border-radius:0 6px 6px 0}
+.task .ac b{color:var(--ink);font-weight:600}
+.st{font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:4px;white-space:nowrap}
+.st.todo{background:var(--surface-2);color:var(--ink-2)}
+.st.doing{background:var(--gold-soft);color:var(--gold)}
+.st.done{background:var(--ngoc-soft);color:var(--ngoc)}
+.st.blocked{background:var(--son-soft);color:var(--son)}
+
+/* roadmap */
+.mile{display:grid;grid-template-columns:76px 1fr;gap:12px;padding:11px 15px;border-bottom:1px solid var(--line)}
+.mile:last-child{border-bottom:none}
+.mile .when{font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--ink-3);padding-top:2px}
+.mile .what{font-size:.86rem;line-height:1.55}
+.mile .what b{display:block;font-weight:600;margin-bottom:2px}
+.mile[data-done="1"] .what b{color:var(--ngoc)}
+
+/* links */
+.links{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:var(--line)}
+.links a{background:var(--surface);padding:11px 15px;text-decoration:none;display:flex;flex-direction:column;gap:2px}
+.links a:hover{background:var(--surface-2)}
+.links .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600}
+.links .v{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--son);word-break:break-all}
+
+.docs{display:flex;flex-wrap:wrap;gap:7px;padding:13px 15px}
+.docs a{font-size:.78rem;text-decoration:none;color:var(--ink-2);border:1px solid var(--line-strong);
+  border-radius:99px;padding:4px 11px}
+.docs a:hover{border-color:var(--son);color:var(--son)}
+
+footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
+  display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;font-size:.74rem;color:var(--ink-3)}
+.live{display:inline-flex;align-items:center;gap:6px}
+.live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ink-3)}
+.live.on::before{background:var(--ngoc)}
+.live.off::before{background:var(--gold)}
+</style>
+
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand">
+      <span class="mark">🧧</span>
+      <div>
+        <h1>Trạm điều phối LiXi</h1>
+        <div class="sub">Quản lý ↔ Thực thi · giao thức v1</div>
+      </div>
+    </div>
+    <div class="clock">
+      Tết Đinh Mùi · <span class="mono">6/2/2027</span><br>
+      còn <b id="dday" class="mono">—</b> ngày
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric lead">
+      <span class="k">Nhóm hoạt động 7 ngày</span>
+      <span class="v mono" id="m-active">0</span>
+      <span class="n">Chỉ số duy nhất quyết định dự án sống hay chết. Mục tiêu ≥ 3 vào tuần 13.</span>
+    </div>
+    <div class="metric"><span class="k">Tổng nhóm</span><span class="v mono" id="m-groups">0</span><span class="n">gồm nhóm demo và nhóm thử</span></div>
+    <div class="metric"><span class="k">Bài đã đăng</span><span class="v mono" id="m-posts">8</span><span class="n">trên kênh, còn 25 trong hàng đợi</span></div>
+    <div class="metric"><span class="k">Nơi đã đăng</span><span class="v mono" id="m-venues">0</span><span class="n">Reddit, Viblo, Dev.to — chờ duyệt</span></div>
+  </div>
+
+  <div class="grid">
+
+    <div class="stack" style="gap:20px">
+      <section class="panel">
+        <header>
+          <h2>Việc đang giao</h2>
+          <span class="hint">Quản lý giao · Thực thi nhận</span>
+        </header>
+        <div id="tasks"><div class="empty">Đang tải…</div></div>
+      </section>
+
+      <section class="panel">
+        <header><h2>Mốc tới Tết</h2><span class="hint">lùi ngược từ 6/2/2027</span></header>
+        <div id="miles"></div>
+      </section>
+
+      <section class="panel">
+        <header><h2>Hạ tầng đang chạy</h2></header>
+        <div class="links">
+          <a href="https://t.me/lixi_vn_bot?startgroup=true"><span class="k">Bot</span><span class="v">@lixi_vn_bot</span></a>
+          <a href="https://t.me/lixibot_demo"><span class="k">Nhóm demo</span><span class="v">t.me/lixibot_demo</span></a>
+          <a href="https://t.me/lixibot_kenh"><span class="k">Kênh</span><span class="v">t.me/lixibot_kenh</span></a>
+          <a href="https://new-coin-orcin.vercel.app"><span class="k">Trang hướng dẫn</span><span class="v">new-coin-orcin.vercel.app</span></a>
+          <a href="https://github.com/nirannguyen50/new-coin"><span class="k">Mã nguồn</span><span class="v">github.com/nirannguyen50/new-coin</span></a>
+          <a href="https://github.com/nirannguyen50/new-coin/issues/1"><span class="k">Issue theo dõi</span><span class="v">issues/1</span></a>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header><h2>Tài liệu dự án</h2><span class="hint">nhánh main</span></header>
+        <div class="docs" id="docs"></div>
+      </section>
+    </div>
+
+    <section class="panel" id="chat-panel">
+      <header>
+        <h2>Kênh liên lạc</h2>
+        <span class="hint"><span class="live" id="live">đang nối…</span></span>
+      </header>
+      <div class="log" id="log"><div class="empty">Đang tải…</div></div>
+      <form class="compose" id="compose">
+        <div class="row">
+          <select id="from" aria-label="Người gửi">
+            <option value="thuc-thi">Thực thi (Cowork)</option>
+            <option value="quan-ly">Quản lý</option>
+            <option value="chu-du-an">Chủ dự án</option>
+          </select>
+          <select id="type" aria-label="Loại tin">
+            <option>REPORT</option><option>CLAIM</option><option>DONE</option>
+            <option>BLOCKED</option><option>QUESTION</option><option>ANSWER</option>
+            <option>PROPOSE</option><option>NEED_OWNER</option><option>NOTE</option>
+            <option>TASK</option>
+          </select>
+          <input id="task" placeholder="Mã việc, ví dụ A1" aria-label="Mã việc">
+        </div>
+        <textarea id="body" placeholder="Nội dung. Báo xong thì kèm bằng chứng: link thật, số liệu chép nguyên văn." aria-label="Nội dung"></textarea>
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <span class="note" id="status">Đọc giao thức đầy đủ ở docs/18 trước khi gửi.</span>
+          <button class="send" id="send" type="submit">Gửi</button>
+        </div>
+      </form>
+    </section>
+
+  </div>
+
+  <footer>
+    <span>Trạm điều phối LiXi · giao thức <a href="https://github.com/nirannguyen50/new-coin/blob/main/docs/18-protocol-manager-executor.md" style="color:var(--son)">docs/18</a></span>
+    <span class="mono" id="stamp">—</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var DOCS=[["00","Quyết định token"],["09","Kế hoạch DEX"],["11","Off-chain trước"],["14","Tăng trưởng tự động"],["16","Cộng đồng từ số 0"],["17","Brief Cowork"],["18","Giao thức"]];
+  var MILES=[
+    ["Đã xong","Bot chạy thật, 258 test, tự đăng bài và tự báo cáo",1],
+    ["Tuần này","Thêm 3 biến môi trường để automation chạy",0],
+    ["Tuần 2–5","Đăng ở Viblo, Dev.to, Reddit, danh bạ bot",0],
+    ["Tuần 6–13","Lặp và đo. Mốc: ≥3 nhóm hoạt động",0],
+    ["Tuần 14–21","Chiến dịch Tết",0],
+    ["6/2/2027","Tết Đinh Mùi — đỉnh mùa vụ",0]
+  ];
+  var $=function(id){return document.getElementById(id)};
+  var esc=function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+    return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
+
+  // countdown
+  var d=Math.max(0,Math.ceil((Date.UTC(2027,1,6)-Date.now())/864e5));
+  $("dday").textContent=d;
+  $("stamp").textContent=new Date().toLocaleString("vi-VN");
+
+  $("docs").innerHTML=DOCS.map(function(x){
+    return '<a href="https://github.com/nirannguyen50/new-coin/blob/main/docs/" target="_blank" rel="noopener">'+
+      '<span class="mono">'+x[0]+'</span> '+esc(x[1])+'</a>'}).join("");
+  $("miles").innerHTML=MILES.map(function(m){
+    return '<div class="mile" data-done="'+m[2]+'"><div class="when">'+esc(m[0])+'</div>'+
+      '<div class="what"><b>'+esc(m[1])+'</b></div></div>'}).join("");
+
+  var WHO={"quan-ly":["ql","Quản lý"],"thuc-thi":["th","Thực thi"],"chu-du-an":["ow","Chủ dự án"]};
+  function renderMsgs(rows){
+    var el=$("log");
+    if(!rows.length){el.innerHTML='<div class="empty">Chưa có tin nào. Gửi tin đầu tiên ở ô dưới.</div>';return}
+    el.innerHTML=rows.map(function(m){
+      var w=WHO[m.from]||["th",m.from||"?"];
+      var t=m.ts?new Date(m.ts).toLocaleString("vi-VN",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
+      return '<div class="msg"><div class="head">'+
+        '<span class="who '+w[0]+'">'+esc(w[1])+'</span>'+
+        '<span class="tag t-'+esc(m.type||"NOTE")+'">'+esc(m.type||"NOTE")+'</span>'+
+        (m.task?'<span class="tag">'+esc(m.task)+'</span>':'')+
+        '<span class="mono">'+esc(t)+'</span></div>'+
+        '<div class="body">'+esc(m.body)+'</div></div>'}).join("");
+  }
+  function renderTasks(rows){
+    var el=$("tasks");
+    if(!rows.length){el.innerHTML='<div class="empty">Chưa có việc nào đang giao.</div>';return}
+    el.innerHTML=rows.map(function(t){
+      var s=t.status||"todo";
+      return '<div class="task" data-s="'+esc(s)+'"><div class="stripe"></div><div class="in">'+
+        '<div class="t"><span class="id mono">'+esc(t.code||t.id||"")+'</span>'+
+        '<span class="ttl">'+esc(t.title)+'</span>'+
+        '<span class="st '+esc(s)+'" style="margin-left:auto">'+esc(s)+'</span></div>'+
+        (t.detail?'<div class="d">'+esc(t.detail)+'</div>':'')+
+        (t.acceptance?'<div class="ac"><b>Nghiệm thu:</b> '+esc(t.acceptance)+'</div>':'')+
+        '</div></div>'}).join("");
+  }
+
+  // snapshot.docs la mang; khong co forEach. Va data() bi dong bang nen phai sao chep.
+  function rowsOf(snap){
+    var out=[],d=(snap&&snap.docs)||[];
+    for(var i=0;i<d.length;i++){
+      var src=d[i].data()||{},row={id:d[i].id};
+      for(var k in src){if(Object.prototype.hasOwnProperty.call(src,k))row[k]=src[k]}
+      out.push(row);
+    }
+    return out;
+  }
+
+  renderMsgs([]);renderTasks([]);
+
+  var db=null;
+  function offline(msg){
+    $("live").className="live off";$("live").textContent=msg;
+    $("send").disabled=true;$("status").textContent="Không ghi được. Dùng GitHub Issue #1 thay thế.";
+  }
+  (window.claude&&window.claude.use?window.claude.use("db"):Promise.resolve(null))
+    .then(function(x){
+      db=x;
+      if(!db){offline("chỉ đọc");return}
+      $("live").className="live on";$("live").textContent="đã nối";
+      db.collection("messages").orderBy("ts","desc").limit(60).onSnapshot(function(snap){
+        var rows=rowsOf(snap);
+        renderMsgs(rows);
+      },function(){offline("mất kết nối")});
+      db.collection("tasks").orderBy("code").onSnapshot(function(snap){
+        var rows=rowsOf(snap);
+        renderTasks(rows);
+      },function(){});
+      db.doc("status/current").onSnapshot(function(doc){
+        var v=doc.data?doc.data():null; if(!v)return;
+        if(v.groupsActive7d!=null)$("m-active").textContent=v.groupsActive7d;
+        if(v.groupsTotal!=null)$("m-groups").textContent=v.groupsTotal;
+        if(v.postsPublished!=null)$("m-posts").textContent=v.postsPublished;
+        if(v.venues!=null)$("m-venues").textContent=v.venues;
+      },function(){});
+    },function(){offline("không nối được")});
+
+  $("compose").addEventListener("submit",function(e){
+    e.preventDefault();
+    var body=$("body").value.trim(); if(!body||!db)return;
+    var btn=$("send");btn.disabled=true;$("status").textContent="Đang gửi…";
+    db.collection("messages").add({
+      ts:Date.now(),from:$("from").value,type:$("type").value,
+      task:$("task").value.trim(),body:body
+    }).then(function(){
+      $("body").value="";$("task").value="";
+      $("status").textContent="Đã gửi.";btn.disabled=false;
+    },function(err){
+      $("status").textContent="Gửi lỗi: "+(err&&err.code?err.code:"không rõ")+". Thử lại hoặc dùng Issue #1.";
+      btn.disabled=false;
+    });
+  });
+})();
+</script>
