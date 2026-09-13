@@ -124,7 +124,7 @@
     <section class="section" id="bot-lam-gi">
       <div class="container">
         <h2>Bot làm gì trong nhóm của bạn</h2>
-        <p class="section-intro">Ba việc, tất cả diễn ra ngay trong khung chat của nhóm. Không cài phần mềm, không đăng nhập ở đâu, không cần ví hay thẻ ngân hàng.</p>
+        <p class="section-intro">Ba việc, tất cả diễn ra ngay trong khung chat của nhóm. Không cài phần mềm, không đăng nhập ở đâu, không cần ví hay thẻ ngân hàng. Chỉ cần nhớ một lệnh: <code>/lixi</code> — thêm <code>chia N</code> là mở bao chia ngẫu nhiên, không thêm là tip thẳng cho một người.</p>
         <div class="three-col">
           <article class="card">
             <h3>Tặng điểm để cảm ơn</h3>
@@ -243,6 +243,7 @@
               <h3>Mở bao lì xì đầu tiên <span class="step-time">30 giây</span></h3>
               <p>Mặc định bot yêu cầu một người phải ở trong nhóm <strong>3 ngày</strong> (tính từ lúc bot thấy người đó) mới được tip hay mở bao. Nhóm vừa thêm bot thì ai cũng "mới", nên để thử ngay, tạm tắt điều kiện này:</p>
               <code class="cmd">/caidat thamnien 0</code>
+              <p class="cmd-note"><strong>Chỉ để thử nhanh.</strong> Làm bước 7 ngay sau khi thử xong — bỏ qua là nhóm mất lớp chống spam.</p>
               <p>Cấp cho mình vài trăm điểm (bước 5, reply vào tin của chính bạn), rồi mở bao:</p>
               <code class="cmd">/lixi 300 chia 3</code>
               <p>Bot đăng một bao lì xì 300 điểm có nút <strong>🧧 Nhận lì xì</strong>. Ba người bấm đầu tiên nhận phần chia ngẫu nhiên. Sau 10 phút bao đóng; phần chưa ai nhận <strong>tự hoàn lại</strong> cho người mở.</p>
@@ -291,7 +292,7 @@
               <tr><td>/lixi 500 chia 5</td><td>Mở bao lì xì 500 điểm, chia ngẫu nhiên cho 5 người bấm nhận đầu tiên trong 10 phút</td></tr>
               <tr><td>/lichsu</td><td>10 giao dịch gần nhất của bạn</td></tr>
               <tr><td>/bxh</td><td>Top 10 người nhận nhiều điểm nhất trong 7 ngày qua (tip + bao lì xì; không hiện số dư)</td></tr>
-              <tr><td>/huongdan</td><td>Hướng dẫn ngắn: lệnh thành viên, lệnh admin, hai chốt chống lạm dụng</td></tr>
+              <tr><td>/huongdan</td><td>Hướng dẫn ngắn: lệnh thành viên, lệnh admin, hai chốt chống lạm dụng chính (thâm niên và hạn mức tip); các cài đặt còn lại trong bảng này là nâng cao</td></tr>
               <tr><td>/start</td><td>Lời chào, lưu ý và danh sách lệnh</td></tr>
             </tbody>
           </table>
@@ -337,7 +338,7 @@
 
         <details class="faq-item">
           <summary>Tôi có reset điểm của nhóm được không?</summary>
-          <p>Bản này chưa có lệnh reset tự phục vụ. Cách gần nhất: dùng <code>/caidat</code> để siết hạn mức về 0 tạm thời, hoặc để điểm cũ đó và bắt đầu chu kỳ mới bằng cách nạp pot và cấp điểm lại. Bot đang trong giai đoạn thử nghiệm, nên toàn bộ điểm có thể bị xóa khi chúng tôi nâng cấp; sẽ có thông báo trước trong nhóm. Nếu nhóm bạn cần xóa hẳn dữ liệu, gửi yêu cầu qua mục "Liên hệ và báo lỗi" ở cuối trang; chúng tôi xóa và xác nhận.</p>
+          <p>Bản này chưa có lệnh reset tự phục vụ. Cách gần nhất: dùng <code>/caidat</code> để siết hạn mức về 0 tạm thời, hoặc để điểm cũ đó và bắt đầu chu kỳ mới bằng cách nạp pot và cấp điểm lại. Bot đang trong giai đoạn thử nghiệm, nên toàn bộ điểm có thể bị xóa khi chúng tôi nâng cấp. Nếu phải xóa, chúng tôi báo trước <strong>ít nhất 7 ngày</strong> trên kênh <a href="//t.me/lixibot_kenh" rel="noopener">@lixibot_kenh</a> và trong nhóm của bạn. Nếu nhóm bạn cần xóa hẳn dữ liệu, gửi yêu cầu qua mục "Liên hệ và báo lỗi" ở cuối trang; chúng tôi xóa và xác nhận.</p>
         </details>
 
         <details class="faq-item">
