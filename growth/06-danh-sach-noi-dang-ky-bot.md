@@ -28,9 +28,9 @@ Chuẩn bị một lần, dán lại nhiều lần. Chỗ `[[...]]` điền trư
 |---|---|
 | Tên hiển thị | **Lì Xì Bot** |
 | Username | `[[@username_bot]]` (sau khi đổi tên chính thức) |
-| Link thêm vào nhóm | `[[LINK_BOT]]` = `https://t.me/[[username_bot]]?startgroup=true` |
-| Link hướng dẫn | `[[LINK_HUONG_DAN]]` (trang `them-bot.html`) |
-| Kênh Telegram | `[[LINK_KENH]]` |
+| Link thêm vào nhóm | `https://t.me/lixi_vn_bot?startgroup=true` = `https://t.me/[[username_bot]]?startgroup=true` |
+| Link hướng dẫn | `https://new-coin-orcin.vercel.app` (trang `them-bot.html`) |
+| Kênh Telegram | `https://t.me/lixibot_kenh` |
 | Mã nguồn | `[[LINK_GITHUB]]` (nếu repo công khai) |
 | Ảnh | Logo vuông 512×512 (nền đơn sắc, chữ "L" hoặc phong bao đỏ), 2–3 ảnh chụp màn hình: bao lì xì đang mở, lệnh `/nap` reply, `/sodu` |
 
@@ -155,7 +155,7 @@ Vài thứ kỹ thuật có thể hữu ích cho ai đang làm bot:
 
 Nói rõ: đang beta, điểm trong bot chỉ là điểm, không phải tiền, không mua bán được, không có token gì cả. Mình làm để xem có nhóm nào dùng thật không.
 
-Ai có nhóm muốn thử thì thêm bot trong 2 phút theo hướng dẫn: [[LINK_HUONG_DAN]]
+Ai có nhóm muốn thử thì thêm bot trong 2 phút theo hướng dẫn: https://new-coin-orcin.vercel.app
 Mã nguồn (nếu công khai): [[LINK_GITHUB]]
 Rất mong góp ý về cách làm, đặc biệt phần chống lạm dụng.
 ```
@@ -175,7 +175,7 @@ Things worth sharing:
 
 Honest scope: beta, points have no cash value, no token, no wallet. I'm testing whether groups actually use it.
 
-Setup guide (Vietnamese): [[LINK_HUONG_DAN]] · Source: [[LINK_GITHUB]]
+Setup guide (Vietnamese): https://new-coin-orcin.vercel.app · Source: [[LINK_GITHUB]]
 Feedback on the abuse limits especially welcome.
 ```
 
@@ -183,7 +183,7 @@ Feedback on the abuse limits especially welcome.
 
 | # | Nơi | Họ cần gì | Người thật bấm? | Còn tồn tại? |
 |---|---|---|---|---|
-| 16 | **Repo công khai — mô tả + topics** | Vào Settings của repo: description một dòng, website = `[[LINK_HUONG_DAN]]`, topics | Có (chủ repo) | Chắc |
+| 16 | **Repo công khai — mô tả + topics** | Vào Settings của repo: description một dòng, website = `https://new-coin-orcin.vercel.app`, topics | Có (chủ repo) | Chắc |
 | 17 | **Danh sách "awesome" về Telegram bot** (repo tổng hợp do cộng đồng duy trì) | Mở pull request thêm một dòng theo đúng định dạng của họ; đọc CONTRIBUTING | Có (tạo PR) | Không chắc repo nào còn nhận PR — tìm trên GitHub "awesome telegram bots" và chọn repo có commit trong 12 tháng gần nhất |
 
 - **Description (EN, một dòng):** `Red-envelope tipping bot for Telegram groups: tip points, random-split envelopes, daily activity rewards. Vietnamese. Beta, points have no cash value.`

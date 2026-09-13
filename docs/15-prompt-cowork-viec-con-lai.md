@@ -1,5 +1,11 @@
 # Prompt bàn giao cho trợ lý điều khiển máy tính (Cowork)
 
+> **ĐÃ THỰC HIỆN XONG ngày 12–13/9/2026.** Bot mới `@lixi_vn_bot` đã tạo, bot cũ đã xoá, Vercel đã cập nhật,
+> kênh https://t.me/lixibot_kenh đã mở và đăng 8 bài. **Việc 7 (tin gieo hạt) đã HUỶ** — chủ dự án
+> không quen admin nhóm nào và không muốn liên hệ đồng nghiệp cũ.
+> Kế hoạch thay thế đang áp dụng: `docs/16-ke-hoach-xay-cong-dong-tu-so.md`.
+> Giữ file này làm hồ sơ những gì đã làm. Các chỗ `[[LINK_BOT]]` trong `growth/` nay đã điền link thật.
+
 Dùng khi muốn nhờ một trợ lý có quyền điều khiển trình duyệt và ứng dụng trên máy của chủ dự án
 làm nốt những việc mà nền tảng bắt buộc phải có người thật thao tác (xem `docs/14` mục 4).
 
@@ -16,7 +22,7 @@ hãy làm trọn từ đầu đến cuối trên máy tôi và chỉ hỏi khi t
 
 - Bot Telegram tên **Lì Xì Bot** đang chạy thật trên Vercel, dự án `new-coin`, tên miền
   `https://new-coin-orcin.vercel.app`. Mã nguồn ở `https://github.com/nirannguyen50/new-coin`.
-- Bot hiện tại là `@lixi_test_2026_bot` — username có chữ "test", nhìn thiếu nghiêm túc.
+- Bot hiện tại là `@lixi_vn_bot` — username có chữ "test", nhìn thiếu nghiêm túc.
 - **Telegram KHÔNG cho đổi username bot đã tạo.** Chỉ đổi được tên hiển thị. Muốn có username đẹp
   thì phải tạo bot MỚI và chuyển token sang. Việc này chỉ rẻ khi chưa có nhóm thật nào dùng bot —
   đúng tình trạng hiện tại.

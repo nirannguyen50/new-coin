@@ -228,6 +228,8 @@ trường của dự án — **bạn không phải gõ tay gì cả**, và cũng
 
 1. Bấm tab **Project** (hoặc **Overview**) và copy **địa chỉ** của dự án — dạng
    `https://new-coin-xxxx.vercel.app` (nằm ngay dưới tên dự án, mục **Domains**).
+   Mở thẳng địa chỉ đó sẽ ra **trang giới thiệu Lì Xì Bot** (`website/index.html`) — đây cũng
+   chính là link đi chia sẻ cho admin các nhóm. Xem `VERCEL.md` để biết địa chỉ nào phục vụ trang nào.
 2. Mở một tab trình duyệt mới và dán địa chỉ đó, **thêm vào cuối**:
    `/api/setup?key=` rồi dán tiếp `SETUP_KEY` bạn đã đặt ở Bước 3.
 
@@ -389,7 +391,7 @@ khởi động (kể cả khi địa chỉ đổi sau mỗi lần deploy lại).
 
    Ở đầu log cũng có một khung **CẢNH BÁO** về việc dữ liệu bị xoá khi khởi động lại — đó là
    cảnh báo cố ý, không phải lỗi (đọc mục hạn chế bên dưới).
-10. Mở Telegram, vào **[t.me/lixi_test_2026_bot](https://t.me/lixi_test_2026_bot)** (hoặc bot của
+10. Mở Telegram, vào **[t.me/lixi_vn_bot](https://t.me/lixi_vn_bot)** (hoặc bot của
     bạn), bấm **Start** hoặc gõ `/start`. Bot trả lời là thành công.
 11. Muốn dùng trong nhóm: thêm bot vào nhóm và cấp quyền admin theo mục
     [Thêm bot vào nhóm và cấp quyền admin](#thêm-bot-vào-nhóm-và-cấp-quyền-admin).
@@ -583,7 +585,10 @@ webhook được đăng ký với `allowed_updates` tự đặt thì phải có 
   vercel.json               # cấu hình deploy lên Vercel (cron, install, functions)
   VERCEL.md                 # giải thích từng dòng của vercel.json (JSON không cho chú thích)
   render.yaml               # cấu hình deploy lên Render (phương án dự phòng)
-  public/index.html         # trang tĩnh giới thiệu (Vercel cần một thư mục "kết quả build")
+  website/                  # trang web tĩnh — Vercel phục vụ đúng thư mục này
+    index.html              # TRANG CHỦ: hướng dẫn admin thêm Lì Xì Bot vào nhóm
+    token.html              # bản nháp kế hoạch token (noindex, không liên kết từ trang chủ)
+    style.css, script.js    # dùng chung cho hai trang; không tải gì từ bên ngoài
   api/
     telegram.js              # cửa ngõ webhook trên Vercel (kiểm tra header bí mật của Telegram)
     cron.js                  # công việc hằng ngày: thưởng hoạt động + quét bao lì xì hết giờ

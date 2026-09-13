@@ -39,7 +39,7 @@ tồn tại để làm con số đó tăng đều tuần này qua tuần khác. 
 - [ ] Lấy 7 bài tiếp theo trong `growth/05` (theo lịch mục 4 của file đó, hoặc đánh dấu bài đã dùng).
 - [ ] Bài "tuần này thay đổi gì": điền `[[SỐ]]` bằng số vừa chép từ `/thongke`, điền `[[thay đổi …]]` bằng việc thật
       (đọc `git log` tuần qua nếu cần). Không có thay đổi thì viết "tuần này không đổi gì".
-- [ ] Thay `[[LINK_BOT]]`, `[[LINK_HUONG_DAN]]`, `[[LINK_KENH]]` nếu bài có.
+- [ ] Thay `https://t.me/lixi_vn_bot?startgroup=true`, `https://new-coin-orcin.vercel.app`, `https://t.me/lixibot_kenh` nếu bài có.
 - [ ] Dùng tính năng **hẹn giờ đăng** của Telegram (giữ nút gửi → "Schedule message") để rải 7 bài ra 7 ngày, 20:00.
       Không đăng dồn một lúc.
 - [ ] Kiểm tra nhanh trước khi bấm: không chữ nào về giá/tiền/lợi nhuận, số nào cũng có nguồn, không hứa gì.
@@ -53,7 +53,7 @@ tồn tại để làm con số đó tăng đều tuần này qua tuần khác. 
 
 ### 4. Trả lời admin — 3 phút
 
-- [ ] Mở kênh nhận phản hồi (`[[LINK_KENH]]`, bình luận kênh, tin nhắn từ admin đã đồng ý dùng). Trả lời mọi câu hỏi
+- [ ] Mở kênh nhận phản hồi (`https://t.me/lixibot_kenh`, bình luận kênh, tin nhắn từ admin đã đồng ý dùng). Trả lời mọi câu hỏi
       còn treo — ngắn, thật, không hứa ngày.
 - [ ] Admin nào đã dùng đủ 2 tuần: hỏi đúng một câu "giữ hay gỡ?". Từ chối thì hỏi "vì sao?" và ghi lại nguyên văn.
 - [ ] Có báo lỗi: ghi vào "việc cho tuần sau", trả lời "đã ghi nhận" — không sửa ngay trong 15 phút này.

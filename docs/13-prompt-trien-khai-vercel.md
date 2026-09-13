@@ -23,9 +23,9 @@ và chỉ hỏi tôi khi thực sự bắt buộc.
 - Mã nguồn đã viết xong và đã đẩy lên GitHub: `https://github.com/nirannguyen50/new-coin`
 - Repo chỉ có **một** nhánh tên `claude/binance-coin-plan-rthkem`, và đó cũng là nhánh mặc định.
   Không tạo nhánh mới, không tạo bản sao (fork/clone) của repo.
-- Dự án đã có sẵn `vercel.json`, thư mục `api/` và `public/`. **Không cần sửa code.**
+- Dự án đã có sẵn `vercel.json`, thư mục `api/` và `website/`. **Không cần sửa code.**
 - Tôi đã đăng nhập Vercel bằng tài khoản GitHub trong trình duyệt.
-- Bot Telegram đã tạo sẵn, địa chỉ: `https://t.me/lixi_test_2026_bot`
+- Bot Telegram đã tạo sẵn, địa chỉ: `https://t.me/lixi_vn_bot`
 
 ### Việc cần làm, theo đúng thứ tự
 
@@ -42,7 +42,7 @@ và chỉ hỏi tôi khi thực sự bắt buộc.
 6. Lấy tên miền của dự án (dạng `https://<tên-dự-án>.vercel.app`) rồi mở **một lần** địa chỉ:
    `https://<tên-dự-án>.vercel.app/api/setup?key=<DÁN_SETUP_KEY>`
    Trang này in ra các dòng có dấu ✅ hoặc ❌ bằng tiếng Việt. Hãy đọc và báo lại cho tôi toàn bộ nội dung.
-7. Mở `https://t.me/lixi_test_2026_bot`, gõ `/start`, và xác nhận bot có trả lời.
+7. Mở `https://t.me/lixi_vn_bot`, gõ `/start`, và xác nhận bot có trả lời.
 
 ### Thế nào là xong
 

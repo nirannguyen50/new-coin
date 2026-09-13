@@ -1,6 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "outputDirectory": "public",
+  "outputDirectory": "website",
+  "redirects": [
+    { "source": "/them-bot.html", "destination": "/", "permanent": false },
+    { "source": "/them-bot", "destination": "/", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/token", "destination": "/token.html" }
+  ],
   "functions": {
     "api/telegram.js": {
       "maxDuration": 30

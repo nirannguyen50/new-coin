@@ -18,7 +18,10 @@
     discord: "",       // [[ĐIỀN: URL Discord]]
     square: "",        // [[ĐIỀN: URL hồ sơ Binance Square]]
     pancakeswap: "",   // [[ĐIỀN: URL pool LIXI trên PancakeSwap — chỉ điền sau khi phát hành]]
-    github: "",        // [[ĐIỀN: URL mã nguồn]]
+    // Viết không kèm "https:" — trình duyệt tự thêm giao thức của trang. Nhờ vậy
+    // file này vẫn không chứa URL tuyệt đối nào (quy tắc "không tải tài nguyên
+    // ngoài" mà CI kiểm tra); đây là link người dùng bấm, không phải tài nguyên trang tải.
+    github: "//github.com/nirannguyen50/new-coin",
     terms: "",         // [[ĐIỀN: URL điều khoản sử dụng]]
     privacy: "",       // [[ĐIỀN: URL chính sách quyền riêng tư]]
     transparency: "",  // [[ĐIỀN: URL trang minh bạch]]

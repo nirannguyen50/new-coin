@@ -10,9 +10,9 @@
 ## 0. Cách dùng
 
 - **Placeholder** (thay trước khi đăng, tìm bằng `[[`):
-  - `[[LINK_BOT]]` — link thêm bot vào nhóm, dạng `https://t.me/<username_bot>?startgroup=true`.
-  - `[[LINK_HUONG_DAN]]` — trang `website/them-bot.html` sau khi đưa lên web.
-  - `[[LINK_KENH]]` — nơi nhận báo lỗi/báo lừa đảo (nhóm hỗ trợ admin hoặc chính kênh này nếu bật bình luận).
+  - `https://t.me/lixi_vn_bot?startgroup=true` — link thêm bot vào nhóm, dạng `https://t.me/<username_bot>?startgroup=true`.
+  - `https://new-coin-orcin.vercel.app` — trang `website/them-bot.html` sau khi đưa lên web.
+  - `https://t.me/lixibot_kenh` — nơi nhận báo lỗi/báo lừa đảo (nhóm hỗ trợ admin hoặc chính kênh này nếu bật bình luận).
   - `[[SỐ]]`, `[[SỐ TUẦN]]`, `[[thay đổi …]]` — số liệu và việc thật của tuần đó. **Không có thì ghi "chưa có"**, không ước lượng.
 - **Định dạng:** văn bản thuần, xuống dòng, vài emoji; không cần bật Markdown trong Telegram. Nếu muốn in đậm, dùng
   chế độ định dạng của ứng dụng Telegram khi dán, đừng thêm dấu `*` vào bài.
@@ -35,8 +35,8 @@ Ba điều cần biết:
 2. Điểm trong bot KHÔNG phải tiền, không mua bán được, không phải đầu tư, có thể bị reset.
 3. Chúng tôi không nhắn riêng trước, không xin mật khẩu, không yêu cầu chuyển tiền.
 
-Thêm bot vào nhóm trong 2 phút: [[LINK_BOT]]
-Hướng dẫn từng bước: [[LINK_HUONG_DAN]]
+Thêm bot vào nhóm trong 2 phút: https://t.me/lixi_vn_bot?startgroup=true
+Hướng dẫn từng bước: https://new-coin-orcin.vercel.app
 
 Mỗi ngày một bài: mẹo lệnh, ý tưởng dùng, và những gì thay đổi trong tuần.
 ```
@@ -55,7 +55,7 @@ Một bot cho nhóm Telegram, làm đúng ba việc:
 
 Điểm là điểm trong nhóm, không phải tiền. Dùng để cảm ơn, khích lệ, chơi với nhau.
 
-Admin thêm bot trong 2 phút, không cần liên hệ ai: [[LINK_BOT]]
+Admin thêm bot trong 2 phút, không cần liên hệ ai: https://t.me/lixi_vn_bot?startgroup=true
 ```
 
 ### Ngày 2 — Mẹo lệnh: /start
@@ -89,12 +89,12 @@ Bao lì xì 200 điểm mở ra, 5 người nhanh tay nhận phần chia ngẫu 
 ```
 ⚠️ Nhắc an toàn (đọc 20 giây)
 
-1. Chỉ có MỘT Lì Xì Bot chính thức. Link thêm bot chỉ lấy từ kênh này và trang hướng dẫn: [[LINK_HUONG_DAN]]
+1. Chỉ có MỘT Lì Xì Bot chính thức. Link thêm bot chỉ lấy từ kênh này và trang hướng dẫn: https://new-coin-orcin.vercel.app
 2. Chúng tôi không bao giờ nhắn riêng cho bạn trước.
 3. Không ai của chúng tôi xin mật khẩu, seed phrase, hay yêu cầu chuyển tiền để "kích hoạt", "xác minh", "nhận lì xì".
 4. Điểm trong bot không phải tiền. Ai hứa "đổi điểm ra tiền" là lừa.
 
-Thấy tài khoản giả mạo? Báo ở đây: [[LINK_KENH]]
+Thấy tài khoản giả mạo? Báo ở đây: https://t.me/lixibot_kenh
 ```
 
 ### Ngày 5 — Mẹo lệnh: tip một người
@@ -136,13 +136,13 @@ Chưa có gì để khoe thì chúng tôi ghi "chưa có". Kênh này không đ�
 Bạn là admin một nhóm Telegram?
 
 Thêm Lì Xì Bot mất 2 phút, và bạn không cần nhắn cho ai:
-1. Bấm [[LINK_BOT]], chọn nhóm
+1. Bấm https://t.me/lixi_vn_bot?startgroup=true, chọn nhóm
 2. Cấp quyền admin cho bot (không cần bật quyền nào cụ thể)
 3. Gõ /nap 1000 để nạp pot; reply một thành viên rồi gõ /nap 100 để cấp điểm
 
 Xong. Không phí, không quảng cáo trong nhóm, gỡ lúc nào cũng được.
 
-Hướng dẫn từng bước: [[LINK_HUONG_DAN]]
+Hướng dẫn từng bước: https://new-coin-orcin.vercel.app
 ```
 
 ### Ngày 8 — Mẹo lệnh: bao lì xì
@@ -244,7 +244,7 @@ Số liệu thật:
 • Nhóm có giao dịch trong 7 ngày: [[SỐ]] (tuần trước: [[SỐ]])
 • Tip + bao lì xì trong tuần: [[SỐ]]
 
-Bạn gặp lỗi gì, kể ở đây: [[LINK_KENH]]. Lỗi được nêu công khai thì được sửa nhanh hơn.
+Bạn gặp lỗi gì, kể ở đây: https://t.me/lixibot_kenh. Lỗi được nêu công khai thì được sửa nhanh hơn.
 ```
 
 ### Ngày 15 — Mẹo lệnh (admin): /thuong
@@ -283,7 +283,7 @@ Bạn biết cảnh này: cuối tuần ngồi chuyển từng khoản, ghi lạ
 
 Lì Xì Bot không thay tiền thật của bạn. Nó thay phần "ghi sổ và phát tay": ai được gì, lúc nào, vì sao — có lịch sử, ai cũng xem được bằng /lichsu.
 
-Thử 2 tuần với điểm, chẳng mất gì: [[LINK_BOT]]
+Thử 2 tuần với điểm, chẳng mất gì: https://t.me/lixi_vn_bot?startgroup=true
 ```
 
 ### Ngày 18 — Mẹo lệnh (admin): thâm niên
@@ -309,7 +309,7 @@ Nhóm mới thêm bot, muốn thử ngay: /caidat thamnien 0, thử xong đặt 
 2. Phải "nạp trước", "xác minh ví", "kết nối ví" mới được nhận. Bot thật không bao giờ hỏi.
 3. Đến từ tin nhắn riêng. Bot thật chỉ hoạt động trong nhóm.
 
-Gặp một trong ba: đừng bấm, báo admin nhóm, và báo chúng tôi: [[LINK_KENH]]
+Gặp một trong ba: đừng bấm, báo admin nhóm, và báo chúng tôi: https://t.me/lixibot_kenh
 ```
 
 ### Ngày 20 — Mẹo lệnh: /lichsu
@@ -391,7 +391,7 @@ Ai làm clip highlight cho nhóm → admin reply rồi /nap 100.
 Bạn không phải admin, nhưng biết một admin?
 
 Chuyển cho họ đúng một dòng:
-"Bot lì xì cho nhóm Telegram, miễn phí, thêm mất 2 phút, không cần nhắn ai: [[LINK_HUONG_DAN]]"
+"Bot lì xì cho nhóm Telegram, miễn phí, thêm mất 2 phút, không cần nhắn ai: https://new-coin-orcin.vercel.app"
 
 Không cần thuyết phục. Trang hướng dẫn nói rõ nó là gì, không là gì (điểm không phải tiền), và cách gỡ nếu không hợp.
 
@@ -424,7 +424,7 @@ Sự thật:
 • Chúng tôi không nhắn riêng trước, không bao giờ.
 • Không có "phí kích hoạt". Không có gì để rút ra tiền.
 
-Chặn, báo cáo, và nhắn vào nhóm để người khác biết. Kênh báo: [[LINK_KENH]]
+Chặn, báo cáo, và nhắn vào nhóm để người khác biết. Kênh báo: https://t.me/lixibot_kenh
 ```
 
 ### Ngày 28 — Tuần này thay đổi gì (tuần 4) + hỏi ý kiến
@@ -440,7 +440,7 @@ Số liệu thật:
 • Nhóm có giao dịch trong 7 ngày: [[SỐ]] (4 tuần trước: [[SỐ]])
 • Bao lì xì đã mở trong tháng: [[SỐ]]
 
-Câu hỏi cho admin đang dùng: tính năng nào bạn dùng nhiều nhất, và cái gì làm bạn bực nhất? Trả lời ở [[LINK_KENH]]. Tháng tới chúng tôi làm theo câu trả lời đó, không theo ý mình.
+Câu hỏi cho admin đang dùng: tính năng nào bạn dùng nhiều nhất, và cái gì làm bạn bực nhất? Trả lời ở https://t.me/lixibot_kenh. Tháng tới chúng tôi làm theo câu trả lời đó, không theo ý mình.
 ```
 
 ### Ngày 29 — Mẹo lệnh: /rut và sự thật về nó
@@ -464,7 +464,7 @@ Những gì có thật sau tháng đầu: [[SỐ]] nhóm có giao dịch trong 7
 
 Tháng tới: [[việc lớn nhất sẽ làm]].
 
-Nếu bạn đọc đến đây mà chưa thêm bot vào nhóm: [[LINK_BOT]]. Không hợp thì gỡ, chúng tôi không giận.
+Nếu bạn đọc đến đây mà chưa thêm bot vào nhóm: https://t.me/lixi_vn_bot?startgroup=true. Không hợp thì gỡ, chúng tôi không giận.
 ```
 
 ## 3. Bài bổ sung cho hai lệnh mới (`/bxh`, `/huongdan`)

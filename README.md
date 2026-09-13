@@ -79,7 +79,7 @@ Cập nhật 12/9/2026. Kế hoạch đang áp dụng: `docs/09` (6 tuần lên 
 | Smart contract BEP-20 + vesting + script thanh khoản | Hoàn thành, 61 test; **chưa deploy** vì chưa có ví/BNB |
 | Công cụ tokenomics | Hoàn thành, cấu hình mẫu pass 7/7 red flag |
 | Landing page | Hoàn thành, còn placeholder địa chỉ contract, đội ngũ, audit |
-| **Lì Xì Bot (off-chain)** | **Đang chạy thật** trên Vercel + Neon Postgres, bot `@lixi_test_2026_bot`; đã kiểm chứng trong nhóm thật: `/start`, `/pot`, `/nap`, `/sodu`, mở bao lì xì, hết giờ hoàn điểm, `/lichsu`, `/caidat`; các luồng còn lại (nhận lì xì, tip, duyệt tip lớn, rút, thưởng ngày, cold start) kiểm chứng bằng giả lập nhiều người dùng trên Postgres thật; 201 test |
+| **Lì Xì Bot (off-chain)** | **Đang chạy thật** trên Vercel + Neon Postgres, bot `@lixi_vn_bot`; đã kiểm chứng trong nhóm thật: `/start`, `/pot`, `/nap`, `/sodu`, mở bao lì xì, hết giờ hoàn điểm, `/lichsu`, `/caidat`; các luồng còn lại (nhận lì xì, tip, duyệt tip lớn, rút, thưởng ngày, cold start) kiểm chứng bằng giả lập nhiều người dùng trên Postgres thật; 201 test |
 | Chuyển bot sang token on-chain | Chưa làm, **cố ý** — chỉ làm khi đủ 3 điều kiện trong `docs/11` |
 
 ### Phần vận hành (cần người thật hoặc tiền)

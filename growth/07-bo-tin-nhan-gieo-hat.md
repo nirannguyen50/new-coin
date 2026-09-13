@@ -9,11 +9,11 @@
 
 ## 0. Trước khi gửi
 
-- Bot đã sẵn sàng: username chính thức, `/start` trả lời, trang hướng dẫn `[[LINK_HUONG_DAN]]` mở được.
+- Bot đã sẵn sàng: username chính thức, `/start` trả lời, trang hướng dẫn `https://new-coin-orcin.vercel.app` mở được.
 - Bạn đã tự chạy bot trong nhóm thử của mình ít nhất 3 ngày, đã mở ít nhất một bao lì xì.
 - Bạn biết admin đó **bằng tên**, đã từng nói chuyện. Nếu chưa, nhóm đó không phải "hạt giống" — bỏ qua.
 - Gửi vào giờ admin rảnh (tối, cuối tuần), một tin duy nhất, không kèm ảnh/link rút gọn. Link trang hướng dẫn để cuối.
-- Sau khi gửi: **không nhắc lại**. Nếu admin đồng ý, gửi tiếp đúng một tin: link thêm bot `[[LINK_BOT]]` + "cần gì cứ hỏi mình".
+- Sau khi gửi: **không nhắc lại**. Nếu admin đồng ý, gửi tiếp đúng một tin: link thêm bot `https://t.me/lixi_vn_bot?startgroup=true` + "cần gì cứ hỏi mình".
 
 ## 1. Mười mẫu theo loại nhóm
 
@@ -82,7 +82,7 @@ Chị [[Tên]] ơi, em đang làm thử một bot Telegram cho nhóm: mẹ nào 
 ### Khi admin hỏi: "Có phải lừa đảo / có phải crypto không?"
 
 ```
-Câu hỏi đúng, và mình mừng vì bạn hỏi. Không phải crypto: bản đang chạy dùng điểm lưu trong database của bot, không có token, không có ví, không có blockchain, không ai mua bán gì. Điểm không phải tiền, không đổi ra tiền, và mình không hứa nó sẽ có giá trị sau này — ai nói ngược lại là nói sai, kể cả nếu họ tự nhận là mình. Bot không nhắn riêng ai, không xin mật khẩu, không có "phí kích hoạt". Bạn kiểm tra được ba thứ: gõ /start trong nhóm và đọc câu lưu ý bot tự in ra; xem FAQ ở trang hướng dẫn [[LINK_HUONG_DAN]] (bot lưu gì, gỡ thế nào); và nếu muốn, xem mã nguồn [[LINK_GITHUB]]. Nếu vẫn thấy chưa yên tâm thì cứ để sau, mình không giục.
+Câu hỏi đúng, và mình mừng vì bạn hỏi. Không phải crypto: bản đang chạy dùng điểm lưu trong database của bot, không có token, không có ví, không có blockchain, không ai mua bán gì. Điểm không phải tiền, không đổi ra tiền, và mình không hứa nó sẽ có giá trị sau này — ai nói ngược lại là nói sai, kể cả nếu họ tự nhận là mình. Bot không nhắn riêng ai, không xin mật khẩu, không có "phí kích hoạt". Bạn kiểm tra được ba thứ: gõ /start trong nhóm và đọc câu lưu ý bot tự in ra; xem FAQ ở trang hướng dẫn https://new-coin-orcin.vercel.app (bot lưu gì, gỡ thế nào); và nếu muốn, xem mã nguồn [[LINK_GITHUB]]. Nếu vẫn thấy chưa yên tâm thì cứ để sau, mình không giục.
 ```
 
 ### Khi admin hỏi: "Bạn được gì từ chuyện này?"
@@ -95,7 +95,7 @@ Nói thật là hiện tại mình không được tiền: không phí, không q
 
 | Kết quả | Làm gì |
 |---|---|
-| Đồng ý | Gửi đúng một tin: `[[LINK_BOT]]` + "Thêm xong gõ /start, cấp điểm thử bằng reply + /nap 100. Mình ở đây nếu cần." Ghi vào bảng theo dõi ở `growth/08`. |
+| Đồng ý | Gửi đúng một tin: `https://t.me/lixi_vn_bot?startgroup=true` + "Thêm xong gõ /start, cấp điểm thử bằng reply + /nap 100. Mình ở đây nếu cần." Ghi vào bảng theo dõi ở `growth/08`. |
 | Hỏi thêm | Trả lời bằng hai đoạn ở mục 2, hoặc gửi link trang hướng dẫn. Không gửi tài liệu dài. |
 | Im lặng | Không nhắc. Nhóm đó xong. |
 | Từ chối | Cảm ơn, hỏi một câu duy nhất: "vì sao?" — câu trả lời là dữ liệu quý hơn một nhóm dùng thử. Ghi lại. |
