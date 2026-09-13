@@ -73,19 +73,34 @@ Sửa lại cả ba bản nháp theo hướng này rồi gửi chủ dự án du
 
 ## 4. Thứ tự việc tiếp theo
 
-0. **Dọn tên nhánh (làm trước, 2 phút).** Repo giờ có nhánh `main` sạch tên. Nhánh cũ tên
-   `claude/binance-coin-plan-rthkem` nhìn rất giống dự án coin và nó đang là nhánh mặc định,
-   tức tên đó hiện ngay trên URL khi ai đó mở repo.
-   - Vào https://github.com/nirannguyen50/new-coin/settings/branches → mục **Default branch**
-     → bấm nút đổi → chọn **`main`** → xác nhận.
-   - Vào Vercel, dự án `new-coin` → **Settings → Git → Production Branch** → đổi sang **`main`** → Save.
-     (Hai nhánh luôn trỏ cùng một commit nên đổi không làm gián đoạn bot.)
-   - **Không xoá** nhánh cũ.
-1. Sửa 3 bản nháp theo mục 3, gửi duyệt.
-2. Đăng lần lượt, **giãn cách tối thiểu 1 ngày giữa các nơi**, không đăng ồ ạt.
-3. Theo dõi bình luận ở mỗi nơi, trả lời thật lòng, nhất là câu hỏi kỹ thuật.
-4. Bài bị xoá hoặc bị mod nhắc: dừng ở nơi đó ngay, ghi lý do, không đăng lại.
-5. Sau mỗi đợt: nhắn riêng `@lixi_vn_bot` lệnh `/thongke`, chép kết quả vào issue báo cáo.
+> Đọc hết danh sách này. Việc quan trọng nhất là việc A, chi tiết nằm ở **mục 7** cuối file —
+> lượt trước đã bỏ sót vì nó nằm cuối, nên lần này làm A trước tiên.
+
+### A. Thêm 3 biến môi trường trên Vercel — ƯU TIÊN CAO NHẤT, ~5 phút
+
+Bot đã được lập trình để **tự chạy hằng ngày**: tự đăng bài lên kênh (33 bài đã nằm sẵn trong bản
+deploy), tự nhắn chủ dự án ngay khi có nhóm thật thêm bot, và tự ghi báo cáo số liệu lên GitHub.
+**Toàn bộ phần này đang nằm im** vì thiếu 3 biến môi trường. Thêm xong là không ai phải đăng bài tay nữa.
+
+Làm theo **mục 7** ở cuối file này. Tóm tắt: `CHANNEL_CHAT_ID`, `GITHUB_REPORT_ISSUE`, `GITHUB_TOKEN`.
+Dùng Issue **#1** (issue bạn vừa mở) làm issue theo dõi, tức `GITHUB_REPORT_ISSUE=1`.
+
+Sau khi thêm xong: Redeploy, rồi báo lại trong issue là đã thêm đủ 3 biến chưa.
+
+### B. Lấy số liệu gốc
+
+Nhắn riêng `@lixi_vn_bot` lệnh `/thongke`, chép nguyên văn vào issue. Đây là mốc 0 để tuần sau so sánh.
+
+### C. Đăng bài — chỉ khi chủ dự án đã gõ "ok"
+
+Ba bản nháp đã sửa theo mục 3 và đang chờ duyệt. **Không đăng trước khi được duyệt.**
+Khi có "ok": đăng lần lượt, **giãn cách tối thiểu 1 ngày giữa các nơi**, theo dõi bình luận và trả lời
+thật lòng. Bài bị xoá hoặc bị mod nhắc thì dừng hẳn ở nơi đó, ghi lý do, không đăng lại.
+
+### KHÔNG cần làm
+
+- **Đổi Production Branch trên Vercel: bỏ qua.** Trợ lý code đẩy code lên cả hai nhánh nên deploy chạy
+  bình thường dù Vercel đang trỏ vào nhánh nào. Đừng tốn thời gian vào việc này.
 
 ## 5. Việc KHÔNG làm
 
