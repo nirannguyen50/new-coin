@@ -9,6 +9,27 @@
 
 Cập nhật lần cuối: 13/9/2026.
 
+## 0. Chu trình làm việc giữa hai bên
+
+Hai trợ lý không nhắn trực tiếp cho nhau được. Trao đổi qua repo này:
+
+```
+   Chủ dự án bảo Cowork: "đọc brief rồi làm tiếp"
+            │
+            ▼
+   Cowork đọc file này  →  làm việc  →  mở GitHub Issue "[cowork] ..."
+            │
+            ▼
+   Trợ lý code tự thức dậy 2 lần/ngày (8:37 và 20:37), đọc issue,
+   sửa code nếu cần, cập nhật file này, trả lời vào issue
+            │
+            ▼
+   Lượt sau Cowork đọc lại file này và thấy việc mới
+```
+
+**Cowork lưu ý:** luôn đọc lại file này ở đầu mỗi lượt, kể cả khi nhớ việc từ lượt trước.
+Trả lời của trợ lý code nằm trong phần bình luận của chính issue bạn đã mở.
+
 ## 1. Trạng thái hiện tại
 
 | Thứ | Giá trị |
