@@ -243,8 +243,18 @@ Do Thực thi (phiên đám mây) đọc trực tiếp và trích nguyên văn; 
 | **Hacker News — Show HN** (mới) | **Được, có điều kiện.** Đăng dự án của mình được, nhưng không dùng HN làm kênh quảng bá chính | news.ycombinator.com/newsguidelines.html: *"Please don't use HN primarily for promotion. It's ok to post your own stuff part of the time, but the primary use of the site should be for curiosity."* |
 | **AlternativeTo** (mới) | **Để dành.** Cấm quảng cáo qua profile; kênh chính thức là "Suggest new application", duyệt vài ngày tới một tuần. **Yêu cầu ứng dụng hỗ trợ tiếng Anh** — bot hiện chỉ tiếng Việt | alternativeto.net/faq: *"Using user profiles to advertize products or software is not allowed."* · *"All applications added to the database must also support the English language"* |
 
+Bổ sung cùng ngày (A6), cùng cách đọc; Thực thi ghi rõ các trích đoạn đi qua mô hình tóm tắt của công cụ fetch:
+
+| Nơi | Kết luận | Bằng chứng |
+|---|---|---|
+| **Voz** | **Không đăng** nếu chưa được BQT duyệt trước. Muốn đăng phải liên hệ BQT xin phép — đó là việc chạm người thật, chưa làm | voz.vn nội quy: *"Mọi hình thức quảng cáo, rủ rê, lôi kéo, mua bán, v.v... liên quan đến lợi nhuận nếu chưa thông qua BQT đều bị nghiêm cấm."* |
+| **Dạy Nhau Học** | **Chưa rõ.** Guidelines và FAQ không có điều nào về tự giới thiệu dự án; mục "share" có người tự đăng công cụ cá nhân nhưng đó là quan sát, không phải nội quy | daynhauhoc.com/guidelines, /faq — không có điều khoản liên quan |
+| **Hashnode** | **Được, có điều kiện.** Bài phải có giá trị kỹ thuật thật, không dùng nền tảng chủ yếu để tự quảng bá | hashnode.com/code-of-conduct: cấm *"using the platform primarily for self-promotion without contributing to the community"*; khuyến khích *"Linking to documentation, repositories, articles, code samples, or other relevant references"* |
+| **Product Hunt** | **Được**, tự đăng là chức năng chính. Cần tài khoản cá nhân thật, hồ sơ đầy đủ; không xin upvote. Vẫn giữ nguyên quyết định cũ: **để dành** tới khi ≥ 5 nhóm hoạt động | help.producthunt.com: *"You'll need a personal account to post a product on Product Hunt."* · *"Self-promoting in comments will also be removed."* |
+
 **Thứ tự đăng rút ra:** đợt 1 = Viblo, Dev.to, Reddit (bài đã duyệt ở `growth/09`). Đợt 2 = Indie Hackers,
-Show HN — chỉ sau khi đợt 1 có kết quả và bot có ít nhất một nhóm thật. AlternativeTo chờ bản tiếng Anh.
+Show HN, Hashnode — chỉ sau khi đợt 1 có kết quả và bot có ít nhất một nhóm thật. Product Hunt chờ ≥ 5 nhóm.
+AlternativeTo chờ bản tiếng Anh. Voz và Spiderum bỏ. Dạy Nhau Học chưa quyết.
 
 ## 4. Bảng theo dõi (điền tay)
 
