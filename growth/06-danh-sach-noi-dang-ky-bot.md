@@ -256,6 +256,20 @@ Bổ sung cùng ngày (A6), cùng cách đọc; Thực thi ghi rõ các trích �
 Show HN, Hashnode — chỉ sau khi đợt 1 có kết quả và bot có ít nhất một nhóm thật. Product Hunt chờ ≥ 5 nhóm.
 AlternativeTo chờ bản tiếng Anh. Voz và Spiderum bỏ. Dạy Nhau Học chưa quyết.
 
+### 3c. Nơi công khai admin nhóm Telegram Việt liệt kê nhóm — 13/9/2026 (A8)
+
+Cùng cách đọc, cùng giới hạn (Quản lý chưa đối chiếu độc lập). Tìm được 3/5; các trang "nhóm kín 18+" thấy
+nhiều nhưng loại hẳn.
+
+| Nơi | Kết luận | Bằng chứng |
+|---|---|---|
+| **telegram-groups.com** (mục Việt Nam) | **Dùng được, để dành.** Nộp miễn phí qua mẫu liên hệ; nhưng chỉ nhận nhóm *"100+ members and are publicly joinable without invitation"* — nhóm demo hiện 2 thành viên | telegram-groups.com/vietnam-telegram-groups/ — *"Updated September 2026"*, *"You can add an active community that you know. Submit it here."* |
+| **tgram.io** (mục tiếng Việt) | **Chưa rõ cách nộp.** Trang sống (nhóm đầu bảng 41,131 thành viên) nhưng không thấy mục "thêm nhóm" | tgram.io/?lang=vi |
+| **Voz — Khu thương mại** | **Bỏ**, trả phí hoặc phải BQT duyệt (xem A6) | voz.vn nội quy 1583 |
+
+Từ khoá đã thử không ra thêm: danh bạ nhóm Telegram VN, TGStat (không có mục Việt Nam), awesome-telegram trên
+GitHub (không có mục Việt Nam), otofun, 5giay (chỉ mua bán đồ vật).
+
 ## 4. Bảng theo dõi (điền tay)
 
 | Ngày | Nơi (#) | Link bài / hồ sơ | Trạng thái (đã nộp / được duyệt / từ chối / bỏ) | Có nhóm nào đến từ đây không? (hỏi admin khi họ thêm bot) |
