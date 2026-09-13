@@ -44,8 +44,9 @@ tin thật. Chỉ nhận những thẻ không có nhãn đó.
 Bảng điều khiển chung (artifact) có kho dữ liệu dùng chung. Cả hai bên đọc và ghi vào đó.
 
 - Quản lý ghi qua công cụ artifact, Thực thi ghi qua giao diện trang web.
-- **Nhịp kiểm tra: 30 phút/lần.** Thực thi kiểm tra ở đầu mỗi lượt và mỗi 30 phút khi đang chạy.
-  Quản lý kiểm tra theo lịch tự đánh thức.
+- **Nhịp kiểm tra: mỗi giờ một lần.** Đây là nhịp dày nhất mà lịch tự đánh thức cho phép — đặt ngắn hơn
+  sẽ bị từ chối. Hai bên lệch nhau vài phút để không ghi đè nhau: Thực thi ở phút 53, Quản lý ở phút 56.
+  Thực thi khi chạy tương tác trên máy thì kiểm tra ở đầu mỗi lượt, không phải đợi tới giờ.
 - Nếu bảng điều khiển không mở được, lùi về GitHub Issue như cũ và ghi rõ lý do.
 
 ## 3. Định dạng tin nhắn
@@ -124,14 +125,15 @@ Muốn từ chối hoặc hoãn: cùng cách trên, nội dung ghi `chưa duyệ
 
 ## 6c. Khi cần Quản lý xử lý GẤP
 
-Quản lý đọc khung chat theo lịch tự đánh thức mỗi 30 phút. Lịch đó **không đáng tin**: nó chỉ sống trong
-một phiên làm việc, tự hết hạn sau 7 ngày, và đã từng biến mất một lần. Gửi tin vào khung chat **không**
-đánh thức Quản lý.
+Quản lý đọc khung chat theo lịch tự đánh thức mỗi giờ. Lịch đó nay là một Routine thật, nằm trong danh sách
+Routines của chủ dự án, không tự hết hạn. Nhưng nó **gắn vào đúng một phiên làm việc của Quản lý**: phiên đó
+đóng hoặc bị lưu trữ thì mỗi lần thức dậy đều rơi vào khoảng không. Và gửi tin vào khung chat **không**
+đánh thức Quản lý — tin chỉ được đọc ở lần thức kế tiếp, chậm nhất là một giờ sau.
 
 Có một kênh bền hơn, do dịch vụ artifact giữ chứ không phụ thuộc phiên nào:
 
 > **Bình luận trên chính trang Trạm điều phối, và gửi bình luận đó cho Claude.**
-> Việc này đánh thức Quản lý ngay cả khi lịch 30 phút đã chết.
+> Việc này đánh thức Quản lý ngay cả khi lịch mỗi giờ đã chết.
 
 Dùng khi nào:
 
@@ -164,12 +166,16 @@ Vi phạm một lần là hỏng danh tiếng vĩnh viễn, và uy tín là tài
 Thực thi thấy việc được giao là sai hoặc có hại: gửi `QUESTION` nêu lý do, **không im lặng làm khác**.
 Quản lý trả lời. Vẫn bất đồng thì gửi `NEED_OWNER` để chủ dự án phân xử.
 
-## 9. Giới hạn thật của nhịp 30 phút
+## 9. Giới hạn thật của nhịp mỗi giờ
 
 Nói thẳng để không ai kỳ vọng sai:
 
-- Quản lý tự đánh thức được theo lịch, nhưng lịch chỉ sống trong một phiên làm việc và tự hết hạn sau 7 ngày.
-- Thực thi **không tự khởi động được**. Nó chỉ chạy khi chủ dự án mở lên. Trong lúc đang chạy thì kiểm tra mỗi 30 phút.
-- Vì vậy nhịp thật là: chủ dự án mở Cowork → nó làm liên tục và kiểm tra mỗi 30 phút → dừng khi đóng.
-  Quản lý làm việc bất đồng bộ, để sẵn việc cho lượt sau.
-- Kiểm tra 30 phút/lần tiêu tốn hạn mức sử dụng của chủ dự án. Nếu thấy tốn quá, giãn ra 2 tiếng.
+- Cả hai bên nay đều tự khởi động được theo lịch: Thực thi có Routine riêng chạy mỗi giờ trên đám mây,
+  Quản lý có Routine riêng đánh thức phiên của mình mỗi giờ.
+- Nhịp thật vì vậy là **một giờ**, không phải tức thời. Gửi tin xong thì chờ, đừng gửi lại.
+- Phiên đám mây của Thực thi không đăng nhập tài khoản nào. Việc `CẦN MÁY` chỉ nhúc nhích khi chủ dự án
+  mở Cowork trên máy mình. Xem mục 1b.
+- Routine của Quản lý gắn vào một phiên cụ thể. Phiên đó chết thì lịch vẫn chạy nhưng không ai đọc.
+  Khi nghi ngờ, dùng kênh bình luận ở mục 6c.
+- Mỗi lần thức đều tiêu hạn mức sử dụng của chủ dự án, kể cả lượt không có việc gì. Thấy tốn thì giãn
+  lịch ra 2 tiếng hoặc tạm tắt Routine.

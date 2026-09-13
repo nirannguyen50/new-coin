@@ -28,8 +28,9 @@ Ba luật quan trọng nhất, nhắc lại ở đây:
 2. **Không xác minh được thì nói thẳng là chưa xác minh được.** Đó là câu trả lời tốt, không phải thất bại.
 3. **Không tự hạ tiêu chí nghiệm thu** để việc trông như đã xong. Không đạt thì gửi tin `BLOCKED` kèm lý do cụ thể.
 
-**Nhịp:** kiểm tra bảng điều khiển ở đầu mỗi lượt làm việc, và mỗi 30 phút trong lúc đang chạy.
-Quản lý cũng tự kiểm tra mỗi 30 phút.
+**Nhịp:** kiểm tra bảng điều khiển ở đầu mỗi lượt làm việc. Phiên chạy theo lịch thì mỗi giờ một lần —
+đó là nhịp dày nhất lịch tự đánh thức cho phép. Quản lý cũng tự kiểm tra mỗi giờ, lệch 3 phút so với
+Thực thi để hai bên không ghi đè nhau.
 
 **Khi bị chặn và cần Quản lý xử lý gấp:** ngoài việc gửi tin `BLOCKED` vào khung chat, hãy **bình luận
 trên chính trang Trạm điều phối và gửi bình luận đó cho Claude**. Gửi tin trong khung chat KHÔNG đánh thức
