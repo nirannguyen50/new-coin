@@ -92,61 +92,38 @@ Thiếu tiêu chí nghiệm thu thì Thực thi có quyền hỏi lại trước
 - **Không tự hạ tiêu chí** để việc trông như đã xong. Không đạt thì báo BLOCKED.
 - **Bên quản lý cũng chịu quy tắc này**: chỉ đóng việc sau khi tự kiểm chứng được, và nói rõ cái gì kiểm chứng được, cái gì không.
 
-## 6. Khi nào phải hỏi chủ dự án
+## 6. Ai duyệt cái gì
 
-Gửi `NEED_OWNER` và **dừng lại**, không tự quyết:
+Từ 13/9/2026 (xem `docs/20`): **Quản lý toàn quyền duyệt.** Chủ dự án không gõ "duyệt" từng việc.
 
-- Đăng bất cứ nội dung gì ra nơi công khai lần đầu ở một nơi mới
-- Nhắn tin cho người thật
-- Bất cứ việc gì tốn tiền, kể cả "dùng thử miễn phí có gắn thẻ"
-- Xoá dữ liệu, đổi mật khẩu, đổi quyền sở hữu
-- Việc mà nếu sai thì không hoàn tác được
+| Việc | Ai quyết |
+|---|---|
+| Nội dung đăng, nơi đăng, trả lời bình luận, giao việc, thứ tự ưu tiên | **Quản lý** |
+| Chi tiền, kể cả "dùng thử miễn phí có gắn thẻ" | Chủ dự án |
+| Phát hành token, tạo pool, bất cứ gì lên blockchain bằng tiền thật | Chủ dự án |
+| Ký, KYC, dùng danh tính thật của chủ dự án | Chủ dự án |
+| Xoá dữ liệu người dùng, đổi mật khẩu, đổi quyền sở hữu | Chủ dự án |
 
-Mọi việc khác: cứ làm, báo lại sau.
+Bốn dòng dưới: gửi `NEED_OWNER`, dừng, chờ. Mọi thứ khác: Quản lý quyết, ghi rõ lý do trong tin, làm.
+Chủ dự án phủ quyết bất cứ lúc nào bằng cách nói với Quản lý; Quản lý ghi vào `docs/20` và đổi hướng.
 
-## 6b. Chủ dự án duyệt việc bằng cách nào
+## 6b. Duyệt nội dung đăng ra ngoài
 
-Khi Thực thi chạy theo lịch tự động, chủ dự án có thể không có mặt. Vì vậy:
+Quản lý chỉ duyệt thứ mình **đã đọc nguyên văn**. Vì vậy:
 
-**Việc gắn nhãn `CẦN DUYỆT` chỉ được làm sau khi chủ dự án gửi tin duyệt vào khung chat.**
+- Bài đăng do Quản lý soạn và để trong repo (`growth/09-bai-dang-da-duyet.md`) là đã duyệt sẵn.
+  Thực thi đăng nguyên văn, không sửa, không thêm link.
+- Bài do Thực thi soạn: gửi nguyên văn trong tin `PROPOSE`, Quản lý trả lời `ANSWER` với `duyệt` hoặc
+  `chưa duyệt` kèm lý do ở lượt kế tiếp. Chưa có `ANSWER` thì chưa đăng.
+- Trả lời bình luận dưới bài đã đăng: Thực thi tự trả lời, đúng sự thật, không hứa hẹn. Bình luận hỏi về
+  giá, lợi nhuận, pháp lý, token: không trả lời, gửi `QUESTION` cho Quản lý.
 
-Cách duyệt: vào Trạm điều phối, chọn người gửi **Chủ dự án**, loại tin **ANSWER**, ô mã việc điền mã
-(ví dụ `A3`), nội dung ghi `duyệt` kèm điều kiện nếu có.
-
-```
-from: chu-du-an   type: ANSWER   task: A3
-body: duyệt. Đăng Viblo trước, chờ 1 ngày rồi mới đăng Dev.to.
-```
-
-Thực thi phải tìm đúng tin có `from: chu-du-an` và `task` khớp mã việc. **Không có tin đó thì không làm**,
-dù việc có vẻ rõ ràng tới đâu. Không suy diễn từ tin nhắn khác, không coi im lặng là đồng ý.
-
-Muốn từ chối hoặc hoãn: cùng cách trên, nội dung ghi `chưa duyệt` kèm lý do.
+Thẻ việc nào đã duyệt thì ghi `approvedBy: quan-ly` trên thẻ. Không còn nhãn `CẦN DUYỆT` chờ chủ dự án.
 
 ## 6b-2. Ai được viết với tên Chủ dự án
 
-Chỉ chủ dự án. Thực thi — kể cả khi chạy trên tài khoản của chủ dự án — **không bao giờ** chọn người gửi
-"Chủ dự án". Quản lý khi thấy tin `from: chu-du-an` có mốc giờ rơi đúng vào lúc Routine Thực thi đang
-chạy thì coi là chưa duyệt và hỏi lại chủ dự án.
-
-Chủ dự án cũng có thể duyệt bằng cách nói với Quản lý (trong phiên chat hoặc bình luận trên trang).
-Khi đó Quản lý ghi tin duyệt vào khung chat thay, thêm `relayedBy: quan-ly` để phân biệt.
-
-## 6d. Duyệt một lần cho cả loại việc
-
-Mục tiêu là hai bên tự chạy không cần người. Nhưng mỗi lần đăng ra nơi mới mà phải chờ chủ dự án gõ
-"duyệt" thì vòng lặp đứt ở đúng chỗ cần chạy nhất.
-
-Vì vậy chủ dự án có thể **duyệt theo loại**, một lần, bằng tin `ANSWER` với `task` là mã loại:
-
-| Mã loại | Bao gồm | Vẫn phải hỏi lại |
-|---|---|---|
-| `LOAI-DANG` | Đăng bài giới thiệu ở nơi đã xác minh nội quy cho phép, theo nội dung đã có trong repo | Nơi chưa xác minh; bài trả lời tranh cãi; bất cứ gì nhắc tới token |
-| `LOAI-TRALOI` | Trả lời bình luận dưới bài đã đăng, đúng sự thật, không hứa hẹn | Bình luận hỏi về giá, lợi nhuận, pháp lý |
-
-Tin duyệt loại có hiệu lực cho tới khi chủ dự án gửi `chưa duyệt` cùng mã loại. Việc đã có duyệt loại
-thì Quản lý gắn nhãn `ĐÃ DUYỆT LOẠI` trên thẻ và Thực thi làm không cần hỏi. Không có tin duyệt loại
-thì mọi thứ vẫn theo 6b.
+Chỉ chủ dự án. Thực thi **không bao giờ** chọn người gửi "Chủ dự án". Tin duyệt từ Quản lý có
+`from: quan-ly`; tin có `from: chu-du-an` mà chủ dự án không xác nhận với Quản lý thì Quản lý bỏ qua.
 
 ## 6c. Khi cần Quản lý xử lý GẤP
 

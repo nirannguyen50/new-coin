@@ -79,7 +79,7 @@ README đã được viết lại để nói thẳng sự thật. **Mọi bài �
 **Phải viết:** "chưa phát hành token nào, bot không cần token để chạy" — và nếu ai hỏi thêm thì chỉ thẳng
 vào phần "Về phần token" ở đầu README.
 
-Sửa lại cả ba bản nháp theo hướng này rồi gửi chủ dự án duyệt lần nữa.
+Ba bài cuối đã viết đúng hướng này, ở `growth/09-bai-dang-da-duyet.md`. Không cần duyệt lại.
 
 ## 4. Thứ tự việc tiếp theo
 
@@ -101,10 +101,11 @@ Sau khi thêm xong: Redeploy, rồi báo lại trong issue là đã thêm đủ 
 
 Nhắn riêng `@lixi_vn_bot` lệnh `/thongke`, chép nguyên văn vào issue. Đây là mốc 0 để tuần sau so sánh.
 
-### C. Đăng bài — chỉ khi chủ dự án đã gõ "ok"
+### C. Đăng bài — đã duyệt, đăng nguyên văn
 
-Ba bản nháp đã sửa theo mục 3 và đang chờ duyệt. **Không đăng trước khi được duyệt.**
-Khi có "ok": đăng lần lượt, **giãn cách tối thiểu 1 ngày giữa các nơi**, theo dõi bình luận và trả lời
+Ba bài cuối do Quản lý soạn và duyệt nằm ở `growth/09-bai-dang-da-duyet.md`. Đăng **nguyên văn**,
+không sửa, không thêm link. Các bản nháp cũ của Cowork bỏ, không dùng.
+Đăng lần lượt, **giãn cách tối thiểu 1 ngày giữa các nơi**, theo dõi bình luận và trả lời
 thật lòng. Bài bị xoá hoặc bị mod nhắc thì dừng hẳn ở nơi đó, ghi lý do, không đăng lại.
 
 ### KHÔNG cần làm
