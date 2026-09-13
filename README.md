@@ -48,6 +48,7 @@ Nếu bạn chỉ quan tâm tới bot, đọc [bot/README.md](bot/README.md) và
 | [docs/15-prompt-cowork-viec-con-lai.md](docs/15-prompt-cowork-viec-con-lai.md) | Prompt bàn giao cho trợ lý điều khiển máy tính: tạo bot mới có username tử tế, cập nhật Vercel, tạo kênh, đăng bài, gửi tin gieo hạt (có duyệt từng tin), đăng ký danh bạ |
 | [docs/16-ke-hoach-xay-cong-dong-tu-so.md](docs/16-ke-hoach-xay-cong-dong-tu-so.md) | **Kế hoạch cộng đồng đang áp dụng.** Xây từ số 0 không dùng quan hệ cá nhân: nhóm demo công khai, tìm admin ở nơi công khai, lùi ngược từ Tết 6/2/2027, điều kiện dừng |
 | [docs/17-brief-cowork.md](docs/17-brief-cowork.md) | **Hộp thư chung với trợ lý điều khiển máy.** Trạng thái hiện tại, việc tiếp theo, việc cấm. Trợ lý đọc file này mỗi lượt và báo cáo lại bằng GitHub Issue |
+| [docs/18-protocol-manager-executor.md](docs/18-protocol-manager-executor.md) | **Protocol làm việc giữa hai trợ lý.** Vai trò, định dạng tin nhắn, vòng đời một việc, quy tắc chống báo cáo sai, khi nào phải hỏi chủ dự án |
 
 ## Cấu trúc mã nguồn và công cụ
 
