@@ -289,6 +289,23 @@ const SCHEMA_STATEMENTS = [
      PRIMARY KEY (chat_id, day)
    )`,
 
+  // --- Bài đã đăng lên kênh công khai (chống đăng trùng) ---
+  // Khoá chính `post_id` CHÍNH LÀ ràng buộc "không bao giờ đăng hai lần": bộ đăng bài
+  // chèn dòng này TRƯỚC khi gọi Telegram, nên hai lần cron chạy song song thì chỉ một
+  // lần chèn được (xem `src/channel.js`). Bảng KHÔNG dính tới nhóm nào.
+  `CREATE TABLE IF NOT EXISTS $SCHEMA$.lixi_channel_posts (
+     post_id   TEXT PRIMARY KEY,
+     posted_at BIGINT NOT NULL,
+     chat_id   TEXT
+   )`,
+
+  // --- Sổ tay chung của bot: dấu mốc báo cáo hằng ngày, ... (không thuộc nhóm nào) ---
+  `CREATE TABLE IF NOT EXISTS $SCHEMA$.lixi_bot_state (
+     key        TEXT PRIMARY KEY,
+     value      JSONB  NOT NULL DEFAULT '{}'::jsonb,
+     updated_at BIGINT NOT NULL
+   )`,
+
   // --- Log admin nạp pot / cấp điểm thủ công ---
   `CREATE TABLE IF NOT EXISTS $SCHEMA$.lixi_admin_credit_log (
      chat_id  TEXT   NOT NULL REFERENCES $SCHEMA$.lixi_groups(chat_id) ON DELETE CASCADE,
@@ -311,8 +328,9 @@ const SCHEMA_STATEMENTS = [
  * database cũ có cột mới thì phải `ALTER TABLE ... ADD COLUMN`.
  *
  * QUY TẮC cho mọi câu đặt ở đây:
- *   1. Chỉ THÊM (add column, add index). TUYỆT ĐỐI không DROP/RENAME/đổi kiểu cột, không
- *      tạo lại bảng — số dư của người dùng đang nằm trong đó.
+ *   1. Chỉ THÊM (add column, add index, CREATE TABLE IF NOT EXISTS cho bảng hoàn toàn
+ *      mới). TUYỆT ĐỐI không DROP/RENAME/đổi kiểu cột, không tạo lại bảng đang có —
+ *      số dư của người dùng đang nằm trong đó.
  *   2. Luôn `IF NOT EXISTS` để chạy lại bao nhiêu lần cũng vô hại (idempotent).
  *   3. Cột mới phải cho phép NULL (hoặc có DEFAULT) — các dòng cũ không có giá trị, và
  *      code phải đọc được dòng thiếu giá trị mà không lỗi.
@@ -330,9 +348,35 @@ const MIGRATION_STATEMENTS = [
   `ALTER TABLE $SCHEMA$.lixi_approvals ADD COLUMN IF NOT EXISTS held BOOLEAN NOT NULL DEFAULT false`,
   // Trạng thái tăng trưởng của nhóm (2026-09): bot còn trong nhóm, đã chào mừng, nhóm
   // nguồn giới thiệu — xem `defaultGrowth` (store.js) và `src/growth.js`.
-  // (Chỉ mục `lixi_tx_ts_idx` cho /bxh KHÔNG nằm ở đây — danh sách này chỉ gồm ADD COLUMN;
-  // chỉ mục là tối ưu, được tạo khi mở /api/setup vì `ensureSchema` chạy lại SCHEMA_STATEMENTS.)
+  // (Chỉ mục `lixi_tx_ts_idx` cho /bxh KHÔNG nằm ở đây — chỉ mục là tối ưu, được tạo khi
+  // mở /api/setup vì `ensureSchema` chạy lại SCHEMA_STATEMENTS.)
   `ALTER TABLE $SCHEMA$.lixi_groups ADD COLUMN IF NOT EXISTS growth JSONB NOT NULL DEFAULT '{}'::jsonb`,
+];
+
+/**
+ * BẢNG HOÀN TOÀN MỚI cần có trên database ĐÃ TỒN TẠI (2026-09).
+ *
+ * Vì sao là danh sách RIÊNG, không gộp vào `MIGRATION_STATEMENTS`: danh sách kia có một
+ * ràng buộc cố ý — mọi câu trong đó phải là `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
+ * (có test canh giữ). Tạo một bảng mới cũng là thao tác CỘNG THÊM và cũng an toàn tuyệt
+ * đối với dữ liệu đang có (không đụng vào bảng nào khác), nhưng nó là một HÌNH DẠNG khác,
+ * nên để riêng thay vì nới lỏng ràng buộc đang bảo vệ số dư người dùng.
+ *
+ * Chạy cùng chỗ với `MIGRATION_STATEMENTS`: `ensureSchema()` và `_ensureAdditiveMigrations()`.
+ */
+const NEW_TABLE_STATEMENTS = [
+  // Bài đã đăng lên kênh công khai — chống đăng trùng (xem `src/channel.js`).
+  `CREATE TABLE IF NOT EXISTS $SCHEMA$.lixi_channel_posts (
+     post_id   TEXT PRIMARY KEY,
+     posted_at BIGINT NOT NULL,
+     chat_id   TEXT
+   )`,
+  // Sổ tay chung của bot — dấu mốc báo cáo hằng ngày (xem `src/report.js`).
+  `CREATE TABLE IF NOT EXISTS $SCHEMA$.lixi_bot_state (
+     key        TEXT PRIMARY KEY,
+     value      JSONB  NOT NULL DEFAULT '{}'::jsonb,
+     updated_at BIGINT NOT NULL
+   )`,
 ];
 
 /**
@@ -418,7 +462,7 @@ class PostgresLedger {
       }
       // Database cũ: bảng đã có nên CREATE TABLE IF NOT EXISTS ở trên không làm gì —
       // các cột thêm sau này chỉ vào được bằng ALTER TABLE ADD COLUMN IF NOT EXISTS.
-      for (const statement of MIGRATION_STATEMENTS) {
+      for (const statement of [...NEW_TABLE_STATEMENTS, ...MIGRATION_STATEMENTS]) {
         await client.query(statement.split('$SCHEMA$').join(this.schema));
       }
     } finally {
@@ -455,7 +499,7 @@ class PostgresLedger {
     const promise = (async () => {
       const client = await this.pool.connect();
       try {
-        for (const statement of MIGRATION_STATEMENTS) {
+        for (const statement of [...NEW_TABLE_STATEMENTS, ...MIGRATION_STATEMENTS]) {
           await client.query(statement.split('$SCHEMA$').join(schema));
         }
         return true;
@@ -464,8 +508,9 @@ class PostgresLedger {
       }
     })().catch((err) => {
       console.error(
-        'Không thêm được cột mới vào bảng lixi_members (bot vẫn chạy, tạm thời hiện ' +
-          'số id thay cho tên). Mở /api/setup để thử lại:',
+        'Không chạy được phần di trú cộng thêm (cột tên thành viên, bảng bài đăng kênh). ' +
+          'Bot vẫn chạy — tạm thời hiện số id thay cho tên và bỏ qua việc đăng bài kênh. ' +
+          'Mở /api/setup để thử lại:',
         safeErrorMessage(err)
       );
       return false;
@@ -1134,6 +1179,79 @@ class PostgresLedger {
     };
   }
 
+  // -------------------------------------------------------------------------
+  // Kênh công khai + báo cáo hằng ngày (không thuộc nhóm nào)
+  // -------------------------------------------------------------------------
+
+  /** Mã các bài đã đăng lên kênh (xem `src/channel.js`). */
+  async listPostedChannelPostIds() {
+    await this._ensureAdditiveMigrations();
+    const { rows } = await this.pool.query(
+      `SELECT post_id FROM ${this.schema}.lixi_channel_posts ORDER BY posted_at, post_id`
+    );
+    return rows.map((r) => r.post_id);
+  }
+
+  /** Mốc thời gian của bài gần nhất đã đăng (0 = chưa đăng bài nào). */
+  async lastChannelPostAt() {
+    await this._ensureAdditiveMigrations();
+    const { rows } = await this.pool.query(
+      `SELECT COALESCE(MAX(posted_at), 0) AS last_at FROM ${this.schema}.lixi_channel_posts`
+    );
+    return toNumber(rows[0] && rows[0].last_at);
+  }
+
+  /**
+   * "Xí phần" một bài trước khi gửi lên Telegram.
+   *
+   * `ON CONFLICT DO NOTHING` + khoá chính `post_id` là toàn bộ cơ chế chống đăng trùng:
+   * hai lần cron chạy cùng lúc thì một lần chèn được (rowCount = 1) và một lần không
+   * (rowCount = 0). Không cần khoá, không cần transaction dài.
+   *
+   * @returns {Promise<boolean>} true = lần chạy này được quyền đăng.
+   */
+  async claimChannelPost(postId, nowMs = Date.now(), chatId = null) {
+    await this._ensureAdditiveMigrations();
+    const res = await this.pool.query(
+      `INSERT INTO ${this.schema}.lixi_channel_posts (post_id, posted_at, chat_id)
+            VALUES ($1, $2, $3)
+       ON CONFLICT (post_id) DO NOTHING`,
+      [String(postId), Number(nowMs) || Date.now(), chatId == null ? null : String(chatId)]
+    );
+    return res.rowCount === 1;
+  }
+
+  /** Trả mã bài về hàng đợi khi Telegram từ chối (để hôm sau đăng lại). */
+  async releaseChannelPost(postId) {
+    await this._ensureAdditiveMigrations();
+    const res = await this.pool.query(
+      `DELETE FROM ${this.schema}.lixi_channel_posts WHERE post_id = $1`,
+      [String(postId)]
+    );
+    return res.rowCount > 0;
+  }
+
+  /** Dấu mốc của báo cáo hằng ngày (xem `src/report.js`); chưa có thì `null`. */
+  async readReportState(key = 'daily') {
+    await this._ensureAdditiveMigrations();
+    const { rows } = await this.pool.query(
+      `SELECT value FROM ${this.schema}.lixi_bot_state WHERE key = $1`,
+      [String(key)]
+    );
+    return rows.length ? rows[0].value : null;
+  }
+
+  async writeReportState(value, key = 'daily') {
+    await this._ensureAdditiveMigrations();
+    await this.pool.query(
+      `INSERT INTO ${this.schema}.lixi_bot_state (key, value, updated_at)
+            VALUES ($1, $2::jsonb, $3)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at`,
+      [String(key), JSON.stringify(value == null ? {} : value), Date.now()]
+    );
+    return value;
+  }
+
   // =========================================================================
   // Các thao tác mở rộng mà lệnh bot cần — đều dùng lại hàm thuần của ledger.js
   // =========================================================================
@@ -1276,6 +1394,7 @@ module.exports = {
   PostgresLedger,
   SCHEMA_STATEMENTS,
   MIGRATION_STATEMENTS,
+  NEW_TABLE_STATEMENTS,
   RECENT_TX_LIMIT,
   POOL_MAX_CLIENTS,
   buildPoolConfig,

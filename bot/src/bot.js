@@ -31,14 +31,17 @@ function isTrackedGroup(ctx) {
  * Tạo bot Telegraf và đăng ký toàn bộ lệnh.
  *
  * @param {string} token token bot từ @BotFather
- * @param {{superAdminIds?: string[], storage: object, botUsername?: string|null}} options
+ * @param {{superAdminIds?: string[], storage: object, botUsername?: string|null,
+ *          env?: object}} options
  *        `storage` là kho lưu trữ đã chọn (JSON hoặc Postgres — xem src/storage.js).
  *        Mọi lệnh chỉ nói chuyện với `storage`, nên đổi kho KHÔNG phải sửa lệnh nào.
  *        `botUsername` (tuỳ chọn): username bot để dựng nút "Thêm vào nhóm"; không truyền
  *        thì bot tự hỏi Telegram (`getMe`) một lần và cache — test truyền thẳng để khỏi
  *        gọi mạng (xem `growth.createBotIdentity`).
+ *        `env` (tuỳ chọn): biến môi trường để đọc cấu hình lúc chạy (hiện dùng cho
+ *        `IGNORED_CHAT_IDS` — các nhóm không đáng báo "có nhóm mới"); mặc định `process.env`.
  */
-function createBot(token, { superAdminIds = [], storage, botUsername = null } = {}) {
+function createBot(token, { superAdminIds = [], storage, botUsername = null, env = process.env } = {}) {
   if (!storage) {
     throw new Error('createBot: thiếu tham số `storage` (kho lưu trữ).');
   }
@@ -99,7 +102,7 @@ function createBot(token, { superAdminIds = [], storage, botUsername = null } = 
   tipCmd.register(bot, { storage, identity });
   withdrawCmd.register(bot, { storage });
   adminCmd.register(bot, { superAdminIds, storage });
-  growthCmd.register(bot, { superAdminIds, storage });
+  growthCmd.register(bot, { superAdminIds, storage, env });
 
   bot.catch((err, ctx) => {
     // Không để một lỗi lệnh làm crash cả tiến trình bot.

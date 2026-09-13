@@ -146,6 +146,71 @@ function writeGroupState(chatId, state) {
   fs.renameSync(tmp, file);
 }
 
+// ---------------------------------------------------------------------------
+// "Sổ tay chung" của bot (không thuộc nhóm nào)
+// ---------------------------------------------------------------------------
+
+/**
+ * Những thứ KHÔNG thuộc về một nhóm cụ thể được để trong một file duy nhất:
+ *   - `channelPosts` — mã các bài đã đăng lên kênh công khai (xem `src/channel.js`).
+ *   - `reports`      — dấu mốc của báo cáo hằng ngày gửi lên GitHub (xem `src/report.js`).
+ *
+ * Tên file BẮT ĐẦU BẰNG DẤU CHẤM là cố ý: `listGroupIds()` chỉ lấy file `.json` KHÔNG
+ * bắt đầu bằng dấu chấm, nên file này nằm chung thư mục mà không bao giờ bị nhầm là một
+ * nhóm (nếu bị nhầm thì cron sẽ đi phát thưởng cho một "nhóm" không có thật).
+ */
+const BOT_STATE_FILE = '.bot-state.json';
+
+function botStateFilePath() {
+  return path.join(DATA_DIR, BOT_STATE_FILE);
+}
+
+function defaultBotState() {
+  return {
+    // mã bài -> { postedAt, chatId }
+    channelPosts: {},
+    // tên mốc -> giá trị tuỳ ý (JSON)
+    reports: {},
+  };
+}
+
+/** Đọc sổ tay chung; chưa có file thì trả về bản mặc định (chưa ghi ra đĩa). */
+function readBotState() {
+  ensureDataDir();
+  const file = botStateFilePath();
+  const fallback = defaultBotState();
+  if (!fs.existsSync(file)) return fallback;
+  let parsed;
+  try {
+    parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (err) {
+    throw new Error(`Không đọc được file trạng thái chung (${file}): ${err.message}`);
+  }
+  return {
+    ...fallback,
+    ...parsed,
+    channelPosts: { ...fallback.channelPosts, ...(parsed.channelPosts || {}) },
+    reports: { ...fallback.reports, ...(parsed.reports || {}) },
+  };
+}
+
+/** Ghi sổ tay chung, atomic (write temp file + rename) — như `writeGroupState`. */
+function writeBotState(state) {
+  ensureDataDir();
+  const file = botStateFilePath();
+  const tmp = path.join(DATA_DIR, `.bot-state.${process.pid}.${Date.now()}.tmp`);
+  fs.writeFileSync(tmp, JSON.stringify(state, null, 2), 'utf8');
+  fs.renameSync(tmp, file);
+}
+
+/** Đọc → sửa tại chỗ → ghi lại, toàn bộ đồng bộ (không có await ở giữa). */
+function withBotState(mutator) {
+  const state = readBotState();
+  const result = mutator(state);
+  writeBotState(state);
+  return result;
+}
+
 /** Danh sách chatId đã có dữ liệu (dùng cho job thưởng hoạt động chạy mỗi ngày). */
 function listGroupIds() {
   ensureDataDir();
@@ -183,15 +248,21 @@ function flushPendingWrites() {
 }
 
 module.exports = {
+  BOT_STATE_FILE,
   DATA_DIR,
   flushPendingWrites,
+  botStateFilePath,
+  defaultBotState,
   defaultConfig,
   defaultGrowth,
   defaultGroupState,
   ensureDataDir,
   groupFilePath,
+  readBotState,
   readGroupState,
+  writeBotState,
   writeGroupState,
+  withBotState,
   listGroupIds,
   withGroupState,
 };

@@ -113,3 +113,76 @@ Tiêu đề: `[cowork] Báo cáo <ngày>`
 ## Cần quyết định
 - <câu hỏi, nếu có>
 ```
+
+## 7. Bàn giao: ba việc con người phải làm MỘT LẦN trên Vercel
+
+Từ bản cập nhật này, bot tự làm ba việc vốn phải làm tay: đăng bài lên kênh mỗi ngày,
+nhắn riêng cho chủ bot khi có nhóm mới, và tự viết báo cáo tiến độ lên GitHub.
+Code đã xong và đã có test. **Chỉ còn ba biến môi trường phải đặt tay.**
+
+Cho tới khi ba biến này được đặt, bot vẫn chạy bình thường: nó chỉ ghi lý do bỏ qua vào
+log Vercel, không báo lỗi và không làm hỏng phần phát thưởng.
+
+Nơi đặt biến (dùng chung cho cả ba): Vercel → dự án `new-coin` → **Settings** →
+**Environment Variables** → **Add New** → chọn cả ba môi trường (Production, Preview,
+Development) → **Save**. Đặt xong cả ba rồi mới bấm **Redeploy** một lần.
+
+### 7.1. `CHANNEL_CHAT_ID` — để bot tự đăng bài lên kênh
+
+1. Mở kênh `https://t.me/lixibot_kenh` → biểu tượng kênh → **Edit** → **Administrators**
+2. **Add Admin** → chọn `@lixi_vn_bot` → bật quyền **Post Messages** → **Save**
+3. Vercel → thêm biến `CHANNEL_CHAT_ID` với giá trị `@lixibot_kenh`
+
+Từ lần cron chạy kế tiếp, mỗi ngày bot đăng **đúng một bài**, theo thứ tự trong
+`bot/content/channel-posts.js` (chuyển nguyên văn từ `growth/05-thu-vien-noi-dung-30-ngay.md`).
+
+**Sáu bài vẫn phải đăng tay** — các bài "tuần này thay đổi gì" và bài tổng kết tháng
+(ngày 6, 14, 21, 22, 28, 30) còn chỗ trống `[[SỐ]]` cần số liệu thật của tuần đó. Bot
+**cố ý bỏ qua** chúng: đăng một bài minh bạch mà để trống số liệu còn tệ hơn không đăng.
+
+**Công tắc tắt:** đặt `CHANNEL_AUTOPOST=off` là dừng hẳn việc đăng bài, không cần sửa
+code. Các bài đã đăng vẫn được ghi nhớ; bật lại là đăng tiếp đúng chỗ cũ.
+
+### 7.2. Issue theo dõi trên GitHub — nơi bot ghi báo cáo hằng ngày
+
+1. Mở https://github.com/nirannguyen50/new-coin/issues/new
+2. Tiêu đề: `Báo cáo tự động hằng ngày` — nội dung: một dòng bất kỳ
+3. **Submit new issue**
+4. Nhìn địa chỉ trang vừa tạo: `.../issues/12` → số `12` chính là giá trị cần đặt
+5. Vercel → thêm biến `GITHUB_REPORT_ISSUE` = `12` (chỉ con số, không có dấu `#`)
+
+Bot **chỉ thêm bình luận** vào đúng issue này, không bao giờ tự mở issue mới. Đây là
+kênh để trợ lý điều phối (chỉ đọc được GitHub) thấy con số thật mà không cần ai chép tay.
+
+### 7.3. `GITHUB_TOKEN` — token fine-grained, quyền nhỏ nhất
+
+1. Mở https://github.com/settings/personal-access-tokens/new
+2. **Token name**: `lixi-bot-bao-cao` · **Expiration**: chọn thời hạn (ví dụ 1 năm)
+3. **Resource owner**: tài khoản sở hữu repo (`nirannguyen50`)
+4. **Repository access**: chọn **Only select repositories** → chọn **đúng một** repo `new-coin`
+5. **Permissions** → **Repository permissions** → tìm mục **Issues** → đổi sang **Read and write**
+   (không bật thêm quyền nào khác; *Metadata: Read-only* tự bật, đó là bình thường)
+6. **Generate token** → chép chuỗi bắt đầu bằng `github_pat_...`
+7. Vercel → thêm biến `GITHUB_TOKEN` = chuỗi vừa chép
+
+Token này chỉ bình luận được vào issue của **đúng một repo** — không đẩy được code, không
+đọc được repo khác. Lỡ lộ thì vào lại trang ở bước 1 bấm **Revoke**, tạo cái mới, dán lại.
+
+Token **không bao giờ** bị in ra log: nó nằm trong danh sách bí mật của `bot/src/redact.js`,
+và mọi thông báo lỗi (kể cả phần GitHub trả về) đều đi qua đó trước khi được in.
+
+### 7.4. Tuỳ chọn: `IGNORED_CHAT_IDS` — bớt làm phiền
+
+Khi một nhóm thêm bot, bot nhắn riêng cho mọi id trong `BOT_SUPER_ADMIN_IDS`: tên nhóm,
+số thành viên xấp xỉ, có phải đến từ nút giới thiệu không, và tổng số nhóm hiện có.
+
+Nhóm demo và nhóm thử của chủ dự án không đáng báo. Thêm id của chúng vào
+`IGNORED_CHAT_IDS` (cách nhau bằng dấu phẩy) là bot im lặng với riêng những nhóm đó.
+
+### 7.5. Kiểm tra sau khi Redeploy
+
+- Vercel → **Deployments** → bản mới nhất → **Functions** → `/api/cron` → xem log lần chạy.
+  Log tiếng Việt nói rõ đã đăng bài nào, hoặc vì sao bỏ qua.
+- Kênh `@lixibot_kenh`: sáng hôm sau phải có bài ghim xuất hiện.
+- Issue theo dõi: sáng hôm sau phải có một bình luận mới với bảng số liệu.
+- Nếu chưa có gì: xem log — bot luôn ghi lý do cụ thể (thiếu biến nào, GitHub trả về mã gì).

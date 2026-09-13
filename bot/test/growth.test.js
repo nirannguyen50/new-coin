@@ -62,9 +62,25 @@ let messageSeq = 100;
 let getMeCalls = 0;
 let getMeResult = { id: 7, is_bot: true, first_name: 'Lì Xì Bot', username: 'lixi_getme_bot' };
 
+/** Số thành viên mà `getChatMembersCount` trả về (đặt là Error để mô phỏng Telegram lỗi). */
+let memberCountResult = 42;
+/** Chat id mà `sendMessage` phải ném lỗi (mô phỏng chủ bot chưa bấm Start / đã chặn bot). */
+let sendMessageFailsFor = null;
+
 Telegram.prototype.callApi = async function fakeCallApi(method, payload) {
   const entry = { method, payload, result: true };
   calls.push(entry);
+  if (method === 'getChatMembersCount') {
+    if (memberCountResult instanceof Error) throw memberCountResult;
+    return memberCountResult;
+  }
+  if (
+    method === 'sendMessage' &&
+    sendMessageFailsFor != null &&
+    String(payload.chat_id) === String(sendMessageFailsFor)
+  ) {
+    throw new Error('Forbidden: bot can\'t initiate conversation with a user');
+  }
   if (method === 'sendMessage') {
     messageSeq += 1;
     entry.result = { message_id: messageSeq, text: payload.text, chat: { id: payload.chat_id } };
@@ -87,9 +103,11 @@ test.after(() => {
 
 const jsonStorage = new JsonGroupStorage();
 
-function makeBot(storage = jsonStorage, { botUsername = 'lixi_test_bot' } = {}) {
+function makeBot(storage = jsonStorage, { botUsername = 'lixi_test_bot', env = {} } = {}) {
   calls = [];
-  const bot = createBot(TOKEN, { storage, superAdminIds: [String(OWNER_ID)], botUsername });
+  memberCountResult = 42;
+  sendMessageFailsFor = null;
+  const bot = createBot(TOKEN, { storage, superAdminIds: [String(OWNER_ID)], botUsername, env });
   bot.botInfo = BOT_USER;
   const errors = [];
   bot.catch((err) => errors.push(err));
@@ -159,6 +177,15 @@ function edits() {
 }
 function lastText() {
   const sent = sentMessages();
+  return sent.length ? sent[sent.length - 1].text : '';
+}
+/** Tin nhắn bot đã gửi vào ĐÚNG một chat (nhóm, hoặc chat riêng của chủ bot). */
+function sentTo(chatId) {
+  return sentMessages().filter((m) => String(m.chat_id) === String(chatId));
+}
+/** Văn bản cuối cùng bot gửi vào một chat cụ thể. */
+function lastTextTo(chatId) {
+  const sent = sentTo(chatId);
   return sent.length ? sent[sent.length - 1].text : '';
 }
 /** Mọi văn bản bot đã gửi/sửa từ lần `makeBot`/reset gần nhất. */
@@ -431,8 +458,8 @@ test('bot được thêm KHÔNG có quyền admin: chào mừng kèm quyền c�
   const chat = groupChat(G_ADDED_MEMBER);
 
   await drive(bot, errors, myChatMemberUpdate(chat, A, 'left', 'member'));
-  assert.equal(sentMessages().length, 1, 'đúng một tin chào mừng');
-  const welcome = lastText();
+  assert.equal(sentTo(G_ADDED_MEMBER).length, 1, 'đúng một tin chào mừng');
+  const welcome = lastTextTo(G_ADDED_MEMBER);
   assert.match(welcome, /Cảm ơn đã thêm Lì Xì Bot vào nhóm/);
   assert.match(welcome, /\/nap 1000/);
   assert.match(welcome, /reply[^\n]*\/nap 100/);
@@ -443,10 +470,14 @@ test('bot được thêm KHÔNG có quyền admin: chào mừng kèm quyền c�
   assert.match(welcome, /Quản trị viên/);
   assert.match(welcome, /thưởng hoạt động/);
   assert.equal(sentMessages()[0].chat_id, G_ADDED_MEMBER);
+  // Nhóm mới => chủ bot được nhắn riêng đúng một lần (xem mục 9 bên dưới).
+  assert.equal(sentTo(OWNER_ID).length, 1, 'chủ bot được báo đúng một lần');
+  assert.equal(sentMessages().length, 2, 'đúng hai tin: chào nhóm + báo chủ bot');
 
   // Telegram gửi lại update y hệt (hoặc bot bị gỡ rồi thêm lại) → không chào lần hai.
   await drive(bot, errors, myChatMemberUpdate(chat, A, 'left', 'member'));
-  assert.equal(sentMessages().length, 1, 'không được chào mừng lần hai');
+  assert.equal(sentTo(G_ADDED_MEMBER).length, 1, 'không được chào mừng lần hai');
+  assert.equal(sentTo(OWNER_ID).length, 1, 'không được báo chủ bot lần hai');
   let state = await jsonStorage.readGroup(G_ADDED_MEMBER);
   assert.ok(state.growth.onboardedAt);
   assert.equal(state.growth.onboardedAsAdmin, false);
@@ -454,16 +485,17 @@ test('bot được thêm KHÔNG có quyền admin: chào mừng kèm quyền c�
 
   // Được cấp admin sau đó: xác nhận ngắn, không lặp lại cả bài chào mừng.
   await drive(bot, errors, myChatMemberUpdate(chat, A, 'member', 'administrator'));
-  assert.equal(sentMessages().length, 2);
-  assert.equal(lastText(), growth.ADMIN_GRANTED_TEXT);
+  assert.equal(sentTo(G_ADDED_MEMBER).length, 2);
+  assert.equal(lastTextTo(G_ADDED_MEMBER), growth.ADMIN_GRANTED_TEXT);
   await drive(bot, errors, myChatMemberUpdate(chat, A, 'member', 'administrator'));
-  assert.equal(sentMessages().length, 2, 'xác nhận admin cũng chỉ một lần');
+  assert.equal(sentTo(G_ADDED_MEMBER).length, 2, 'xác nhận admin cũng chỉ một lần');
+  assert.equal(sentTo(OWNER_ID).length, 1, 'cấp admin KHÔNG phải nhóm mới, không báo lại');
   state = await jsonStorage.readGroup(G_ADDED_MEMBER);
   assert.equal(state.growth.botStatus, 'administrator');
 
   // Bị gỡ: không nhắn gì (không thể nhắn vào nhóm đã rời), chỉ ghi trạng thái.
   await drive(bot, errors, myChatMemberUpdate(chat, A, 'administrator', 'kicked'));
-  assert.equal(sentMessages().length, 2);
+  assert.equal(sentTo(G_ADDED_MEMBER).length, 2);
   state = await jsonStorage.readGroup(G_ADDED_MEMBER);
   assert.equal(state.growth.botStatus, 'kicked');
   assert.ok(state.growth.leftAt);
@@ -471,15 +503,15 @@ test('bot được thêm KHÔNG có quyền admin: chào mừng kèm quyền c�
 
   // Chat riêng (người dùng bấm Start/chặn bot) không phải nhóm → bỏ qua.
   await drive(bot, errors, myChatMemberUpdate(PRIVATE_CHAT, A, 'kicked', 'member'));
-  assert.equal(sentMessages().length, 2);
+  assert.equal(sentMessages().length, 3, 'chat riêng không sinh thêm tin nào');
   assert.ok(!store.listGroupIds().includes(String(OWNER_ID)));
 });
 
 test('bot được thêm với quyền admin ngay: chào mừng KHÔNG có đoạn thiếu quyền', async () => {
   const { bot, errors } = makeBot();
   await drive(bot, errors, myChatMemberUpdate(groupChat(G_ADDED_ADMIN), A, 'left', 'administrator'));
-  assert.equal(sentMessages().length, 1);
-  const welcome = lastText();
+  assert.equal(sentTo(G_ADDED_ADMIN).length, 1);
+  const welcome = lastTextTo(G_ADDED_ADMIN);
   assert.match(welcome, /Cảm ơn đã thêm Lì Xì Bot vào nhóm/);
   assert.ok(!/chưa có quyền admin/i.test(welcome), `không được nhắc thiếu quyền: ${welcome}`);
   assert.ok(!welcome.includes(growth.RIGHTS_NEEDED_TEXT));
@@ -715,7 +747,7 @@ test('kho Postgres: /bxh và /thongke cho đúng con số như kho JSON; trạng
     // my_chat_member + referral trên Postgres, rồi instance mới đọc lại đúng.
     const PG_NEW = BASE - 24;
     await drive(bot, errors, myChatMemberUpdate(groupChat(PG_NEW), A, 'left', 'member'));
-    assert.match(lastText(), /chưa có quyền admin/i);
+    assert.match(lastTextTo(PG_NEW), /chưa có quyền admin/i);
     await drive(bot, errors, myChatMemberUpdate(groupChat(PG_NEW), A, 'left', 'member'));
     await drive(bot, errors, textUpdate(groupChat(PG_NEW), A, `/start ${growth.encodeReferralPayload(PG_RANK)}`));
     assert.equal(sentMessages().filter((m) => m.chat_id === PG_NEW).length, 1, 'chào mừng đúng một lần');
@@ -739,4 +771,124 @@ test('kho Postgres: /bxh và /thongke cho đúng con số như kho JSON; trạng
     }
     await closeAllPools();
   }
+});
+
+// ===========================================================================
+// 9) Báo ngay cho chủ bot khi một nhóm THẬT thêm bot
+// ===========================================================================
+//
+// Đây là chỉ số quan trọng nhất của dự án, và chủ bot không nên phải ngồi gõ /thongke
+// để phát hiện ra. Tin báo chỉ đi tới BOT_SUPER_ADMIN_IDS, không bao giờ vào nhóm nào.
+
+const G_ALERT = BASE - 31;
+const G_ALERT_IGNORED = BASE - 32;
+const G_ALERT_DM_FAIL = BASE - 33;
+const G_ALERT_NO_COUNT = BASE - 34;
+
+/** Nhóm có tên chứa HTML — tên do người khác đặt nên bắt buộc phải escape. */
+function namedGroup(id) {
+  return { id, type: 'supergroup', title: '<b>Nhóm Cường</b> & bạn' };
+}
+
+test('nhóm mới thêm bot: chủ bot được nhắn riêng đúng một lần, có tên nhóm (đã escape), số thành viên và tổng số nhóm', async () => {
+  const { bot, errors } = makeBot();
+  const chat = namedGroup(G_ALERT);
+
+  await drive(bot, errors, myChatMemberUpdate(chat, A, 'left', 'administrator'));
+
+  const dms = sentTo(OWNER_ID);
+  assert.equal(dms.length, 1, 'chủ bot được báo đúng một lần');
+  assert.equal(dms[0].parse_mode, 'HTML');
+  const text = dms[0].text;
+  assert.match(text, /Có nhóm mới thêm Lì Xì Bot/);
+  assert.match(text, /&lt;b&gt;Nhóm Cường&lt;\/b&gt; &amp; bạn/, 'tên nhóm phải được escape');
+  assert.ok(!text.includes('<b>Nhóm Cường'), 'không được để HTML của người khác lọt qua');
+  assert.match(text, /Số thành viên \(xấp xỉ\): <b>42<\/b>/);
+  assert.match(text, /Tổng số nhóm đang có bot: <b>\d+<\/b>/);
+  assert.match(text, /chưa ghi nhận/, 'lúc này chưa biết nhóm đến từ đâu — phải nói đúng như vậy');
+
+  // Nhóm vẫn nhận đúng một lời chào mừng, và nó KHÔNG chứa tin báo của chủ bot.
+  assert.equal(sentTo(G_ALERT).length, 1);
+  assert.ok(!lastTextTo(G_ALERT).includes('Có nhóm mới'));
+
+  // Telegram gửi lại update y hệt → không báo lần hai.
+  await drive(bot, errors, myChatMemberUpdate(chat, A, 'left', 'administrator'));
+  assert.equal(sentTo(OWNER_ID).length, 1, 'idempotent theo nhóm');
+});
+
+test('nhóm nằm trong IGNORED_CHAT_IDS (nhóm demo, nhóm thử của chủ dự án): không báo', async () => {
+  const { bot, errors } = makeBot(jsonStorage, {
+    env: { IGNORED_CHAT_IDS: `${G_ALERT_IGNORED}, -1009999999999` },
+  });
+
+  await drive(bot, errors, myChatMemberUpdate(namedGroup(G_ALERT_IGNORED), A, 'left', 'administrator'));
+
+  assert.equal(sentTo(G_ALERT_IGNORED).length, 1, 'nhóm vẫn được chào mừng như thường');
+  assert.equal(sentTo(OWNER_ID).length, 0, 'nhưng chủ bot KHÔNG bị làm phiền');
+});
+
+test('chủ bot chưa bấm Start / đã chặn bot: tin báo hỏng nhưng lời chào mừng vẫn chạy', async () => {
+  const { bot, errors } = makeBot();
+  sendMessageFailsFor = OWNER_ID;
+
+  // `drive` ném lại mọi lỗi bot.catch bắt được — không có lỗi nào nghĩa là handler sống sót.
+  await drive(bot, errors, myChatMemberUpdate(namedGroup(G_ALERT_DM_FAIL), A, 'left', 'member'));
+
+  assert.equal(sentTo(G_ALERT_DM_FAIL).length, 1, 'nhóm mới vẫn được chào mừng');
+  assert.match(lastTextTo(G_ALERT_DM_FAIL), /Cảm ơn đã thêm Lì Xì Bot vào nhóm/);
+  const state = await jsonStorage.readGroup(G_ALERT_DM_FAIL);
+  assert.ok(state.growth.onboardedAt, 'trạng thái nhóm vẫn được ghi đúng');
+});
+
+test('Telegram không trả được số thành viên: vẫn báo, và nói thẳng là chưa lấy được', async () => {
+  const { bot, errors } = makeBot();
+  memberCountResult = new Error('Bad Request: member list is inaccessible');
+
+  await drive(bot, errors, myChatMemberUpdate(namedGroup(G_ALERT_NO_COUNT), A, 'left', 'member'));
+
+  const dms = sentTo(OWNER_ID);
+  assert.equal(dms.length, 1);
+  assert.match(dms[0].text, /Số thành viên: chưa lấy được/);
+  assert.match(dms[0].text, /chưa có quyền admin/i, 'thêm mà chưa là admin thì phải nhắc');
+});
+
+test('parseIgnoredChatIds / isIgnoredChatId / newGroupAlertText (hàm thuần)', () => {
+  assert.deepEqual(growth.parseIgnoredChatIds(' -1001 , -1002 ,, '), ['-1001', '-1002']);
+  assert.deepEqual(growth.parseIgnoredChatIds(''), []);
+  assert.deepEqual(growth.parseIgnoredChatIds(null), []);
+  assert.equal(growth.isIgnoredChatId(-1001, ['-1001']), true);
+  assert.equal(growth.isIgnoredChatId(-1001, ['-1002']), false);
+  assert.equal(growth.isIgnoredChatId(-1001, []), false);
+
+  const referred = growth.newGroupAlertText({
+    title: 'Nhóm ABC',
+    memberCount: 300,
+    referred: true,
+    groupsTotal: 12,
+    isAdmin: true,
+  });
+  assert.match(referred, /Nhóm ABC/);
+  assert.match(referred, /<b>300<\/b>/);
+  assert.match(referred, /<b>có<\/b> \(bot đang tự lan truyền\)/);
+  assert.match(referred, /<b>12<\/b>/);
+  assert.ok(!/chưa có quyền admin/i.test(referred));
+
+  const unknown = growth.newGroupAlertText({});
+  assert.match(unknown, /không có tên/);
+  assert.match(unknown, /chưa lấy được/);
+  assert.match(unknown, /chưa đếm được/);
+});
+
+test('notifySuperAdmins: một người lỗi không chặn những người còn lại', async () => {
+  const sent = [];
+  const telegram = {
+    async sendMessage(id, text, extra) {
+      if (String(id) === '2') throw new Error('Forbidden: bot was blocked by the user');
+      sent.push({ id, text, extra });
+    },
+  };
+  const result = await growth.notifySuperAdmins(telegram, ['1', '2', '3', '', '  '], 'xin chào');
+  assert.deepEqual(result, { sent: 2, failed: 1 });
+  assert.deepEqual(sent.map((s) => s.id), ['1', '3']);
+  assert.equal(sent[0].extra.parse_mode, 'HTML');
 });

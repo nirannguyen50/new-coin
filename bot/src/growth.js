@@ -344,6 +344,96 @@ function aggregateGrowthStats(states, { sinceMs }) {
   return stats;
 }
 
+// ---------------------------------------------------------------------------
+// BÁO NGAY khi một nhóm THẬT thêm bot (chỉ nhắn riêng cho chủ bot)
+// ---------------------------------------------------------------------------
+
+/**
+ * Danh sách id chat KHÔNG đáng báo: nhóm demo công khai, nhóm nháp của chủ dự án,
+ * nhóm test. HÀM THUẦN.
+ *
+ * Vì sao phải có: "có nhóm mới" là chỉ số quan trọng nhất của dự án này, nhưng nếu mỗi
+ * lần chủ dự án tự thêm bot vào nhóm thử của mình cũng kêu lên một tiếng thì tin báo mất
+ * hết ý nghĩa. Để ở biến môi trường (`IGNORED_CHAT_IDS`) chứ không viết cứng trong code,
+ * để thêm/bớt một nhóm không phải deploy lại.
+ */
+function parseIgnoredChatIds(raw) {
+  return String(raw == null ? '' : raw)
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Nhóm này có nằm trong danh sách bỏ qua không. HÀM THUẦN. */
+function isIgnoredChatId(chatId, ignoredIds = []) {
+  const id = String(chatId);
+  return ignoredIds.map(String).includes(id);
+}
+
+/**
+ * Tin nhắn riêng báo cho chủ bot biết có nhóm thật vừa thêm bot. HÀM THUẦN.
+ *
+ * Đây là tin nhắn DUY NHẤT trong cả bot có chứa TÊN nhóm — và nó chỉ đi tới chủ bot
+ * (`BOT_SUPER_ADMIN_IDS`), không bao giờ đi vào một nhóm nào khác. Tên nhóm do người
+ * khác đặt nên bắt buộc phải escape HTML.
+ *
+ * @param {{title?: string, memberCount?: number|null, referred?: boolean,
+ *          groupsTotal?: number|null, isAdmin?: boolean}} info
+ * @param {{escapeHtml?: (s: string) => string, formatNumber?: (n: number) => string}} [fmt]
+ */
+function newGroupAlertText(info = {}, { escapeHtml = (s) => String(s), formatNumber = (n) => String(n) } = {}) {
+  const title = String(info.title || '').trim() || 'không có tên';
+  const lines = [
+    '🎉 <b>Có nhóm mới thêm Lì Xì Bot!</b>',
+    `• Tên nhóm: <b>${escapeHtml(title)}</b>`,
+  ];
+  lines.push(
+    info.memberCount == null
+      ? '• Số thành viên: chưa lấy được (Telegram không trả lời kịp — không sao)'
+      : `• Số thành viên (xấp xỉ): <b>${formatNumber(Number(info.memberCount) || 0)}</b>`
+  );
+  lines.push(
+    info.referred
+      ? '• Đến từ nút "Thêm vào nhóm" của một nhóm khác: <b>có</b> (bot đang tự lan truyền)'
+      : '• Đến từ nút "Thêm vào nhóm" của một nhóm khác: <b>chưa ghi nhận</b>'
+  );
+  lines.push(
+    info.groupsTotal == null
+      ? '• Tổng số nhóm đang có bot: chưa đếm được'
+      : `• Tổng số nhóm đang có bot: <b>${formatNumber(Number(info.groupsTotal) || 0)}</b>`
+  );
+  if (info.isAdmin === false) {
+    lines.push('', '⚠️ Bot chưa có quyền admin trong nhóm này nên thưởng hoạt động chưa chạy được.');
+  }
+  lines.push('', 'Gõ <code>/thongke</code> để xem toàn bộ con số.');
+  return lines.join('\n');
+}
+
+/**
+ * Nhắn riêng cho từng chủ bot. KHÔNG BAO GIỜ ném lỗi ra ngoài: chủ bot có thể chưa bấm
+ * Start với bot, có thể đã chặn bot, có thể nhập nhầm id — không lý do nào trong số đó
+ * được phép làm hỏng việc chào mừng nhóm mới.
+ *
+ * @returns {Promise<{sent: number, failed: number}>}
+ */
+async function notifySuperAdmins(telegram, superAdminIds, text) {
+  let sent = 0;
+  let failed = 0;
+  for (const rawId of superAdminIds || []) {
+    const id = String(rawId).trim();
+    if (!id) continue;
+    try {
+      await telegram.sendMessage(id, text, { parse_mode: 'HTML' });
+      sent += 1;
+    } catch (err) {
+      failed += 1;
+      // Cố ý KHÔNG in nội dung lỗi kèm id: chỉ cần biết là không gửi được.
+      console.error(`Không gửi được tin báo nhóm mới cho chủ bot (id ${id}).`);
+    }
+  }
+  return { sent, failed };
+}
+
 /** Tin nhắn /thongke. Chỉ số đếm — không bao giờ in tên hay id. */
 function statsText(stats, { formatNumber = (n) => String(n) } = {}) {
   const f = (n) => formatNumber(Number(n) || 0);
@@ -383,8 +473,12 @@ module.exports = {
   decodeReferralPayload,
   encodeReferralPayload,
   growthOf,
+  isIgnoredChatId,
+  newGroupAlertText,
   normalizeBotUsername,
+  notifySuperAdmins,
   onboardingText,
+  parseIgnoredChatIds,
   recordReferral,
   statsText,
   statsWindowStart,

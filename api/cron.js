@@ -3,12 +3,26 @@
 /**
  * api/cron.js — CÔNG VIỆC HẰNG NGÀY trên Vercel (xem `crons` trong `vercel.json`).
  *
- * Hai việc, cả hai đều idempotent (chạy lại không gây hại):
+ * Bốn việc, tất cả đều idempotent (chạy lại không gây hại):
  *   1. Phát thưởng hoạt động cho mọi nhóm — mỗi (nhóm, ngày) chỉ phát ĐÚNG MỘT LẦN,
  *      dấu mốc nằm trong bảng `lixi_reward_runs` của database.
  *   2. Quét các bao lì xì đã hết giờ và hoàn phần chưa ai nhận cho người gửi.
  *      Đây là LƯỚI AN TOÀN cho cơ chế "dọn lười": bình thường bao lì xì được đóng ngay
  *      khi nhóm có hoạt động tiếp theo, nhưng nếu nhóm im lặng hẳn thì cron này dọn.
+ *   3. Đăng MỘT bài lên kênh Telegram công khai (`bot/src/channel.js`). Mã bài được xí
+ *      phần trong bảng `lixi_channel_posts` trước khi gửi, nên không bao giờ đăng trùng.
+ *   4. Ghi báo cáo tiến độ hằng ngày lên GitHub (`bot/src/report.js`).
+ *
+ * ---------------------------------------------------------------------------
+ * THỨ TỰ ƯU TIÊN KHI CÓ LỖI
+ * ---------------------------------------------------------------------------
+ * Việc 1 và 2 động vào ĐIỂM CỦA NGƯỜI DÙNG — lỗi ở đó làm cả lần chạy bị coi là hỏng
+ * (HTTP 500) để Vercel hiện lên và người thật vào xem.
+ *
+ * Việc 3 và 4 chỉ là TRUYỀN THÔNG và BÁO CÁO. Kênh bị xoá, token GitHub hết hạn, mất
+ * mạng giữa chừng — không cái nào được phép làm lần chạy bị coi là hỏng, và tuyệt đối
+ * không được chặn phần phát thưởng (vốn đã chạy xong từ trước). Vì vậy lý do bỏ qua
+ * của hai việc này nằm ở `summary.kenh` / `summary.baoCao`, KHÔNG nằm ở `summary.loi`.
  *
  * ---------------------------------------------------------------------------
  * CHẶN NGƯỜI LẠ
@@ -38,6 +52,8 @@ const {
   sendJson,
 } = require('../bot/src/serverless');
 const { safeErrorMessage } = require('../bot/src/redact');
+const channel = require('../bot/src/channel');
+const report = require('../bot/src/report');
 
 module.exports = async function handler(req, res) {
   const auth = isAuthorizedCronRequest(
@@ -64,7 +80,15 @@ module.exports = async function handler(req, res) {
 
   const now = Date.now();
   const dateStr = ledger.dateKey(now);
-  const summary = { ok: true, ngay: dateStr, thuong: null, baoLiXi: null, loi: [] };
+  const summary = {
+    ok: true,
+    ngay: dateStr,
+    thuong: null,
+    baoLiXi: null,
+    kenh: null,
+    baoCao: null,
+    loi: [],
+  };
 
   // 1) Thưởng hoạt động (idempotent theo nhóm + ngày).
   try {
@@ -94,6 +118,37 @@ module.exports = async function handler(req, res) {
     summary.loi.push(`bao lì xì: ${safeErrorMessage(err)}`);
   }
 
+  // 3) Đăng một bài lên kênh công khai. `runChannelAutopost` đã tự bắt mọi lỗi bên
+  //    trong; try/catch này chỉ là lớp chắn cuối cùng cho những gì không lường trước.
+  try {
+    summary.kenh = await channel.runChannelAutopost({
+      telegram: app.bot.telegram,
+      storage: app.storage,
+      env: process.env,
+      nowMs: now,
+    });
+  } catch (err) {
+    const message = safeErrorMessage(err);
+    console.error('[cron] Lỗi đăng bài kênh (bỏ qua, không làm hỏng lần chạy):', message);
+    summary.kenh = { daDang: false, maBai: null, tieuDe: null, lyDo: message, conLai: null };
+  }
+
+  // 4) Báo cáo tiến độ lên GitHub. Cũng đã tự bắt lỗi bên trong.
+  try {
+    summary.baoCao = await report.runDailyReport({
+      storage: app.storage,
+      env: process.env,
+      channel: summary.kenh,
+      nowMs: now,
+    });
+  } catch (err) {
+    const message = safeErrorMessage(err);
+    console.error('[cron] Lỗi gửi báo cáo (bỏ qua, không làm hỏng lần chạy):', message);
+    summary.baoCao = { daGui: false, lyDo: message };
+  }
+
+  // CHỈ việc 1 và 2 (phát thưởng, bao lì xì) mới quyết định lần chạy này thành công hay
+  // không — xem phần "THỨ TỰ ƯU TIÊN KHI CÓ LỖI" ở đầu file.
   summary.ok = summary.loi.length === 0;
   sendJson(res, summary.ok ? 200 : 500, summary);
 };

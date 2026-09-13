@@ -152,6 +152,57 @@ class JsonGroupStorage {
     return growth.aggregateGrowthStats(states, { sinceMs });
   }
 
+  // -------------------------------------------------------------------------
+  // Kênh công khai + báo cáo hằng ngày (không thuộc nhóm nào — xem store.js)
+  // -------------------------------------------------------------------------
+
+  /** Mã các bài đã đăng lên kênh (xem `src/channel.js`). */
+  async listPostedChannelPostIds() {
+    return Object.keys(store.readBotState().channelPosts || {});
+  }
+
+  /** Mốc thời gian của bài gần nhất đã đăng (0 = chưa đăng bài nào). */
+  async lastChannelPostAt() {
+    const posts = Object.values(store.readBotState().channelPosts || {});
+    return posts.reduce((max, p) => Math.max(max, Number(p && p.postedAt) || 0), 0);
+  }
+
+  /**
+   * "Xí phần" một bài trước khi gửi lên Telegram.
+   * @returns {Promise<boolean>} true = lần chạy này được quyền đăng; false = đã có chủ.
+   */
+  async claimChannelPost(postId, nowMs = Date.now(), chatId = null) {
+    const id = String(postId);
+    return store.withBotState((state) => {
+      if (state.channelPosts[id]) return false;
+      state.channelPosts[id] = { postedAt: Number(nowMs) || Date.now(), chatId: chatId ? String(chatId) : null };
+      return true;
+    });
+  }
+
+  /** Trả mã bài về hàng đợi khi Telegram từ chối (để hôm sau đăng lại). */
+  async releaseChannelPost(postId) {
+    const id = String(postId);
+    return store.withBotState((state) => {
+      const existed = !!state.channelPosts[id];
+      delete state.channelPosts[id];
+      return existed;
+    });
+  }
+
+  /** Dấu mốc của báo cáo hằng ngày (xem `src/report.js`); chưa có thì `null`. */
+  async readReportState(key = 'daily') {
+    const value = store.readBotState().reports[String(key)];
+    return value == null ? null : value;
+  }
+
+  async writeReportState(value, key = 'daily') {
+    return store.withBotState((state) => {
+      state.reports[String(key)] = value;
+      return value;
+    });
+  }
+
   async claimEnvelope(chatId, envelopeId, userId, nowMs = Date.now()) {
     return this.withGroup(chatId, (state) =>
       ledger.claimEnvelopeAndCredit(state, envelopeId, userId, nowMs)

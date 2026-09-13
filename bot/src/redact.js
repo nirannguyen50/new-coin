@@ -42,12 +42,19 @@ function redactSecrets(text, env = process.env) {
   out = out.replace(/\b\d{5,}:[A-Za-z0-9_-]{20,}/g, MASK);
   // Mật khẩu trong chuỗi kết nối: postgres://user:matkhau@host/db
   out = out.replace(/(\b[a-z][a-z0-9+.-]*:\/\/[^\s:/@]+):[^\s@]+@/gi, `$1:${MASK}@`);
+  // Token GitHub (dùng cho báo cáo hằng ngày — xem src/report.js). GitHub đặt tiền tố cố
+  // định cho mọi loại token: `ghp_` (classic), `github_pat_` (fine-grained), `gho_`/`ghu_`/
+  // `ghs_`/`ghr_` (OAuth, app, refresh). Bắt theo tiền tố nên chặn được cả token của
+  // người khác lọt vào thông báo lỗi, không chỉ token đang đặt trong biến môi trường.
+  out = out.replace(/\bgithub_pat_[A-Za-z0-9_]{10,}/g, MASK);
+  out = out.replace(/\bgh[pousr]_[A-Za-z0-9]{10,}/g, MASK);
 
   // (2) Theo giá trị của các biến môi trường nhạy cảm.
   const sensitive = [
     'TELEGRAM_BOT_TOKEN',
     'CRON_SECRET',
     'SETUP_KEY',
+    'GITHUB_TOKEN',
     'DATABASE_URL',
     'POSTGRES_URL',
     'POSTGRES_PRISMA_URL',

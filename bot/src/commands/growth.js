@@ -5,7 +5,8 @@
  * (xem quy tắc trung thực ở đầu src/growth.js):
  *
  *   my_chat_member   — bot vừa được thêm vào nhóm / được cấp admin: chào mừng admin ĐÚNG
- *                      MỘT LẦN (idempotent), nói rõ cần quyền gì nếu thiếu.
+ *                      MỘT LẦN (idempotent), nói rõ cần quyền gì nếu thiếu, VÀ nhắn riêng
+ *                      cho chủ bot biết "có nhóm mới" (bỏ qua các nhóm trong IGNORED_CHAT_IDS).
  *   /huongdan        — hướng dẫn ngắn, ai cũng gõ được, trong nhóm hay chat riêng.
  *   /bxh             — top 10 người NHẬN nhiều điểm nhất 7 ngày qua (tip + bao lì xì).
  *   /thongke         — chỉ chủ bot (BOT_SUPER_ADMIN_IDS): số nhóm, nhóm hoạt động, ...
@@ -23,7 +24,52 @@ function rankMark(index) {
   return RANK_MARKS[index] || `${index + 1}.`;
 }
 
-function register(bot, { storage, superAdminIds = [] } = {}) {
+/**
+ * Nhắn riêng cho chủ bot khi một nhóm THẬT vừa thêm bot.
+ *
+ * Chạy đúng MỘT LẦN cho mỗi nhóm vì chỉ được gọi khi `applyMyChatMember` trả về
+ * 'welcome' — mốc `onboardedAt` trong state đã lo phần idempotent, không cần cờ riêng.
+ *
+ * KHÔNG BAO GIỜ ném lỗi ra ngoài: lời chào mừng trong nhóm mới là việc chính, còn tin
+ * báo cho chủ bot là việc phụ. Chủ bot chưa bấm Start với bot thì Telegram trả lỗi
+ * "can't initiate conversation" — chuyện bình thường, không được để nó làm hỏng gì cả.
+ */
+async function alertOwnersAboutNewGroup(ctx, { storage, superAdminIds, env, chat, info, referred }) {
+  try {
+    if (!superAdminIds || superAdminIds.length === 0) return;
+    const ignored = growth.parseIgnoredChatIds(env.IGNORED_CHAT_IDS);
+    if (growth.isIgnoredChatId(chat.id, ignored)) {
+      console.log('[nhom-moi] Bỏ qua tin báo: nhóm nằm trong IGNORED_CHAT_IDS.');
+      return;
+    }
+
+    // Số thành viên: "rẻ thì lấy" — một lệnh API, hỏng thì thôi, không thử lại.
+    let memberCount = null;
+    try {
+      memberCount = await ctx.telegram.getChatMembersCount(chat.id);
+    } catch (err) {
+      memberCount = null;
+    }
+
+    let groupsTotal = null;
+    try {
+      const stats = await storage.growthStats(growth.statsWindowStart(Date.now()));
+      groupsTotal = stats.groupsTotal;
+    } catch (err) {
+      groupsTotal = null;
+    }
+
+    const text = growth.newGroupAlertText(
+      { title: chat.title, memberCount, referred, groupsTotal, isAdmin: info.isAdmin },
+      { escapeHtml, formatNumber }
+    );
+    await growth.notifySuperAdmins(ctx.telegram, superAdminIds, text);
+  } catch (err) {
+    console.error('Không gửi được tin báo nhóm mới:', safeErrorMessage(err));
+  }
+}
+
+function register(bot, { storage, superAdminIds = [], env = process.env } = {}) {
   // -------------------------------------------------------------------------
   // Bot vừa được thêm vào nhóm / cấp admin / gỡ khỏi nhóm
   // -------------------------------------------------------------------------
@@ -35,14 +81,28 @@ function register(bot, { storage, superAdminIds = [] } = {}) {
     if (info.event === 'none') return;
 
     const now = Date.now();
-    const post = await storage.withGroup(
+    const outcome = await storage.withGroup(
       chat.id,
-      (state) => growth.applyMyChatMember(state, info, now),
+      (state) => {
+        const post = growth.applyMyChatMember(state, info, now);
+        // Đọc luôn trong cùng transaction: nhóm đến từ nút "Thêm vào nhóm" hay không.
+        // (Thường payload /start tới ngay SAU update này nên phần lớn trường hợp là
+        // "chưa ghi nhận" — tin báo nói đúng những gì biết tại thời điểm đó.)
+        return { post, referred: !!(state.growth && state.growth.referredByChatId) };
+      },
       { nowMs: now }
     );
-    if (post === 'welcome') {
+    if (outcome.post === 'welcome') {
       await ctx.replyWithHTML(growth.onboardingText({ isAdmin: info.isAdmin }));
-    } else if (post === 'admin_ok') {
+      await alertOwnersAboutNewGroup(ctx, {
+        storage,
+        superAdminIds,
+        env,
+        chat,
+        info,
+        referred: outcome.referred,
+      });
+    } else if (outcome.post === 'admin_ok') {
       await ctx.replyWithHTML(growth.ADMIN_GRANTED_TEXT);
     }
   });
@@ -104,4 +164,4 @@ function register(bot, { storage, superAdminIds = [] } = {}) {
   });
 }
 
-module.exports = { register, rankMark };
+module.exports = { alertOwnersAboutNewGroup, register, rankMark };
