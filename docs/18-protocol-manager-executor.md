@@ -44,6 +44,47 @@ một Routine gắn vào máy cũng chỉ tạo được *từ* chính máy đó
 đúng máy đó. Vì vậy thẻ `CẦN MÁY` chỉ nhúc nhích khi chủ dự án mở Cowork trên máy mình. Đoạn dán sẵn cho
 việc đó — làm một lần rồi máy tự nhận việc về sau — ở `docs/21-cowork-tren-may.md`.
 
+## 1c. Hai luật sinh ra từ sự cố 14/9 — hàng đợi đám mây bị bỏ đói
+
+Ngày 14/9 phiên đám mây của Thực thi mở lên, nhìn bảng việc, không thấy thẻ nào làm được, rồi tắt.
+Cả ngày. Bảng lúc đó có đúng hai thẻ mở và **Quản lý gắn nhãn `CẦN MÁY` cho cả hai**. Không ai làm sai
+luật nào — và đó chính là vấn đề: luật cũ cho phép điều này xảy ra mà không ai nhận ra.
+
+### Luật A — nhãn `CẦN MÁY` gắn theo BƯỚC, không gắn theo THẺ
+
+Lỗi gốc: thẻ A10 là "theo dõi bình luận bài Viblo". *Đọc* một bài công khai không cần đăng nhập; chỉ
+*gõ trả lời* mới cần. Quản lý gắn nhãn theo bước khó nhất nên cả thẻ bị treo, và 90% việc làm được
+nằm im theo.
+
+> **Chỉ gắn `CẦN MÁY` cho thẻ mà MỌI bước đều cần máy.**
+> Thẻ có bước đám mây làm được → **tách đôi**, hoặc ghi rõ trong thẻ phần nào đám mây làm, phần nào chờ máy.
+> Trước khi gắn nhãn, hỏi từng bước một: *bước này có cần tài khoản đã đăng nhập không?*
+> Đọc trang công khai, kể cả trang có phần bình luận, **không cần**.
+
+### Luật B — hàng đợi rỗng là MỘT PHÁT HIỆN, không phải một trạng thái bình thường
+
+Luật cũ ghi "hết việc đám mây làm được thì không bịa việc — để Thực thi im". Luật đó đúng, nhưng nó
+biến "để trống" thành lựa chọn an toàn, trong khi trống có hai nghĩa hoàn toàn khác nhau:
+
+| Trống vì | Đúng hay sai |
+|---|---|
+| Dự án thật sự không còn việc nào đám mây làm được lúc này | Chấp nhận được — **nhưng phải ghi lý do ra** |
+| Quản lý chưa nghĩ ra, hoặc gắn sai nhãn, hoặc quên | **Hỏng**, và đây mới là trường hợp thường gặp |
+
+> **Mỗi lượt Quản lý phải đếm: có bao nhiêu thẻ chưa xong mà đám mây làm được?**
+> Bằng 0 → không được kết thúc lượt. Phải làm một trong hai, không có lựa chọn thứ ba:
+> 1. Giao thêm việc thật, phục vụ đúng mục tiêu gần nhất (hiện là Cửa 1 của `docs/19`); hoặc
+> 2. Ghi một tin `NOTE` nói thẳng vì sao lúc này không có việc nào — **kèm cái đang chặn**.
+>
+> "Không bịa việc" vẫn giữ nguyên. Nhưng "không nghĩ ra việc" không được im lặng trôi qua.
+
+### Vì sao im lặng che được lỗi này lâu
+
+Nhịp sống (`status/heartbeat`) đo *Quản lý và Thực thi còn sống không*, chứ không đo *Thực thi có việc
+không*. Thêm nữa, giao thức cố ý dạy phiên đám mây: không có thẻ thì **kết thúc ngay, không gửi tin**.
+Nên một phiên chạy đúng luật mà đói việc trông **giống hệt** một phiên khoẻ mạnh. Vì vậy Trạm điều phối
+phải hiện thẳng con số *việc đám mây đang mở* — im lặng không bao giờ được là bằng chứng của sức khoẻ.
+
 ## 2. Kênh liên lạc
 
 Bảng điều khiển chung (artifact) có kho dữ liệu dùng chung. Cả hai bên đọc và ghi vào đó.

@@ -105,6 +105,14 @@ button{font-family:inherit}
 .send:disabled{opacity:.45;cursor:not-allowed}
 .note{font-size:.74rem;color:var(--ink-3);line-height:1.5}
 
+/* bang bao doi viec: hang doi dam may rong */
+.starve{background:var(--son-soft);border:1px solid var(--son);border-radius:8px;
+  padding:12px 14px;margin:0 0 14px;display:flex;flex-direction:column;gap:4px}
+.starve .sh{font-weight:700;color:var(--son);font-size:.9rem}
+.starve .sn{font-size:.8rem;color:var(--ink-2);line-height:1.5}
+.starve.ok{background:transparent;border-color:var(--line)}
+.starve.ok .sh{color:var(--ink-2)}
+
 /* tasks */
 .task{display:grid;grid-template-columns:4px 1fr;gap:0;border-bottom:1px solid var(--line)}
 .task:last-child{border-bottom:none}
@@ -191,6 +199,11 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
       Tết Đinh Mùi · <span class="mono">6/2/2027</span><br>
       còn <b id="dday" class="mono">—</b> ngày
     </div>
+  </div>
+
+  <div class="starve" id="starve" hidden>
+    <span class="sh" id="starve-h"></span>
+    <span class="sn" id="starve-n"></span>
   </div>
 
   <div class="metrics">
@@ -303,9 +316,11 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
   var MILES=[
     ["Đã xong","Bot chạy thật. Tự đăng bài, tự điền số liệu, tự báo cáo — code xong, chờ 3 biến môi trường",1],
     ["Đã xong","Ba bài đăng đầu đã soạn và duyệt (growth/09); nội quy 12 nơi đăng đã xác minh",1],
-    ["Chờ chủ dự án","A1 (3 biến Vercel), A2 (/thongke), A3 (đăng 3 bài) — cần máy có Telegram và trình duyệt đã đăng nhập",0],
-    ["Tuần 2–5","Đăng đợt 1: Viblo, Dev.to, Reddit. Đợt 2 khi có nhóm thật: Indie Hackers, Show HN, Hashnode",0],
-    ["Tuần 6–13","Lặp và đo. Mốc: ≥3 nhóm hoạt động. Viết docs/19 doanh thu khi có nhóm thật",0],
+    ["Đã xong","14/9: bot TỰ đăng bài đầu tiên lên kênh và TỰ ghi báo cáo số liệu vào Issue #1 — automation chạy thật, có bằng chứng",1],
+    ["Đã xong","docs/19 chọn hướng doanh thu: gói công cụ cho admin nhóm. Chưa đặt giá — chờ Cửa 1",1],
+    ["Chờ chủ dự án","A3 — đăng Dev.to rồi Reddit. Cần máy có trình duyệt đã đăng nhập",0],
+    ["CỬA 1","≥1 nhóm KHÔNG phải của chủ dự án dùng bot ≥7 ngày. Chưa qua — mọi thứ khác chỉ là chuẩn bị",0],
+    ["Tuần 6–13","Lặp và đo. Mốc: ≥3 nhóm hoạt động thật. 0 nhóm người lạ tới tuần 13 thì dừng hẳn",0],
     ["Tuần 14–21","Chiến dịch Tết",0],
     ["6/2/2027","Tết Đinh Mùi — đỉnh mùa vụ",0]
   ];
@@ -371,16 +386,46 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
           (t.acceptance?'<div class="ac"><b>Nghiệm thu:</b> '+esc(t.acceptance)+'</div>':''))+
       '</div></div>';
   }
+  /**
+   * Bang bao DOI VIEC. Sinh ra tu su co 14/9: ca bang viec bi gan "can may" nen phien dam
+   * may cua Thuc thi mo len, khong thay the nao lam duoc, roi tat — ca ngay. Nhip song chi
+   * do CON SONG hay khong, khong do CO VIEC hay khong, va giao thuc lai day phien dam may
+   * "khong co the thi ket thuc ngay, khong gui tin". Nen mot phien doi viec trong Y HET mot
+   * phien khoe manh. Con so nay la thu duy nhat pha duoc su im lang do.
+   */
+  function showStarve(cloudOpen,machineOpen){
+    var box=$("starve");box.hidden=false;
+    if(cloudOpen>0){
+      box.className="starve ok";
+      $("starve-h").textContent="Việc đám mây đang mở: "+cloudOpen;
+      $("starve-n").textContent="Thực thi có việc để làm ngay ở lượt tới."+
+        (machineOpen?" Ngoài ra "+machineOpen+" việc chờ máy chủ dự án.":"");
+      return;
+    }
+    box.className="starve";
+    $("starve-h").textContent="HÀNG ĐỢI ĐÁM MÂY TRỐNG — Thực thi không có việc nào làm được";
+    $("starve-n").textContent=machineOpen
+      ? "Cả "+machineOpen+" việc đang mở đều gắn nhãn cần máy. Phiên đám mây sẽ mở lên, không "+
+        "thấy gì, rồi tắt. Quản lý phải giao thêm việc hoặc ghi rõ vì sao không có — xem docs/18 mục 1c."
+      : "Không còn việc nào đang mở. Quản lý phải giao việc mới hoặc ghi rõ cái gì đang chặn — "+
+        "xem docs/18 mục 1c.";
+  }
+
   function renderTasks(rows){
     var el=$("tasks");
     if(!rows.length){el.innerHTML='<div class="empty">Chưa có việc nào đang giao.</div>';return}
-    var open=rows.filter(function(t){return t.status!=="done"});
-    var done=rows.filter(function(t){return t.status==="done"});
+    // "huy" la da dong, y het "done" — thieu no thi the da huy van hien nhu viec dang mo.
+    var closed=function(t){return t.status==="done"||t.status==="huy"};
+    var open=rows.filter(function(t){return !closed(t)});
+    var done=rows.filter(closed);
     var machine=open.filter(function(t){return t.needsMachine});
+    // Hang doi DAM MAY: viec Thuc thi lam duoc ngay, khong cho may chu du an.
+    var cloud=open.filter(function(t){return t.owner==="thuc-thi"&&!t.needsMachine});
+    showStarve(cloud.length,machine.length);
     var html=open.map(function(t){return taskCard(t,false)}).join("");
     if(!open.length)html='<div class="empty">Không còn việc nào đang mở.</div>';
     if(done.length){
-      html+='<details class="done-box"><summary>Đã xong · '+done.length+'</summary>'+
+      html+='<details class="done-box"><summary>Đã xong hoặc đã huỷ · '+done.length+'</summary>'+
         done.map(function(t){return taskCard(t,true)}).join("")+'</details>';
     }
     el.innerHTML=html;
