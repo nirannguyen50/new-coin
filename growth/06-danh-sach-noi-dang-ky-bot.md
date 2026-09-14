@@ -321,3 +321,31 @@ giao diện tiếng Việt. Ba nơi này đáng làm để có chỗ tham chiế
 1. **Tìm cho ra nơi tiếng Việt thứ hai.** Đây là việc cấp nhất, và chưa ai làm. → thẻ A16.
 2. Xác minh Tinh tế và Dạy Nhau Học — Tinh tế cần máy, Dạy Nhau Học đám mây đọc thêm được.
 3. Rồi mới tới ba nơi tiếng Anh, và ghi rõ chúng là nơi lấy phản hồi, không phải nơi lấy người dùng.
+
+### 5b. Kết quả A16 (14/9): phiên đám mây đã chạm trần khảo sát
+
+Thực thi tìm 5 nơi tiếng Việt mới. Kết quả: **0 nơi đủ điều kiện.** Không phải vì không có, mà vì
+**hai hướng hứa hẹn nhất đều không kiểm được từ đám mây.**
+
+| Nơi | Kết luận | Bằng chứng |
+|---|---|---|
+| **Nhóm Facebook** | ⛔ **Không đọc được từ đám mây.** `facebook.com/groups/*` bị `robots.txt` chặn toàn bộ — công cụ trả `ROBOTS_DISALLOWED` cho mọi nhóm đã thử | Đây là hướng `docs/16` và mục 5 ở trên đánh giá cao nhất, và nó **chỉ mở được bằng máy có Facebook đã đăng nhập** |
+| **Reddit** | ⛔ Chặn ở tầng mạng (`SITE_BLOCKED`), kể cả `old.reddit.com` | Không đọc được nội quy r/VietNam |
+| **VN-Zoom** (vn-z.vn) | ❌ **Loại** | Nội quy: *"Cấm post link dẫn gián tiếp / trực tiếp trong 1 bài viết / bài trả lời nhằm quảng cáo cho 1 Forums / Website"* |
+| **quantrinet.com** | ⚠️ chưa xác minh được nội quy | Diễn đàn còn sống (bài mới nhất 22/12/2025) nhưng không mở được thread nội quy. Đối tượng là quản trị mạng, chỉ gần đúng |
+| **tgram.vn** | ⚠️ chưa xác minh được cách nộp | Danh bạ nhóm, cập nhật 17/6/2026. Không thấy form đề xuất nhóm — giống `telegram-groups.com` |
+| **kipalog.com** | ⚠️ chưa rõ còn hoạt động | Trang tải được, copyright "2022-2026", không đọc được ngày bài mới nhất |
+| **Tinh tế** | ⛔ vẫn 403 | Không có gì mới so với A4 |
+
+**Năm nhóm Facebook ứng viên** (mới chỉ có tên và link từ kết quả tìm kiếm — **chưa xác minh** số thành viên,
+nội quy, hay cách nộp): Cộng đồng Telegram VietNam · Nhóm Telegram · Python Việt Nam · J2TEAM Community ·
+NoCode Việt Nam.
+
+### Điều này đổi kế hoạch thế nào
+
+Trước A16 tôi tưởng nút thắt là "chưa ai đi tìm". Sai. Nút thắt là **đám mây không với tới nơi cần tìm.**
+Ba kênh có khả năng ra người dùng Việt nhất — Facebook, Reddit, Tinh tế — đều nằm sau một bức tường mà chỉ
+**máy của chủ dự án** đi qua được.
+
+Vì vậy con số cần theo dõi không còn là "đã thử mấy nơi", mà là **đã có mấy phiên Cowork chạy trên máy**.
+Không có phiên nào thì số nơi đăng đứng im ở 1, và mốc 7/12 sẽ tới mà không kết luận được gì.
