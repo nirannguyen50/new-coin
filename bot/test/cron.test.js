@@ -28,6 +28,7 @@ const { Telegram } = require('telegraf');
 const ledger = require('../src/ledger');
 const store = require('../src/store');
 const { resetApp } = require('../src/serverless');
+const channel = require('../src/channel');
 const { CHANNEL_POSTS } = require('../content/channel-posts');
 
 const TOKEN = '123456789:ABCdefGhIJKlmNoPQRstuVwXyZ1234567890';
@@ -150,11 +151,18 @@ test('cron chạy đủ 4 việc: thưởng, bao lì xì, đăng bài kênh, bá
 
   // Kênh: đúng một bài, đúng bài đầu tiên của hàng đợi.
   assert.equal(body.kenh.daDang, true);
-  assert.equal(body.kenh.maBai, 'ghim');
+  // KHONG chep cung ma bai: ke tu khi co content/da-dang-tay.js, bai dau hang doi khong con
+  // la 'ghim' nua. Tinh ky vong tu chinh nguon that de test khong do moi lan danh sach doi.
+  const dauHangDoi = channel.nextChannelPost(channel.DA_DANG_TAY, channel.CHANNEL_POSTS, {}).id;
+  assert.equal(body.kenh.maBai, dauHangDoi);
   const sent = telegramCalls.filter((c) => c.method === 'sendMessage');
   assert.equal(sent.length, 1);
   assert.equal(sent[0].payload.chat_id, '@lixibot_kenh');
-  assert.equal(sent[0].payload.text, CHANNEL_POSTS[0].text);
+  assert.equal(
+    sent[0].payload.text,
+    CHANNEL_POSTS.find((p) => p.id === dauHangDoi).text,
+    'gửi nguyên văn bài đầu hàng đợi, không cắt xén'
+  );
 
   // Báo cáo: đúng một lời gọi tới GitHub, đúng issue, không lộ token trong nội dung.
   assert.equal(body.baoCao.daGui, true);
@@ -162,7 +170,7 @@ test('cron chạy đủ 4 việc: thưởng, bao lì xì, đăng bài kênh, bá
   assert.match(fetchCalls[0].url, /\/repos\/nirannguyen50\/new-coin\/issues\/12\/comments$/);
   const reportBody = JSON.parse(fetchCalls[0].init.body).body;
   assert.ok(!reportBody.includes(process.env.GITHUB_TOKEN));
-  assert.match(reportBody, /Đã đăng bài `ghim`/);
+  assert.match(reportBody, new RegExp('Đã đăng bài `' + dauHangDoi + '`'));
 });
 
 test('chạy lần thứ hai trong ngày: không đăng lại bài nào, vẫn thành công', async () => {
@@ -171,7 +179,8 @@ test('chạy lần thứ hai trong ngày: không đăng lại bài nào, vẫn t
 
   const first = await runCron();
   assert.equal(first.body.kenh.daDang, true);
-  assert.equal(first.body.kenh.maBai, 'ghim');
+  const dauHangDoi = channel.nextChannelPost(channel.DA_DANG_TAY, channel.CHANNEL_POSTS, {}).id;
+  assert.equal(first.body.kenh.maBai, dauHangDoi);
 
   // Vercel thử lại, hoặc admin tự gọi /api/cron — lần chạy thứ hai không được đăng thêm.
   telegramCalls = [];
@@ -185,8 +194,8 @@ test('chạy lần thứ hai trong ngày: không đăng lại bài nào, vẫn t
     'không được gửi thêm tin nào lên kênh'
   );
 
-  // Và bài đã đăng không bao giờ bị đăng lại: mã 'ghim' vẫn nằm trong dấu mốc.
-  assert.deepEqual(Object.keys(store.readBotState().channelPosts), ['ghim']);
+  // Và bài đã đăng không bao giờ bị đăng lại: mã vừa đăng vẫn nằm trong dấu mốc.
+  assert.deepEqual(Object.keys(store.readBotState().channelPosts), [dauHangDoi]);
 });
 
 test('GitHub hỏng (401) hoặc mất mạng: cron VẪN thành công và vẫn phát thưởng', async () => {

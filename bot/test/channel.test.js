@@ -69,13 +69,18 @@ const BASE_ENV = { CHANNEL_CHAT_ID: '@lixibot_kenh' };
  * tuần cho nó vào `content/weekly-notes.js`. Nếu test chép cứng danh sách thì cứ mỗi lần
  * thêm ghi chú là test đỏ — đỏ vì test cũ, không phải vì code hỏng.
  */
-async function readyIds(storage, nowMs) {
+async function readyIds(storage, nowMs, daDangTay = []) {
   const stats = await storage.growthStats(growth.statsWindowStart(nowMs));
   const ctx = { stats, notes: WEEKLY_NOTES };
-  return CHANNEL_POSTS.filter((p) => channel.isPostReady(p, channel.ctxFor(p, ctx))).map(
-    (p) => p.id
-  );
+  const bo = new Set(daDangTay.map(String));
+  return CHANNEL_POSTS.filter(
+    (p) => !bo.has(String(p.id)) && channel.isPostReady(p, channel.ctxFor(p, ctx))
+  ).map((p) => p.id);
 }
+
+// Phan lon test duoi day kiem HANH VI cua bo dang bai, khong kiem noi dung that cua kenh,
+// nen chung chay voi so "da dang tay" RONG. Rieng mot test kiem chinh viec gop so do.
+const KHONG_CO_SO_TAY = { daDangTay: [] };
 
 // ===========================================================================
 // 1) Thư viện nội dung: chuyển từ growth/05 sang, không được sai lệch
@@ -189,7 +194,7 @@ test('đăng lần lượt qua nhiều lần chạy, mỗi ngày đúng một b�
   const results = [];
   for (let i = 0; i < 8; i += 1) {
     results.push(
-      await channel.runChannelAutopost({ telegram, storage, env: BASE_ENV, nowMs: day })
+      await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY, telegram, storage, env: BASE_ENV, nowMs: day })
     );
     day += ledger.DAY_MS;
   }
@@ -217,7 +222,7 @@ test('đăng lần lượt qua nhiều lần chạy, mỗi ngày đúng một b�
   assert.ok(!('parse_mode' in telegram.sent[0].extra));
 
   // Cron chạy lần thứ hai TRONG CÙNG NGÀY → không đăng thêm gì.
-  const again = await channel.runChannelAutopost({
+  const again = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY,
     telegram,
     storage,
     env: BASE_ENV,
@@ -240,7 +245,7 @@ test('bài cần số liệu thật không bao giờ được đăng, dù chạy
   const ready = await readyIds(storage, day);
   const autoCount = ready.length;
   for (let i = 0; i < autoCount + 3; i += 1) {
-    await channel.runChannelAutopost({ telegram, storage, env: BASE_ENV, nowMs: day });
+    await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY, telegram, storage, env: BASE_ENV, nowMs: day });
     day += ledger.DAY_MS;
   }
 
@@ -252,7 +257,7 @@ test('bài cần số liệu thật không bao giờ được đăng, dù chạy
   }
 
   // Hết hàng đợi → bỏ qua êm, không lỗi.
-  const done = await channel.runChannelAutopost({ telegram, storage, env: BASE_ENV, nowMs: day });
+  const done = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY, telegram, storage, env: BASE_ENV, nowMs: day });
   assert.equal(done.daDang, false);
   assert.match(done.lyDo, /hết bài/i);
 });
@@ -262,7 +267,7 @@ test('Telegram từ chối: trả mã bài về hàng đợi để hôm sau đă
   const broken = fakeTelegram({ fail: new Error('Bad Request: chat not found') });
   const day = Date.UTC(2026, 8, 13, 1, 0, 0);
 
-  const failed = await channel.runChannelAutopost({
+  const failed = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY,
     telegram: broken,
     storage,
     env: BASE_ENV,
@@ -274,7 +279,7 @@ test('Telegram từ chối: trả mã bài về hàng đợi để hôm sau đă
 
   // Hôm sau Telegram bình thường trở lại → vẫn là bài đầu tiên, không nhảy cóc.
   const telegram = fakeTelegram();
-  const ok = await channel.runChannelAutopost({
+  const ok = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY,
     telegram,
     storage,
     env: BASE_ENV,
@@ -289,7 +294,7 @@ test('công tắc tắt và thiếu cấu hình: bỏ qua êm, không gửi gì,
   const telegram = fakeTelegram();
   const day = Date.UTC(2026, 8, 13, 1, 0, 0);
 
-  const off = await channel.runChannelAutopost({
+  const off = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY,
     telegram,
     storage,
     env: { ...BASE_ENV, CHANNEL_AUTOPOST: 'off' },
@@ -298,7 +303,7 @@ test('công tắc tắt và thiếu cấu hình: bỏ qua êm, không gửi gì,
   assert.equal(off.daDang, false);
   assert.match(off.lyDo, /CHANNEL_AUTOPOST=off/);
 
-  const noChannel = await channel.runChannelAutopost({ telegram, storage, env: {}, nowMs: day });
+  const noChannel = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY, telegram, storage, env: {}, nowMs: day });
   assert.equal(noChannel.daDang, false);
   assert.match(noChannel.lyDo, /CHANNEL_CHAT_ID/);
 
@@ -315,7 +320,7 @@ test('kho hỏng (không đọc/ghi được) không làm sập việc đăng b�
       throw new Error('database đang bảo trì');
     },
   };
-  const r1 = await channel.runChannelAutopost({ telegram, storage: unreadable, env: BASE_ENV, nowMs: day });
+  const r1 = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY, telegram, storage: unreadable, env: BASE_ENV, nowMs: day });
   assert.equal(r1.daDang, false);
   assert.match(r1.lyDo, /database đang bảo trì/);
 
@@ -330,7 +335,7 @@ test('kho hỏng (không đọc/ghi được) không làm sập việc đăng b�
       throw new Error('hết chỗ ghi');
     },
   };
-  const r2 = await channel.runChannelAutopost({ telegram, storage: unwritable, env: BASE_ENV, nowMs: day });
+  const r2 = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY, telegram, storage: unwritable, env: BASE_ENV, nowMs: day });
   assert.equal(r2.daDang, false);
   assert.match(r2.lyDo, /hết chỗ ghi/);
   assert.equal(telegram.sent.length, 0, 'không xí được phần thì tuyệt đối không gửi');
@@ -347,7 +352,7 @@ test('hai lần chạy SONG SONG chỉ đăng được một bài (xí phần tr
   assert.equal(await storage.claimChannelPost('ghim', day, '@lixibot_kenh'), false);
 
   // Một lần chạy khác (cùng ngày) thấy bài đã có chủ → không gửi gì.
-  const result = await channel.runChannelAutopost({ telegram, storage, env: BASE_ENV, nowMs: day });
+  const result = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY, telegram, storage, env: BASE_ENV, nowMs: day });
   assert.equal(result.daDang, false);
   assert.equal(telegram.sent.length, 0);
 });
@@ -455,7 +460,7 @@ test('có ghi chú tuần thì bài "tuần này thay đổi gì" đăng đúng 
 
   const ids = [];
   for (let i = 0; i < 7; i += 1) {
-    const r = await channel.runChannelAutopost({
+    const r = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY,
       telegram,
       storage,
       env: BASE_ENV,
@@ -473,7 +478,7 @@ test('có ghi chú tuần thì bài "tuần này thay đổi gì" đăng đúng 
   assert.match(sent.text, /• viết bài kênh cho tháng thứ hai/);
 
   // Các bài có chỗ trống còn lại vẫn đang chờ ghi chú — báo cáo phải biết để nhắc.
-  const last = await channel.runChannelAutopost({ telegram, storage, env: BASE_ENV, nowMs: day, notes });
+  const last = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY, telegram, storage, env: BASE_ENV, nowMs: day, notes });
   assert.equal(last.maBai, 'ngay-07');
   assert.deepEqual(last.choGhiChu.slice(0, 2), ['ngay-14', 'ngay-21']);
   assert.ok(!last.choGhiChu.includes('ngay-06'), 'bài đã đăng thì không còn chờ');
@@ -498,7 +503,7 @@ test('không lấy được thống kê: bài có chỗ trống bị bỏ qua l�
   for (const id of ['ghim', 'ngay-01', 'ngay-02', 'ngay-03', 'ngay-04', 'ngay-05']) {
     await storage.claimChannelPost(id, Date.UTC(2026, 8, 1), '@lixibot_kenh');
   }
-  const r = await channel.runChannelAutopost({
+  const r = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY,
     telegram,
     storage,
     env: BASE_ENV,
@@ -537,7 +542,7 @@ test('kho Postgres: mã bài đã đăng sống qua khởi động nguội, và 
     let day = Date.UTC(2026, 8, 13, 1, 0, 0);
 
     for (let i = 0; i < 3; i += 1) {
-      const r = await channel.runChannelAutopost({ telegram, storage, env: BASE_ENV, nowMs: day });
+      const r = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY, telegram, storage, env: BASE_ENV, nowMs: day });
       assert.equal(r.daDang, true, `lần chạy ${i + 1} phải đăng được`);
       day += ledger.DAY_MS;
     }
@@ -557,7 +562,7 @@ test('kho Postgres: mã bài đã đăng sống qua khởi động nguội, và 
     assert.ok((await fresh.lastChannelPostAt()) > 0);
 
     const coldTelegram = fakeTelegram();
-    const next = await channel.runChannelAutopost({
+    const next = await channel.runChannelAutopost({ ...KHONG_CO_SO_TAY,
       telegram: coldTelegram,
       storage: fresh,
       env: BASE_ENV,
@@ -609,8 +614,12 @@ test('bài đã đăng tay được coi như đã đăng — bot bỏ qua, khôn
   assert.ok(!daDangTay.includes(post.id), `không được chọn lại bài đã đăng tay: ${post.id}`);
   assert.equal(post.id, ready[2], 'phải là bài kế tiếp trong hàng đợi');
 
-  // Và danh sách rỗng (mặc định hiện tại) thì mọi thứ chạy y như cũ.
-  assert.deepEqual(channel.DA_DANG_TAY, [], 'mặc định để trống cho tới khi thẻ A14 xong');
+  // Danh sách thật (content/da-dang-tay.js) phải là mã CÓ THẬT trong thư viện bài — thêm một
+  // mã sai ở đó nghĩa là một bài chưa ai đọc sẽ không bao giờ được đăng, và không ai hay.
+  const moiMa = new Set(CHANNEL_POSTS.map((p) => p.id));
+  for (const id of channel.DA_DANG_TAY) {
+    assert.ok(moiMa.has(id), `mã trong da-dang-tay.js không có trong thư viện bài: ${id}`);
+  }
   const khongCo = channel.nextChannelPost([], CHANNEL_POSTS, {
     stats: await storage.growthStats(growth.statsWindowStart(day)),
     notes: WEEKLY_NOTES,

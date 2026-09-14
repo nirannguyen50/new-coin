@@ -273,6 +273,7 @@ async function runChannelAutopost({
   nowMs = Date.now(),
   posts = CHANNEL_POSTS,
   notes = WEEKLY_NOTES,
+  daDangTay = DA_DANG_TAY,
 } = {}) {
   const idle = (reason, message, extra = {}) => ({
     daDang: false,
@@ -289,8 +290,9 @@ async function runChannelAutopost({
   try {
     // So "da dang" cua bot chi ghi nhung lan CHINH NO dang. Bai con nguoi dang tay thi so
     // khong biet, nen bot dang lai — 'ghim' da bi dang hai lan vi dung ly do nay. Gop them
-    // danh sach tay o content/da-dang-tay.js de nhung bai do khong bao gio ra lan nua.
-    postedIds = [...(await storage.listPostedChannelPostIds()), ...DA_DANG_TAY];
+    // danh sach tay (mac dinh content/da-dang-tay.js) de nhung bai do khong ra lan nua.
+    // Tiem duoc qua tham so `daDangTay` de test kiem HANH VI, khong phu thuoc noi dung that.
+    postedIds = [...(await storage.listPostedChannelPostIds()), ...daDangTay];
     if (typeof storage.lastChannelPostAt === 'function') {
       const lastAt = await storage.lastChannelPostAt();
       if (alreadyPostedToday(lastAt, nowMs)) {

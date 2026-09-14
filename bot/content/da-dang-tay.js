@@ -21,8 +21,26 @@
  */
 
 const DA_DANG_TAY = [
-  // Chờ thẻ A14: Thực thi liệt kê 11 bài đang có trên kênh kèm chữ đầu, rồi Quản lý dò mã
-  // và điền vào đây. Để trống thì bộ đăng bài chạy y như cũ — an toàn, chỉ là còn trùng.
+  // Tám bài dưới đây được đăng TAY lên kênh tối 13/9/2026 (19:20–19:35) lúc dựng kênh,
+  // trước khi bộ đăng tự động chạy lần đầu. Nguồn: thẻ A14.
+  //
+  // BẰNG CHỨNG, vì thêm nhầm một mã ở đây là xoá sổ một bài mà không ai hay:
+  //  1. Thực thi đọc kênh năm lần độc lập; tám dòng này khớp nhau giữa các lần.
+  //  2. Quản lý đối chiếu lại 8/8 tiền tố với `text` trong channel-posts.js — khớp hết.
+  //  3. Chốt hạ: Thực thi báo bài `ngay-06` TRÊN KÊNH hiện "tuần 1", trong khi trong repo
+  //     nó vẫn là "tuần [[tuan]]". Chỉ người đọc kênh thật mới thấy được khác biệt đó.
+  //
+  // CHƯA CHẮC, và cố ý không đụng tới: tổng số bài trên kênh (các lần đọc cho 9/10/11), và
+  // một bài viết tay "Nhóm thử Lì Xì Bot đã mở!" không có id nào trong channel-posts.js nên
+  // không liên quan tới hàng đợi. Cả hai điều đó không đổi kết luận về tám mã này.
+  'ghim',
+  'ngay-01',
+  'ngay-02',
+  'ngay-03',
+  'ngay-04',
+  'ngay-05',
+  'ngay-06',
+  'ngay-07',
 ];
 
 module.exports = { DA_DANG_TAY };
