@@ -272,10 +272,16 @@ GitHub (không có mục Việt Nam), otofun, 5giay (chỉ mua bán đồ vật)
 
 ## 4. Bảng theo dõi (điền tay)
 
-| Ngày | Nơi (#) | Link bài / hồ sơ | Trạng thái (đã nộp / được duyệt / từ chối / bỏ) | Có nhóm nào đến từ đây không? (hỏi admin khi họ thêm bot) |
+> **ĐÂY LÀ CON SỐ QUYẾT ĐỊNH DỰ ÁN.** Luật dừng ở `docs/16` mục 3 chỉ có hiệu lực khi **đã thử ≥8 nơi**.
+> Tới 7/12/2026 mà mới thử 1–2 nơi thì không kết luận được gì: không đủ căn cứ nói "không ai cần", cũng
+> không có người dùng để nói "có tín hiệu" — đi hết 12 tuần rồi về tay không **và** không học được gì.
+> Đó là kết cục tệ nhất, tệ hơn dừng sớm. Số nơi đã thử hiện trên Trạm điều phối, ô "Nơi đã đăng bài".
+
+| Ngày | Nơi (#) | Link bài / hồ sơ | Trạng thái | Có nhóm nào đến từ đây không? |
 |---|---|---|---|---|
-| | | | | |
-| | | | | |
+| 13/9/2026 | Viblo | [bài](https://viblo.asia/p/lam-bot-li-xi-cho-nhom-telegram-chay-hoan-toan-tren-goi-mien-phi-ba-cho-kho-hon-tuong-AoJe8lXA41j) | đã đăng | chưa — 6 lượt xem sau 1 giờ, 0 bình luận (đo 22:40 13/9) |
+| | Dev.to | | chưa nộp — thẻ A3, cần máy | |
+| | Reddit r/SideProject | | chưa nộp — thẻ A3, cần máy | |
 | | | | | |
 
 Sau 4 tuần, nơi nào không mang về nhóm nào thì không quay lại. Nơi nào có thì viết thêm một bài mới sau 2–3 tháng, với

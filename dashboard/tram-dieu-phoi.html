@@ -513,10 +513,23 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
         put("m-active",v.groupsActive7d);
         put("m-groups",v.groupsTotal);
         put("m-posts",v.postsPublished);
-        put("m-venues",v.venues);
+        // SO NAY QUYET DINH MOC 7/12. Luat dung o docs/16 chi co hieu luc khi da thu >=8 noi;
+        // toi han ma moi thu 1-2 noi thi khong ket luan duoc gi ca — di het 12 tuan roi ve tay
+        // khong VA khong hoc duoc gi. Vi vay o nay hien luon tien do, va do khi cham nhip.
+        var DICH=new Date(Date.UTC(2026,11,7)), BAT_DAU=new Date(Date.UTC(2026,8,14)), CAN=8;
+        var noi=(v.venues==null?null:v.venues);
+        put("m-venues",noi==null?null:noi+" / "+CAN);
+        if(noi!=null){
+          var tong=(DICH-BAT_DAU)/864e5, qua=Math.max(0,(Date.now()-BAT_DAU)/864e5);
+          var conLai=Math.max(0,Math.ceil((DICH-Date.now())/864e5));
+          var phaiCo=Math.min(CAN,Math.ceil(qua/tong*CAN));
+          var cham=noi<phaiCo;
+          $("m-venues").style.color=cham?"var(--son)":"";
+          $("m-venues-n").textContent=(cham?"CHẬM NHỊP — ":"")+"cần đủ "+CAN+
+            " nơi trước 7/12 thì luật dừng mới có nghĩa · còn "+conLai+" ngày";
+        }
         if(v.groupsNote)$("m-groups-n").textContent=v.groupsNote;
         if(v.postsNote)$("m-posts-n").textContent=v.postsNote;
-        if(v.venuesNote)$("m-venues-n").textContent=v.venuesNote;
       },function(){});
     },function(){offline("không nối được")});
 
