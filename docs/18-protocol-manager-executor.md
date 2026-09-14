@@ -170,6 +170,24 @@ Hai luật rút ra:
    biến một tin bị đẩy xuống thành một tin vô hình, và biến "chưa thấy" thành "không có" trong đầu
    người đọc.
 
+#### Và tên trường phải đúng CHỮ — luật này Quản lý cũng tự vi phạm, tám tin liền
+
+Đúng số, đúng giờ thật vẫn chưa đủ. Suốt từ 02:12 tới 15:14 ngày 14/9, Quản lý ghi thẳng vào kho qua
+`write_db` và dùng sai tên hai trường: `kind` thay cho `type`, `text` thay cho `body`. Tám tin liền —
+không phải một lần lỡ tay.
+
+Hậu quả không phải lỗi, không phải cảnh báo — nó là **im lặng**. Trang đọc `m.body`; trường đó không
+tồn tại nên hiện chuỗi rỗng. Khung chat vẫn "đã nối", tin vẫn có đủ người gửi và nhãn, chỉ riêng **nội
+dung** biến mất. Chủ dự án mở Trạm điều phối lên và thấy tám bong bóng trống mới là người phát hiện,
+không phải Quản lý — đúng kiểu lỗi mà `docs/18` mục 1c Luật D đã cảnh báo: *"trang thà nói không biết
+còn hơn nói một con số sai"*, nhưng trang này không nói gì cả, đúng chỗ tệ nhất.
+
+Đã sửa cả tám tin (đổi `kind`→`type`, `text`→`body`, giữ nguyên nội dung), và thêm lớp phòng thủ ở
+trang: đọc `m.body||m.text` và `m.type||m.kind` — nhưng phòng thủ đó chỉ che triệu chứng. Luật thật là:
+
+> **Ghi thẳng vào kho không phải chỗ để nhớ tên trường bằng trí nhớ.** Trước khi gọi `write_db` cho
+> collection `messages`, đọc lại chính bảng ở mục 3: `from`, `type`, `task`, `body`, `ts`. Không suy
+> luận tên trường từ ngữ cảnh hay từ lần gõ trước — tra bảng.
 ## 4. Vòng đời một việc
 
 ```

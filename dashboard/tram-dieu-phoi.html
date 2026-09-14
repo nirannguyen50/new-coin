@@ -362,7 +362,11 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
     el.innerHTML=rows.map(function(m){
       var w=WHO[m.from]||["th",m.from||"?"];
       var t=m.ts?new Date(m.ts).toLocaleString("vi-VN",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):"";
-      var body=String(m.body||""), long=body.length>520;
+      // 14/9: 8 tin cua chinh Quan ly dung sai ten truong (kind/text thay vi type/body)
+      // khi ghi thang qua write_db thay vi qua o soan tin — vi pham dung luat docs/18
+      // muc 3b da tu dat ra. Hau qua: tin hien ra RONG, khong loi, khong ai thay tru
+      // khi mo trang len nhin. Da sua du lieu cu; day la lop phong thu cho lan sau.
+      var body=String(m.body||m.text||""), long=body.length>520;
       return '<div class="msg'+(long?' long':'')+'"><div class="head">'+
         '<span class="who '+w[0]+'">'+esc(w[1])+'</span>'+
         // Trang KHÔNG xác thực được ai gõ (xem M4). Tin ký tên Chủ dự án được đánh dấu
@@ -370,7 +374,7 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
         (m.from==="chu-du-an"
           ? '<span class="tag unverif" title="Khung chat không xác thực được người gửi. Việc hạ một biện pháp an toàn phải xác nhận qua phiên trực tiếp — docs/18 mục 6b-2.">chưa xác thực</span>'
           : '')+
-        '<span class="tag t-'+esc(m.type||"NOTE")+'">'+esc(m.type||"NOTE")+'</span>'+
+        '<span class="tag t-'+esc(m.type||m.kind||"NOTE")+'">'+esc(m.type||m.kind||"NOTE")+'</span>'+
         (m.task?'<span class="tag">'+esc(m.task)+'</span>':'')+
         '<span class="mono">'+esc(t)+'</span></div>'+
         '<div class="body">'+esc(body)+'</div>'+
