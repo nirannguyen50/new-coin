@@ -349,3 +349,33 @@ Ba kênh có khả năng ra người dùng Việt nhất — Facebook, Reddit, T
 
 Vì vậy con số cần theo dõi không còn là "đã thử mấy nơi", mà là **đã có mấy phiên Cowork chạy trên máy**.
 Không có phiên nào thì số nơi đăng đứng im ở 1, và mốc 7/12 sẽ tới mà không kết luận được gì.
+
+## 6. A17 (14/9): người tìm bằng tiếng Việt có thấy ta không
+
+> Câu chưa ai hỏi: một admin đang cần thứ này, tự gõ vào ô tìm kiếm, có thấy ta không? Khảo sát qua
+> công cụ tìm kiếm của phiên đám mây, không đăng nhập, không bấm quảng cáo. Giới hạn: công cụ không
+> hiện snippet hay thứ hạng gốc công khai; số kết quả mỗi cụm dao động 7–10, không đều 10 — coi thứ tự
+> trả về là gần đúng, không phải thứ hạng Google thật 100%.
+
+| Cụm từ | Ta có xuất hiện? | Đối thủ thật trong top 3 |
+|---|---|---|
+| "bot lì xì telegram" | Có — GitHub #1, Viblo #2 | Không |
+| "bot tip điểm nhóm telegram" | Có — Viblo #3 | Không |
+| "bot thưởng thành viên nhóm telegram" | Có — Viblo #1 | Có thể — **TeleMe** (#2), bot "thưởng tham dự hàng ngày" cho cộng đồng Telegram |
+| "bao lì xì telegram nhóm chat" | Có — Viblo #2 | Có thể — **Combot** (#1), qua trang danh mục nhóm |
+| "bot quản lý nhóm telegram tiếng việt" | **KHÔNG — vắng mặt hoàn toàn** | Có thể — **ChoiLongGaBot** (#1), bot quản trị group tiếng Việt |
+| "lì xì bot" | Có — GitHub #1, Viblo #5 | Không |
+
+### Hai điều đáng chú ý
+
+1. **Chỉ có GitHub repo và bài Viblo được tìm thấy — chưa bao giờ là chính sản phẩm.** `t.me/lixi_vn_bot`,
+   `t.me/lixibot_kenh`, `new-coin-orcin.vercel.app` không xuất hiện ở **bất kỳ** cụm từ nào trong cả 6.
+   Người tìm kiếm hiện chỉ có thể chạm được ta qua đúng hai cửa, không phải qua chính bot.
+
+2. **Combot xếp #1 đúng cụm từ khớp với hướng doanh thu đã chọn** (`docs/19` mô hình C — "kiểu Combot").
+   Chưa xác minh được Combot có tính năng lì xì/tip điểm giống ta hay không — trang tìm thấy chỉ là danh
+   mục nhóm, không phải trang giới thiệu tính năng. Ba tên mới ngoài khảo sát `growth/10` cũ: **TeleMe**,
+   **Combot**, **ChoiLongGaBot** — cả ba chưa xác minh tính năng, chỉ ghi nhận có mặt.
+
+**Không suy luận cần làm gì ngay.** Đây là số liệu nền để so sánh mỗi lần khảo sát lại, không phải lý do
+để đổi kế hoạch — con số duy nhất còn quyết định là nhóm người lạ đầu tiên (Cửa 1, `docs/19`).
