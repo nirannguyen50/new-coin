@@ -26,7 +26,9 @@ const assert = require('node:assert/strict');
 const channel = require('../src/channel');
 const ledger = require('../src/ledger');
 const store = require('../src/store');
+const growth = require('../src/growth');
 const { CHANNEL_POSTS, CHANNEL_POST_IDS } = require('../content/channel-posts');
+const { WEEKLY_NOTES } = require('../content/weekly-notes');
 
 test.after(() => {
   fs.rmSync(TMP_DATA_DIR, { recursive: true, force: true });
@@ -58,6 +60,22 @@ function freshStorage(name) {
 }
 
 const BASE_ENV = { CHANNEL_CHAT_ID: '@lixibot_kenh' };
+
+/**
+ * Mã các bài ĐĂNG TỰ ĐỘNG ĐƯỢC, theo đúng thứ tự hàng đợi.
+ *
+ * Tính bằng chính `isPostReady` + `ctxFor` mà bộ đăng bài dùng, KHÔNG hard-code danh
+ * sách. Lý do: một bài `needsManualData` trở nên đăng được ngay khi Quản lý viết ghi chú
+ * tuần cho nó vào `content/weekly-notes.js`. Nếu test chép cứng danh sách thì cứ mỗi lần
+ * thêm ghi chú là test đỏ — đỏ vì test cũ, không phải vì code hỏng.
+ */
+async function readyIds(storage, nowMs) {
+  const stats = await storage.growthStats(growth.statsWindowStart(nowMs));
+  const ctx = { stats, notes: WEEKLY_NOTES };
+  return CHANNEL_POSTS.filter((p) => channel.isPostReady(p, channel.ctxFor(p, ctx))).map(
+    (p) => p.id
+  );
+}
 
 // ===========================================================================
 // 1) Thư viện nội dung: chuyển từ growth/05 sang, không được sai lệch
@@ -177,11 +195,19 @@ test('đăng lần lượt qua nhiều lần chạy, mỗi ngày đúng một b�
   }
 
   const postedIds = results.map((r) => r.maBai);
+  const expected = (await readyIds(storage, Date.UTC(2026, 8, 13, 1, 30, 0))).slice(0, 8);
   assert.deepEqual(
     postedIds,
-    ['ghim', 'ngay-01', 'ngay-02', 'ngay-03', 'ngay-04', 'ngay-05', 'ngay-07', 'ngay-08'],
-    'đúng thứ tự, và NHẢY QUA ngày 6 (bài cần số liệu thật)'
+    expected,
+    'đúng thứ tự hàng đợi, và nhảy qua mọi bài chưa điền được hết chỗ trống'
   );
+  const skipped = CHANNEL_POSTS.slice(0, CHANNEL_POST_IDS.indexOf(postedIds[7]) + 1)
+    .map((p) => p.id)
+    .filter((id) => !postedIds.includes(id));
+  for (const id of skipped) {
+    const post = CHANNEL_POSTS.find((p) => p.id === id);
+    assert.equal(post.needsManualData, true, `chỉ bài cần số liệu thật mới được nhảy qua: ${id}`);
+  }
   assert.equal(new Set(postedIds).size, postedIds.length, 'không bài nào đăng hai lần');
   assert.ok(results.every((r) => r.daDang === true));
   assert.equal(telegram.sent.length, 8);
@@ -211,14 +237,15 @@ test('bài cần số liệu thật không bao giờ được đăng, dù chạy
   const telegram = fakeTelegram();
   let day = Date.UTC(2026, 8, 13, 1, 0, 0);
 
-  const autoCount = CHANNEL_POSTS.filter((p) => !p.needsManualData).length;
+  const ready = await readyIds(storage, day);
+  const autoCount = ready.length;
   for (let i = 0; i < autoCount + 3; i += 1) {
     await channel.runChannelAutopost({ telegram, storage, env: BASE_ENV, nowMs: day });
     day += ledger.DAY_MS;
   }
 
   assert.equal(telegram.sent.length, autoCount, 'đăng đúng số bài tự động được, không hơn');
-  const manualTexts = CHANNEL_POSTS.filter((p) => p.needsManualData).map((p) => p.text);
+  const manualTexts = CHANNEL_POSTS.filter((p) => !ready.includes(p.id)).map((p) => p.text);
   for (const sent of telegram.sent) {
     assert.ok(!sent.text.includes('[['), 'không tin nào được phép còn chỗ trống');
     assert.ok(!manualTexts.includes(sent.text));

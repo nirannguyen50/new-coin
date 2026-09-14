@@ -30,6 +30,14 @@
  * Không hứa hẹn, không nhắc giá, không nói "không có token" trống không.
  */
 
-const WEEKLY_NOTES = {};
+const WEEKLY_NOTES = {
+  // Tuần 1 (8–14/9/2026). Chỉ ghi việc người dùng nhìn thấy được, không ghi việc nội bộ.
+  'ngay-06': {
+    tuan: 1,
+    thayDoi1: 'bài trên kênh giờ tự điền số liệu thật lúc đăng, không còn chỗ trống',
+    thayDoi2: 'sửa 4 chỗ khó hiểu trên trang hướng dẫn sau khi nhờ người chưa biết gì đọc thử',
+    dangLam: 'viết bài giới thiệu ở vài nơi lập trình viên Việt hay đọc, để admin nhóm tìm thấy bot',
+  },
+};
 
 module.exports = { WEEKLY_NOTES };

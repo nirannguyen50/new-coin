@@ -374,6 +374,7 @@ module.exports = {
   SKIP_REASONS,
   WEEKLY_NOTES,
   alreadyPostedToday,
+  ctxFor,
   isPostReady,
   placeholdersOf,
   postsWaitingForNotes,
