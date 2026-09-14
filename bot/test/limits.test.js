@@ -164,3 +164,41 @@ test('approveQueuedTransfer: không cho duyệt hai lần', () => {
     (err) => err.code === 'APPROVAL_ALREADY_DECIDED'
   );
 });
+
+// ===========================================================================
+// Cửa sổ ân hạn lúc cài bot — nhóm mới không bị đóng băng ba ngày
+// ===========================================================================
+
+test('nhóm vừa thêm bot: thành viên có sẵn tip được ngay, người tới sau vẫn bị chặn', () => {
+  const now = Date.UTC(2026, 8, 14, 12, 0, 0);
+  const catBot = now - 2 * 60 * 60 * 1000; // bot vào nhóm 2 giờ trước
+
+  const state = store.defaultGroupState('g');
+  state.growth = { onboardedAt: catBot };
+  assert.equal(state.config.minAccountAgeDays, 3, 'mặc định vẫn là 3 ngày, không nới lỏng');
+
+  // Thành viên CÓ SẴN: bot gặp lần đầu ngay sau khi vào nhóm. Trước khi có cửa sổ ân hạn,
+  // cả nhóm — kể cả nhóm 5 năm tuổi — bị chặn tip suốt 3 ngày đầu.
+  ledger.rememberMember(state, { id: 111, first_name: 'An' }, catBot + 60 * 1000);
+  const coSan = ledger.checkMinAccountAge(state, 111, now);
+  assert.equal(coSan.ok, true, 'không được đóng băng cả nhóm trong 3 ngày đầu');
+  assert.equal(coSan.grandfathered, true);
+
+  // Người xuất hiện SAU cửa sổ: vẫn phải đủ thâm niên — đó mới là thứ lớp chắn bảo vệ.
+  ledger.rememberMember(state, { id: 222, first_name: 'Bình' }, catBot + 30 * 60 * 60 * 1000);
+  const sau = ledger.checkMinAccountAge(state, 222, catBot + 31 * 60 * 60 * 1000);
+  assert.equal(sau.ok, false, 'nick lập sau khi cài bot vẫn bị chặn');
+  assert.equal(sau.grandfathered, false);
+
+  // Nhóm cũ chưa có mốc onboardedAt: giữ nguyên hành vi cũ, không nới lỏng âm thầm.
+  const cu = store.defaultGroupState('cu');
+  ledger.rememberMember(cu, { id: 333, first_name: 'Cường' }, now - 60 * 1000);
+  assert.equal(ledger.checkMinAccountAge(cu, 333, now).ok, false);
+
+  // Và đủ thâm niên thật thì vẫn qua, không phụ thuộc cửa sổ ân hạn.
+  const lau = store.defaultGroupState('lau');
+  ledger.rememberMember(lau, { id: 444, first_name: 'Dung' }, now - 5 * DAY_MS);
+  const du = ledger.checkMinAccountAge(lau, 444, now);
+  assert.equal(du.ok, true);
+  assert.equal(du.grandfathered, false, 'qua vì đủ tuổi thật, không phải vì ân hạn');
+});

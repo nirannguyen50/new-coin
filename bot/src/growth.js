@@ -263,7 +263,7 @@ function onboardingText({ isAdmin = true } = {}) {
     '1. <code>/nap 1000</code> — nạp 1000 điểm vào pot nhóm',
     '2. reply tin nhắn của một thành viên rồi gõ <code>/nap 100</code> — cấp 100 điểm cho người đó',
     '3. <code>/lixi 100 chia 3</code> — mở bao lì xì 100 điểm cho 3 người bấm nhận đầu tiên',
-    '(Nhóm mới muốn thử ngay: <code>/caidat thamnien 0</code>, xong nhớ đặt lại <code>3</code>.)',
+    'Thành viên đang có mặt trong nhóm hôm nay tip và mở bao lì xì được ngay. Người vào nhóm từ ngày mai trở đi cần ở đủ 3 ngày mới tip được — lớp chắn nick ảo lập ra để nhận lì xì.',
     '',
     '⚠️ Điểm LIXI trong bản thử nghiệm <b>không có giá trị tiền thật</b> và có thể bị reset.',
     'Gõ <code>/huongdan</code> để xem toàn bộ lệnh.',

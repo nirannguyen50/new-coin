@@ -372,6 +372,23 @@ function recordCommandTime(state, userId, nowMs = Date.now()) {
   member.lastCommandAt = nowMs;
 }
 
+/**
+ * CỬA SỔ ÂN HẠN LÚC CÀI BOT.
+ *
+ * `firstSeenAt` là lúc BOT lần đầu thấy một người, không phải lúc người đó vào nhóm — bot
+ * không có cách nào biết điều thứ hai. Hệ quả: một nhóm 5 năm tuổi vừa thêm bot cũng có mọi
+ * thành viên "0 ngày tuổi", nên với mặc định `thamnien = 3` thì CẢ NHÓM bị đóng băng ba ngày.
+ * Người lạ thêm bot, gõ thử `/lixi`, bị chặn, rồi gỡ bot. Đó là cách nhanh nhất để không bao
+ * giờ có người dùng thật.
+ *
+ * Vì vậy: ai được bot thấy trong 24 giờ đầu kể từ lúc bot vào nhóm thì coi là thành viên
+ * CÓ SẴN, miễn thâm niên. Ai xuất hiện sau đó mới là người mới và bị kiểm như thường.
+ *
+ * Lớp chắn không yếu đi ở chỗ nó thật sự bảo vệ: nick ảo lập ra để farm lì xì phải vào nhóm
+ * SAU khi bot đã ở đó, nên vẫn bị chặn đủ ba ngày.
+ */
+const INSTALL_GRACE_MS = 24 * 60 * 60 * 1000;
+
 /** Kiểm tra userId đã "ở trong nhóm" (firstSeenAt) đủ số ngày tối thiểu chưa. */
 function checkMinAccountAge(state, userId, nowMs = Date.now()) {
   const minDays = state.config.minAccountAgeDays;
@@ -380,8 +397,15 @@ function checkMinAccountAge(state, userId, nowMs = Date.now()) {
   // Chưa từng thấy user này trong nhóm -> coi như tuổi = 0, chưa đủ điều kiện.
   const firstSeenAt = member ? member.firstSeenAt : nowMs;
   const ageMs = nowMs - firstSeenAt;
-  const ok = ageMs >= minDays * DAY_MS;
-  return { ok, ageDays: ageMs / DAY_MS, minDays };
+  if (ageMs >= minDays * DAY_MS) {
+    return { ok: true, ageDays: ageMs / DAY_MS, minDays, grandfathered: false };
+  }
+  // Thành viên có sẵn lúc cài bot: bot gặp họ trong 24 giờ đầu kể từ khi vào nhóm.
+  const onboardedAt = state.growth && state.growth.onboardedAt;
+  if (onboardedAt && member && member.firstSeenAt - onboardedAt <= INSTALL_GRACE_MS) {
+    return { ok: true, ageDays: ageMs / DAY_MS, minDays, grandfathered: true };
+  }
+  return { ok: false, ageDays: ageMs / DAY_MS, minDays, grandfathered: false };
 }
 
 /** Địa chỉ có đúng định dạng BEP-20/EVM (0x + 40 hex) không — KHÔNG kiểm tra on-chain. */
@@ -1182,6 +1206,7 @@ module.exports = {
   recordDailyTipUsage,
   checkCooldown,
   recordCommandTime,
+  INSTALL_GRACE_MS,
   checkMinAccountAge,
   isValidBep20Address,
   needsAdminApproval,
