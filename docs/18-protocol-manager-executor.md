@@ -44,7 +44,7 @@ một Routine gắn vào máy cũng chỉ tạo được *từ* chính máy đó
 đúng máy đó. Vì vậy thẻ `CẦN MÁY` chỉ nhúc nhích khi chủ dự án mở Cowork trên máy mình. Đoạn dán sẵn cho
 việc đó — làm một lần rồi máy tự nhận việc về sau — ở `docs/21-cowork-tren-may.md`.
 
-## 1c. Hai luật sinh ra từ sự cố 14/9 — hàng đợi đám mây bị bỏ đói
+## 1c. Bốn luật sinh ra từ lỗi đã mắc — đọc trước khi giao việc hoặc sửa Trạm điều phối
 
 Ngày 14/9 phiên đám mây của Thực thi mở lên, nhìn bảng việc, không thấy thẻ nào làm được, rồi tắt.
 Cả ngày. Bảng lúc đó có đúng hai thẻ mở và **Quản lý gắn nhãn `CẦN MÁY` cho cả hai**. Không ai làm sai
@@ -77,6 +77,29 @@ biến "để trống" thành lựa chọn an toàn, trong khi trống có hai n
 > 2. Ghi một tin `NOTE` nói thẳng vì sao lúc này không có việc nào — **kèm cái đang chặn**.
 >
 > "Không bịa việc" vẫn giữ nguyên. Nhưng "không nghĩ ra việc" không được im lặng trôi qua.
+
+### Luật C — hoãn một việc thì phải ghi ĐIỀU KIỆN MỞ KHOÁ, và điều kiện đó phải được đọc lại
+
+Thẻ M3 (`docs/19`, đường tới doanh thu) bị hoãn với lý do "chờ có nhóm thật đã, viết lúc này là viết
+trên giấy trắng". Lý do đó đúng với *con số*, nhưng sai với *hướng đi* — và không có gì đọc lại nó.
+Thẻ nằm im cho tới khi chủ dự án hỏi thẳng "plan đã nối tới đoạn có doanh thu chưa".
+
+> Hoãn một việc thì thẻ phải có trường `unlockWhen`: **một điều kiện kiểm được**, không phải một cảm giác.
+> "Chờ có nhóm thật" không đạt. "≥1 nhóm không phải của chủ dự án dùng ≥7 ngày" thì đạt.
+> Mỗi lượt Quản lý đọc lại mọi thẻ đang hoãn và tự hỏi: **điều kiện này đã đủ chưa, và nó có còn đúng
+> là điều kiện đúng không?** Câu thứ hai mới là câu khó — M3 hỏng vì điều kiện tự nó sai, chứ không
+> phải vì chưa đạt.
+
+### Luật D — không con số nào được chép cứng vào Trạm điều phối
+
+13/9 bốn ô số liệu trên trang là số chết và chúng **nói dối**: ghi "đã đăng 8 bài, còn 25" trong khi
+bot chưa đăng bài nào. Đã sửa bằng cách đọc từ `status/current`. Nhưng bảng mốc thì vẫn chép cứng,
+và tới 14/9 nó vẫn ghi A1, A2 "đang chờ" trong khi cả hai xong từ hôm trước — **cùng một lỗi, sửa một
+chỗ và bỏ sót chỗ kia.**
+
+> Mọi con số và mọi trạng thái trên Trạm điều phối phải đọc từ kho dữ liệu, không được gõ vào HTML.
+> Thứ gì không đọc được thì hiện `—`, không hiện số cũ. Bảng nào có tuổi thì hiện luôn tuổi của nó:
+> quá 7 ngày chưa rà lại thì tự nói ra là đã cũ. **Trang thà nói "không biết" còn hơn nói một con số sai.**
 
 ### Vì sao im lặng che được lỗi này lâu
 

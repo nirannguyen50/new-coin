@@ -313,16 +313,16 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
     ["11","Off-chain trước","docs/11-quyet-dinh-bot-off-chain-truoc.md"],
     ["00","Quyết định token","docs/00-quyet-dinh-token.md"]
   ];
-  var MILES=[
-    ["Đã xong","Bot chạy thật. Tự đăng bài, tự điền số liệu, tự báo cáo — code xong, chờ 3 biến môi trường",1],
-    ["Đã xong","Ba bài đăng đầu đã soạn và duyệt (growth/09); nội quy 12 nơi đăng đã xác minh",1],
-    ["Đã xong","14/9: bot TỰ đăng bài đầu tiên lên kênh và TỰ ghi báo cáo số liệu vào Issue #1 — automation chạy thật, có bằng chứng",1],
-    ["Đã xong","docs/19 chọn hướng doanh thu: gói công cụ cho admin nhóm. Chưa đặt giá — chờ Cửa 1",1],
-    ["Chờ chủ dự án","A3 — đăng Dev.to rồi Reddit. Cần máy có trình duyệt đã đăng nhập",0],
-    ["CỬA 1","≥1 nhóm KHÔNG phải của chủ dự án dùng bot ≥7 ngày. Chưa qua — mọi thứ khác chỉ là chuẩn bị",0],
-    ["Tuần 6–13","Lặp và đo. Mốc: ≥3 nhóm hoạt động thật. 0 nhóm người lạ tới tuần 13 thì dừng hẳn",0],
-    ["Tuần 14–21","Chiến dịch Tết",0],
-    ["6/2/2027","Tết Đinh Mùi — đỉnh mùa vụ",0]
+  /**
+   * MOC DU PHONG — chi dung khi db chua co "status/roadmap".
+   *
+   * VI SAO KHONG CHEP CUNG NUA: 13/9 bon o so lieu tren trang la so chet, va chung noi doi
+   * (bao "da dang 8 bai" khi bot chua dang bai nao). Da sua bang cach doc tu status/current.
+   * Nhung bang moc thi van chep cung, va den 14/9 no van ghi A1/A2 "dang cho" trong khi da
+   * xong tu hom truoc. CUNG MOT LOI, sua mot cho va bo sot cho kia. Nay ca hai deu doc tu db.
+   */
+  var MILES_FALLBACK=[
+    ["Chua co","Trang chua doc duoc moc tu Tram dieu phoi. So lieu duoi day khong co — dung tin bang nay.",0]
   ];
   var $=function(id){return document.getElementById(id)};
   var esc=function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){
@@ -336,9 +336,24 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
   $("docs").innerHTML=DOCS.map(function(x){
     return '<a href="'+GH+esc(x[2])+'" target="_blank" rel="noopener">'+
       '<span class="mono">'+esc(x[0])+'</span> '+esc(x[1])+'</a>'}).join("");
-  $("miles").innerHTML=MILES.map(function(m){
-    return '<div class="mile" data-done="'+m[2]+'"><div class="when">'+esc(m[0])+'</div>'+
-      '<div class="what"><b>'+esc(m[1])+'</b></div></div>'}).join("");
+  function renderMiles(rows,capNhat){
+    var list=(rows&&rows.length)?rows:MILES_FALLBACK;
+    var html=list.map(function(m){
+      var when=m[0],what=m[1],done=m[2]?1:0;
+      return '<div class="mile" data-done="'+done+'"><div class="when">'+esc(when)+'</div>'+
+        '<div class="what"><b>'+esc(what)+'</b></div></div>'}).join("");
+    // Moc cu la moc noi doi. Qua 7 ngay khong ra lai thi noi thang ra, dung de nguoi doc tin.
+    var ngay=capNhat?Math.floor((Date.now()-capNhat)/864e5):null;
+    if(ngay==null){
+      html+='<div class="mile" data-done="0"><div class="when">—</div><div class="what">'+
+        '<b style="color:var(--son)">Khong ro ra lai lan cuoi khi nao</b></div></div>';
+    }else if(ngay>7){
+      html+='<div class="mile" data-done="0"><div class="when">—</div><div class="what">'+
+        '<b style="color:var(--son)">Bang moc chua ra lai '+ngay+' ngay — coi nhu da cu</b></div></div>';
+    }
+    $("miles").innerHTML=html;
+  }
+  renderMiles(null,null);
 
   var WHO={"quan-ly":["ql","Quản lý"],"thuc-thi":["th","Thực thi"],"chu-du-an":["ow","Chủ dự án"]};
   function renderMsgs(rows){
@@ -459,13 +474,24 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
     .then(function(x){
       db=x;
       if(!db){offline("chỉ đọc");return}
-      $("live").className="live on";$("live").textContent="đã nối";
+      // 13/9 trang bao "da noi" nhung khong hien gi, vi snap.forEach khong ton tai. Den xanh
+      // van sang nen loi im lang. Nay den luon keo theo so dong that — noi duoc ma rong thi
+      // thay ngay la rong, chu khong doan.
+      var dem={tin:null,viec:null};
+      function den(){
+        $("live").className="live on";
+        $("live").textContent="đã nối · "+(dem.tin==null?"…":dem.tin)+" tin · "+
+          (dem.viec==null?"…":dem.viec)+" việc";
+      }
+      den();
       db.collection("messages").orderBy("ts","desc").limit(60).onSnapshot(function(snap){
         var rows=rowsOf(snap);
+        dem.tin=rows.length;den();
         renderMsgs(rows);
       },function(){offline("mất kết nối")});
       db.collection("tasks").orderBy("code").onSnapshot(function(snap){
         var rows=rowsOf(snap);
+        dem.viec=rows.length;den();
         renderTasks(rows);
       },function(){});
       db.doc("status/heartbeat").onSnapshot(function(doc){
@@ -476,6 +502,10 @@ footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);
         $("hb").textContent="Quản lý "+ago(v.quanLy)+(v.quanLyLich?" ("+v.quanLyLich+")":"")+
           " · Thực thi "+ago(v.thucThi)+(v.thucThiLich?" ("+v.thucThiLich+")":"");
         $("hb").style.color=stale?"var(--son)":"";
+      },function(){});
+      db.doc("status/roadmap").onSnapshot(function(doc){
+        var v=doc.data?doc.data():null;
+        renderMiles(v&&v.moc,v&&v.capNhat);
       },function(){});
       db.doc("status/current").onSnapshot(function(doc){
         var v=doc.data?doc.data():null; if(!v)return;
