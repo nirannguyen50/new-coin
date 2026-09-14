@@ -1,6 +1,6 @@
 # Khảo sát bot Telegram tương tự — ai thu tiền, thu bao nhiêu, thu cách nào
 
-> Nguyên liệu cho `docs/19` (đường tới doanh thu, chưa viết — thẻ M3). Thực thi khảo sát ngày 13/9/2026
+> Nguyên liệu cho `docs/19` (đường tới doanh thu — đã viết 14/9). Thực thi khảo sát ngày 13/9/2026
 > bằng công cụ đọc web, không cài, không thêm bot vào nhóm nào, không nhắn ai. Quản lý nghiệm thu nhưng
 > **chưa đối chiếu độc lập** (sandbox bị chặn ra các trang này). Nguồn: tin `DONE` A7 trên Trạm điều phối.
 > Chỗ nào trang không niêm yết giá thì ghi "chưa xác minh được", không đoán.
@@ -24,4 +24,4 @@ telegram alive", "virtual currency in-group tip bot free no crypto".
   `docs/11` chưa đạt) hoặc **gói công cụ cho admin** (Combot — Free/Pro/Business, trả theo nhóm).
 - Hướng gần nhất với Lì Xì Bot hiện tại là kiểu Combot: nhóm miễn phí dùng đủ, admin muốn thêm (nhiều luật
   thưởng hơn, thống kê, nhiều nhóm) thì trả gói. Nhận bằng USDT BEP-20 theo quyết định `docs/20`.
-- Chưa viết docs/19 vì chưa có nhóm thật nào hoạt động 7 ngày — viết lúc này là viết trên giấy trắng.
+- `docs/19` đã chọn hướng C (gói công cụ cho admin) dựa trên đúng khảo sát này. Giá chưa đặt — chờ Cửa 3.
