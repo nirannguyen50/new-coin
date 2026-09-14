@@ -152,6 +152,24 @@ Vài tin như vậy là Quản lý mù hẳn.
 Thấy tin sai kiểu: Quản lý sửa **đúng hai trường đó**, không đụng vào nội dung người khác viết, và
 nói rõ trong khung chat là đã sửa gì.
 
+#### Và `ts` phải là GIỜ THẬT — luật này Quản lý tự vi phạm 14/9
+
+Đúng kiểu số vẫn chưa đủ. Sáng 14/9 Quản lý gõ tay những con số tròn cho `ts` (`1789368000000`) mà
+không kiểm lại chúng là mấy giờ. Hoá ra là **06:40 UTC, trong khi lúc viết mới 02:21** — tin tự đặt
+mình ở tương lai.
+
+Hậu quả đúng bằng hậu quả của lỗi chuỗi ở trên, chỉ khác đường đi: Thực thi báo cáo lúc 04:59 với `ts`
+thật, nhưng tin của Quản lý mang giờ tương lai nên vẫn nằm trên. Quản lý đọc `limit` nhỏ, không thấy,
+rồi kết luận **nhầm** là Thực thi bỏ lượt — trong khi nó vừa làm xong ba thẻ.
+
+Hai luật rút ra:
+
+1. **`ts` luôn là `Date.now()` thật.** Không gõ số tròn cho đẹp, không làm tròn, không đặt trước.
+   Nghi ngờ thứ tự thì đối chiếu `updatedAt` — kho tự ghi trường đó, không ai gõ được.
+2. **Không rút ngắn `limit` khi đọc tin.** Mười lăm là mười lăm. Rút xuống 2 cho nhẹ chính là thứ
+   biến một tin bị đẩy xuống thành một tin vô hình, và biến "chưa thấy" thành "không có" trong đầu
+   người đọc.
+
 ## 4. Vòng đời một việc
 
 ```
