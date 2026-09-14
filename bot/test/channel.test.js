@@ -586,3 +586,34 @@ test('kho Postgres: mã bài đã đăng sống qua khởi động nguội, và 
     await closeAllPools();
   }
 });
+
+// ===========================================================================
+// 7) Bài đã đăng TAY: bot không được đăng lại
+// ===========================================================================
+
+test('bài đã đăng tay được coi như đã đăng — bot bỏ qua, không đăng trùng', async () => {
+  const storage = freshStorage('daDangTay');
+  const telegram = fakeTelegram();
+  const day = Date.UTC(2026, 8, 14, 1, 30, 0);
+
+  // Cái bẫy thật hôm 14/9: kênh đã có sẵn bài 'ghim' do người đăng tay, nhưng sổ của bot
+  // trống nên nó đăng lại đúng bài đó. Bài đầu hàng đợi phải nhảy qua mọi mã trong danh sách.
+  const ready = await readyIds(storage, day);
+  const daDangTay = ready.slice(0, 2);
+
+  const post = channel.nextChannelPost(daDangTay, CHANNEL_POSTS, {
+    stats: await storage.growthStats(growth.statsWindowStart(day)),
+    notes: WEEKLY_NOTES,
+  });
+  assert.ok(post, 'vẫn còn bài để đăng');
+  assert.ok(!daDangTay.includes(post.id), `không được chọn lại bài đã đăng tay: ${post.id}`);
+  assert.equal(post.id, ready[2], 'phải là bài kế tiếp trong hàng đợi');
+
+  // Và danh sách rỗng (mặc định hiện tại) thì mọi thứ chạy y như cũ.
+  assert.deepEqual(channel.DA_DANG_TAY, [], 'mặc định để trống cho tới khi thẻ A14 xong');
+  const khongCo = channel.nextChannelPost([], CHANNEL_POSTS, {
+    stats: await storage.growthStats(growth.statsWindowStart(day)),
+    notes: WEEKLY_NOTES,
+  });
+  assert.equal(khongCo.id, ready[0], 'danh sách rỗng thì bắt đầu từ bài đầu hàng đợi');
+});

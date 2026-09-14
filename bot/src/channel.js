@@ -28,6 +28,7 @@
 
 const { CHANNEL_POSTS } = require('../content/channel-posts');
 const { WEEKLY_NOTES } = require('../content/weekly-notes');
+const { DA_DANG_TAY } = require('../content/da-dang-tay');
 const growth = require('./growth');
 const ledger = require('./ledger');
 const { safeErrorMessage } = require('./redact');
@@ -286,7 +287,10 @@ async function runChannelAutopost({
 
   let postedIds = [];
   try {
-    postedIds = await storage.listPostedChannelPostIds();
+    // So "da dang" cua bot chi ghi nhung lan CHINH NO dang. Bai con nguoi dang tay thi so
+    // khong biet, nen bot dang lai — 'ghim' da bi dang hai lan vi dung ly do nay. Gop them
+    // danh sach tay o content/da-dang-tay.js de nhung bai do khong bao gio ra lan nua.
+    postedIds = [...(await storage.listPostedChannelPostIds()), ...DA_DANG_TAY];
     if (typeof storage.lastChannelPostAt === 'function') {
       const lastAt = await storage.lastChannelPostAt();
       if (alreadyPostedToday(lastAt, nowMs)) {
@@ -373,6 +377,7 @@ module.exports = {
   CHANNEL_POSTS,
   SKIP_REASONS,
   WEEKLY_NOTES,
+  DA_DANG_TAY,
   alreadyPostedToday,
   ctxFor,
   isPostReady,
