@@ -184,10 +184,19 @@ test('nhóm vừa thêm bot: thành viên có sẵn tip được ngay, người 
   assert.equal(coSan.ok, true, 'không được đóng băng cả nhóm trong 3 ngày đầu');
   assert.equal(coSan.grandfathered, true);
 
-  // Người xuất hiện SAU cửa sổ: vẫn phải đủ thâm niên — đó mới là thứ lớp chắn bảo vệ.
-  ledger.rememberMember(state, { id: 222, first_name: 'Bình' }, catBot + 30 * 60 * 60 * 1000);
-  const sau = ledger.checkMinAccountAge(state, 222, catBot + 31 * 60 * 60 * 1000);
-  assert.equal(sau.ok, false, 'nick lập sau khi cài bot vẫn bị chặn');
+  // Nhóm im vài ngày rồi mới có người gõ lệnh đầu tiên: VẪN phải được tip ngay. Bot không có
+  // quyền admin thì không đọc được tin nhắn thường, nên nó chỉ "gặp" người ta lúc gõ lệnh —
+  // một cửa sổ 24 giờ cố định sẽ chặn đúng nhóm này, dù họ chẳng làm gì sai.
+  ledger.rememberMember(state, { id: 555, first_name: 'Em' }, catBot + 2.5 * DAY_MS);
+  const imLau = ledger.checkMinAccountAge(state, 555, catBot + 2.6 * DAY_MS);
+  assert.equal(imLau.ok, true, 'nhóm im vài ngày rồi mới gõ lệnh không được bị phạt');
+  assert.equal(imLau.grandfathered, true);
+
+  // Người xuất hiện SAU khi bot đã ở nhóm đủ thâm niên: kiểm như thường — đó mới là thứ
+  // lớp chắn bảo vệ, và nó vẫn chặn.
+  ledger.rememberMember(state, { id: 222, first_name: 'Bình' }, catBot + 4 * DAY_MS);
+  const sau = ledger.checkMinAccountAge(state, 222, catBot + 4.5 * DAY_MS);
+  assert.equal(sau.ok, false, 'nick lập sau khi bot đã ở nhóm đủ lâu vẫn bị chặn');
   assert.equal(sau.grandfathered, false);
 
   // Nhóm cũ chưa có mốc onboardedAt: giữ nguyên hành vi cũ, không nới lỏng âm thầm.

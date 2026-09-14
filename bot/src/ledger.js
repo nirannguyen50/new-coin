@@ -381,13 +381,22 @@ function recordCommandTime(state, userId, nowMs = Date.now()) {
  * Người lạ thêm bot, gõ thử `/lixi`, bị chặn, rồi gỡ bot. Đó là cách nhanh nhất để không bao
  * giờ có người dùng thật.
  *
- * Vì vậy: ai được bot thấy trong 24 giờ đầu kể từ lúc bot vào nhóm thì coi là thành viên
- * CÓ SẴN, miễn thâm niên. Ai xuất hiện sau đó mới là người mới và bị kiểm như thường.
+ * Vì vậy: ai được bot thấy TRONG LÚC BOT CHƯA Ở NHÓM ĐỦ LÂU để phán được thâm niên thì coi
+ * là thành viên CÓ SẴN, miễn thâm niên. Ai xuất hiện sau đó mới là người mới, kiểm như thường.
+ *
+ * Cửa sổ ân hạn = đúng `minAccountAgeDays` của nhóm, không phải một hằng số riêng. Đó không
+ * phải tiện tay: trong khoảng thời gian đó bot KHÔNG THỂ biết ai đủ thâm niên ai không, nên
+ * mọi phán quyết "chưa đủ tuổi" đều là phán quyết mù. Buộc hai con số vào nhau thì đổi
+ * `/caidat thamnien` cũng tự đổi cửa sổ, không có chỗ nào lệch nhau.
+ *
+ * (Bản đầu dùng 24 giờ cố định. Sai, và sai theo kiểu im lặng: bot KHÔNG có quyền admin thì
+ * không đọc được tin nhắn thường, nên chỉ "gặp" một người khi người đó gõ lệnh. Nhóm thêm bot
+ * rồi im hai ngày, tới ngày thứ ba mới có người gõ `/lixi` — quá 24 giờ, bị chặn thêm ba ngày
+ * nữa. Đúng cái cảnh mà bản sửa sinh ra để tránh.)
  *
  * Lớp chắn không yếu đi ở chỗ nó thật sự bảo vệ: nick ảo lập ra để farm lì xì phải vào nhóm
- * SAU khi bot đã ở đó, nên vẫn bị chặn đủ ba ngày.
+ * SAU khi bot đã ở đó đủ lâu, nên vẫn bị chặn đủ số ngày cấu hình.
  */
-const INSTALL_GRACE_MS = 24 * 60 * 60 * 1000;
 
 /** Kiểm tra userId đã "ở trong nhóm" (firstSeenAt) đủ số ngày tối thiểu chưa. */
 function checkMinAccountAge(state, userId, nowMs = Date.now()) {
@@ -400,9 +409,9 @@ function checkMinAccountAge(state, userId, nowMs = Date.now()) {
   if (ageMs >= minDays * DAY_MS) {
     return { ok: true, ageDays: ageMs / DAY_MS, minDays, grandfathered: false };
   }
-  // Thành viên có sẵn lúc cài bot: bot gặp họ trong 24 giờ đầu kể từ khi vào nhóm.
+  // Thành viên có sẵn lúc cài bot: bot gặp họ khi chính bot còn chưa ở nhóm đủ `minDays`.
   const onboardedAt = state.growth && state.growth.onboardedAt;
-  if (onboardedAt && member && member.firstSeenAt - onboardedAt <= INSTALL_GRACE_MS) {
+  if (onboardedAt && member && member.firstSeenAt - onboardedAt < minDays * DAY_MS) {
     return { ok: true, ageDays: ageMs / DAY_MS, minDays, grandfathered: true };
   }
   return { ok: false, ageDays: ageMs / DAY_MS, minDays, grandfathered: false };
@@ -1206,7 +1215,6 @@ module.exports = {
   recordDailyTipUsage,
   checkCooldown,
   recordCommandTime,
-  INSTALL_GRACE_MS,
   checkMinAccountAge,
   isValidBep20Address,
   needsAdminApproval,
