@@ -286,3 +286,38 @@ GitHub (không có mục Việt Nam), otofun, 5giay (chỉ mua bán đồ vật)
 
 Sau 4 tuần, nơi nào không mang về nhóm nào thì không quay lại. Nơi nào có thì viết thêm một bài mới sau 2–3 tháng, với
 số liệu mới.
+
+## 5. Đếm lại 14/9: bao nhiêu nơi THẬT SỰ có thể ra người dùng Việt?
+
+> Viết sau khi rà mục 3, 3b, 3c. Con số "1/8 nơi" ở mục 4 vẫn đúng, nhưng nó che một chuyện
+> nặng hơn: **phần lớn nơi đã xác minh là nơi nói tiếng Anh.** Bot hiện chỉ có tiếng Việt, và
+> người cần nó là **admin nhóm Telegram người Việt**. Đủ 8 nơi mà 6 nơi không thể ra một admin
+> Việt nào thì tới 7/12 ta vẫn không kết luận được gì — chỉ là không kết luận được một cách
+> bận rộn hơn.
+
+### Nơi CÓ THỂ ra người dùng Việt
+
+| Nơi | Trạng thái | Chặn ở đâu |
+|---|---|---|
+| **Viblo** | ✅ đã đăng 13/9 | — |
+| **Tinh tế** | ⛔ chưa xác minh được nội quy | Trang trả 403 cho truy cập tự động. Cần phiên **trên máy** mở bằng trình duyệt thật |
+| **Dạy Nhau Học** | ⚠️ chưa rõ | Guidelines không có điều nào cấm, cũng không có điều nào cho phép. Cần đọc kỹ hơn |
+| **Voz** | ⛔ phải xin BQT duyệt trước | Chạm người thật, chưa làm |
+| **Spiderum** | ❌ loại hẳn | Điều khoản cấm quảng bá sản phẩm dưới mọi hình thức |
+| **Nhóm Facebook về Telegram / quản trị cộng đồng** | ❓ **chưa ai khảo sát** | `docs/16` có nêu, nhưng chưa nơi nào được xác minh — đây là lỗ hổng lớn nhất |
+| **telegram-groups.com** | ⏸ để dành | Chỉ nhận nhóm ≥100 thành viên công khai; nhóm demo đang 2 người |
+
+**Tức là: đúng MỘT nơi tiếng Việt đã dùng được, và nó đã dùng rồi.**
+
+### Nơi nói tiếng Anh — làm được, nhưng đừng nhầm nó là kênh ra người dùng
+
+Indie Hackers, Show HN, Hashnode đều đã xác minh là **được đăng**. Nhưng người đọc ở đó không
+phải admin nhóm Telegram Việt, và bot hiện **chưa có tiếng Anh** — ai thêm bot vào cũng gặp
+giao diện tiếng Việt. Ba nơi này đáng làm để có chỗ tham chiếu và phản hồi kỹ thuật thật, **không**
+đáng tính vào kỳ vọng ra người dùng.
+
+### Việc phải làm, theo đúng thứ tự quan trọng
+
+1. **Tìm cho ra nơi tiếng Việt thứ hai.** Đây là việc cấp nhất, và chưa ai làm. → thẻ A16.
+2. Xác minh Tinh tế và Dạy Nhau Học — Tinh tế cần máy, Dạy Nhau Học đám mây đọc thêm được.
+3. Rồi mới tới ba nơi tiếng Anh, và ghi rõ chúng là nơi lấy phản hồi, không phải nơi lấy người dùng.
