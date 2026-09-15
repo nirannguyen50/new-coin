@@ -108,6 +108,21 @@ không*. Thêm nữa, giao thức cố ý dạy phiên đám mây: không có th
 Nên một phiên chạy đúng luật mà đói việc trông **giống hệt** một phiên khoẻ mạnh. Vì vậy Trạm điều phối
 phải hiện thẳng con số *việc đám mây đang mở* — im lặng không bao giờ được là bằng chứng của sức khoẻ.
 
+### Luật B xảy ra thật 15/9 — đếm đúng theo chữ mà vẫn sai, vì Thực thi lọc chặt hơn Quản lý đếm
+
+`cloudTasksOpen` đếm mọi thẻ "chưa phải done/huy, owner thuc-thi, không CẦN MÁY" — A10 ở trạng thái
+"doing" khớp đúng ba điều đó, nên Quản lý đếm ra 1, coi như đạt Luật B, không giao gì thêm. Nhưng
+prompt của phiên đám mây (Thực thi) chỉ nhận việc khi thẻ ở đúng trạng thái **"todo"** — "doing" không
+khớp. Kết quả: A10 nằm "doing" từ 14/9, không thẻ "todo" mới nào mở sau khi A17 xong, ba lượt liên
+tiếp (20:53, 00:53, 04:53) Thực thi tìm không thấy gì để nhận và tự kết thúc — **đúng luật của nó**,
+nhưng nhìn từ ngoài giống hệt một phiên bị treo, và chủ dự án phải hỏi mới lộ ra.
+
+> Đếm đủ ba điều của Luật B là chưa đủ. Phải hỏi thêm câu thứ tư: **thẻ đó có đang ở trạng thái mà
+> Thực thi THẬT SỰ sẽ nhận không?** Một thẻ "doing" không có gì nhắc lại trong tin gần nhất là một thẻ
+> **vô hình** với phiên đám mây, dù Quản lý đếm nó là "còn mở". Đóng một thẻ mà không còn thẻ "todo"
+> nào đứng sau (kể cả thẻ theo dõi định kỳ như A10) thì phải tự tay đưa nó về lại "todo" **trong cùng
+> lượt đó** — không đợi lượt sau, không chỉ ghi NOTE suông rồi để trạng thái nguyên như cũ.
+
 ## 2. Kênh liên lạc
 
 Bảng điều khiển chung (artifact) có kho dữ liệu dùng chung. Cả hai bên đọc và ghi vào đó.
