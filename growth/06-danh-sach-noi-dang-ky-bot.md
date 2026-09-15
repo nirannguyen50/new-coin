@@ -379,3 +379,26 @@ Không có phiên nào thì số nơi đăng đứng im ở 1, và mốc 7/12 s�
 
 **Không suy luận cần làm gì ngay.** Đây là số liệu nền để so sánh mỗi lần khảo sát lại, không phải lý do
 để đổi kế hoạch — con số duy nhất còn quyết định là nhóm người lạ đầu tiên (Cửa 1, `docs/19`).
+
+## 7. A18 (15/9): năm nhóm Facebook, lần này đọc được thật — vẫn 0/5
+
+Từ 15/9, phiên Thực thi có quyền dùng thiết bị chạy 24/7 của chủ dự án — bức tường robots.txt ở mục 5b
+không còn chặn. Đọc lại đúng 5 nhóm A16 tìm được bằng Browser pane thật (không cần đăng nhập, cả 5 đều
+là Public group). Kết quả: **vẫn 0/5 đủ điều kiện — nhưng lần này là đọc được thật, không phải bị chặn.**
+
+| Nhóm | Thành viên | Hoạt động | Kết luận |
+|---|---:|---|---|
+| Cộng đồng Telegram VietNam | 6.5K | Chết — "No posts in the last month" | ❌ Nhóm chết |
+| Nhóm Telegram | — | Không mở được ("content isn't available") | ❌ Không xem được |
+| Python Việt Nam | 93.5K | Sống (1 bài hôm nay, 74/tháng) | ❌ Nội quy: *"Nghiêm cấm các hình thức quảng cáo, spam và đăng liên kết không phù hợp"* |
+| J2TEAM Community | 779.4K | Rất sống (9 bài hôm nay, 259/tháng) | ❌ Nội quy: *"Bạn không được tự quảng bá, spam và đăng liên kết không phù hợp"* |
+| NoCode Việt Nam | 13.7K | Sống nhẹ (14/tháng) | ❌ Sai chủ đề (không phải NoCode/LowCode) + cấm quảng cáo không liên quan |
+
+**Đáng chú ý nhất:** nhóm lớn nhất và sống nhất trong cả năm — J2TEAM, 779K thành viên, đúng đối tượng
+dev Việt — vẫn loại vì nội quy cấm tự quảng bá rõ ràng. Không phải "chưa ai tìm ra nhóm đúng"; là **quy
+mô lớn và nội quy chống spam đi cùng nhau** — nhóm Facebook công nghệ Việt lớn đều tự bảo vệ khỏi đúng
+kiểu bài mà một dự án cá nhân muốn đăng.
+
+**Kết luận cho hướng Facebook:** đóng, không mở lại trừ khi tìm được nhóm mới ngoài 5 nhóm này. Việc kế
+tiếp có ý nghĩa hơn: A15 (sửa BotFather) và A3 (Dev.to/Reddit) — giờ máy đã dùng được, làm theo đúng thứ
+tự A15 → A3.
